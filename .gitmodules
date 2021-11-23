@@ -1,0 +1,13 @@
+[submodule "ondatra"]
+    path = ondatra
+    url = https://github.com/hashwini-keysight/ondatra
+    branch = otg-exp
+    ignore = dirty
+[submodule "kne"]
+	path = kne
+	url = https://github.com/google/kne
+    ignore = dirty
+[submodule "meshnet-cni"]
+	path = meshnet-cni
+	url = https://github.com/networkop/meshnet-cni
+    ignore = dirty

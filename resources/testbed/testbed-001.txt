@@ -1,0 +1,68 @@
+duts {
+  id: "dut1"
+  vendor: ARISTA
+  ports {
+    id: "port1"    
+  }
+  ports {
+    id: "port2"    
+  }
+}
+
+duts {
+  id: "dut2"
+  vendor: ARISTA
+  ports {
+    id: "port1"    
+  }
+  ports {
+    id: "port2"    
+  }
+  ports {
+    id: "port3"    
+  }
+}
+
+ates {
+  id: "ate1"
+  vendor: IXIA
+  ports {
+    id: "port1"    
+  }
+}
+
+ates {
+  id: "ate2"
+  vendor: IXIA
+  ports {
+    id: "port1"    
+  }
+}
+
+ates {
+  id: "ate3"
+  vendor: IXIA
+  ports {
+    id: "port1"    
+  }
+} 
+
+links {
+  a: "dut1:port1"
+  b: "ate1:port1"
+}
+
+links {
+  a: "dut1:port2"
+  b: "dut2:port1"
+}
+
+links {
+  a: "dut2:port2"
+  b: "ate2:port1"
+}
+
+links {
+  a: "dut2:port3"
+  b: "ate3:port1"
+}

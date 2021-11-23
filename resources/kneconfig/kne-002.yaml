@@ -1,0 +1,5 @@
+username: admin
+password: admin
+topology: ./otg-kne-config-002.txt
+cli: /home/hashwini/workspace/kne/kne_cli/kne_cli
+kubecfg: /home/hashwini/.kube/config

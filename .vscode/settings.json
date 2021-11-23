@@ -1,0 +1,15 @@
+{
+    "git.autoRepositoryDetection": false,
+    "git.ignoredRepositories": [
+        "ondatra",
+        "kne",
+        "meshnet-cni",
+    ],
+    "go.testFlags": [
+        "-v", 
+        "-config", 
+        "../resources/kneconfig/kne-001.yaml",
+        "-testbed", 
+        "../resources/testbed/testbed-001.txt"
+    ],
+}

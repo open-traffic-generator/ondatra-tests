@@ -1,0 +1,33 @@
+interface Ethernet1
+no switchport
+ip address 12.12.12.2/24
+ipv6 address 0:12:12:12::2/64
+!
+interface Ethernet2
+no switchport
+ip address 2.2.2.1/24
+ipv6 address 0:2:2:2::1/64
+!
+interface Ethernet3
+no switchport
+ip address 3.3.3.1/24
+ipv6 address 0:3:3:3::1/64
+!
+ip routing
+!
+ipv6 unicast-routing
+!
+router bgp 4000
+router-id 3.3.3.1
+neighbor 2.2.2.2 remote-as 2222
+neighbor 3.3.3.2 remote-as 3332
+neighbor 12.12.12.1 remote-as 3000
+neighbor 0:2:2:2::2 remote-as 2222
+neighbor 0:3:3:3::2 remote-as 3332
+neighbor 0:12:12:12::1 remote-as 3000
+!
+address-family ipv6
+neighbor 0:2:2:2::2 activate
+neighbor 0:3:3:3::2 activate
+neighbor 0:12:12:12::1 activate
+!

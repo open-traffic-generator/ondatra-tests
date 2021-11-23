@@ -1,0 +1,35 @@
+ates {
+  id: "ate1"
+  vendor: IXIA
+  ports {
+    id: "port1"    
+  }
+}
+duts {
+  id: "dut1"
+  vendor: ARISTA
+  ports {
+    id: "port1"    
+  }
+  ports {
+    id: "port2"    
+  }
+}
+
+ates {
+  id: "ate2"
+  vendor: IXIA
+  ports {
+    id: "port1"    
+  }
+}
+
+links {
+  a: "ate1:port1"
+  b: "dut1:port1"
+}
+
+links {
+  a: "dut1:port2"
+  b: "ate2:port1"
+}

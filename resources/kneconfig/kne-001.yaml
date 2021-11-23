@@ -1,0 +1,5 @@
+username: admin
+password: admin
+topology: /home/anbalogh/keys_bitbucket/ondatra_tests/resources/topology/topology-001.txt
+cli: /home/anbalogh/keys_bitbucket/ondatra_tests/kne/kne_cli/kne_cli
+kubecfg: /home/anbalogh/.kube/config
