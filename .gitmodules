@@ -1,6 +1,6 @@
 [submodule "ondatra"]
-    path = ondatra
-    url = https://github.com/hashwini-keysight/ondatra
+	path = ondatra
+	url = https://github.com/hashwini-keysight/ondatra
     branch = otg-exp
     ignore = dirty
 [submodule "kne"]
