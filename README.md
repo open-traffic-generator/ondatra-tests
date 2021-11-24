@@ -15,8 +15,9 @@ make build
 
 ## Execute tests
 ```
-go test ./... -v -config ../resources/kneconfig/kne-001.yaml -testbed ../resources/testbed/testbed-001.txt 
+go test -timeout 30s -run ^TestBGPPolicyRouteInstallation$ tests/tests -v -config ../resources/kneconfig/kne-001.yaml -testbed ../resources/testbed/testbed-001.txt
 ```
+
 ### Test command line args
 The sample go test command line above has specific ondatra test arguments as follows:
 `<ondatra-test-args> ::= <-config> <kne-config-file> <-testbed> <kne-testbed-file>`
