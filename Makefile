@@ -1,8 +1,10 @@
 build:
 	git submodule update --init --recursive
 	ROOT=`pwd`
-	cd ondatra
-	go generate -v ./...
-	go mod tidy -e
+	cd kne/kne_cli
+	go build -v ./...
 	cd $(PWD)
+	cd ondatra
+	go mod tidy -e
+	go generate -v ./...
 	go build -v ./...
