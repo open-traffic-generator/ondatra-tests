@@ -8,10 +8,11 @@ In order to execute and/or develop tests you will need a running
 
 ## Ondatra framework dependencies
 This step needs to be done until the openconfig/ondatra repo main branch 
-fully supports the `open-traffic-generator` binding 
+fully supports the `open-traffic-generator` binding.
 ```
 make build
 ```
+Edit the resources/kneconfig/kne-001.yaml file to reflect the path of the repository.
 
 ## Execute tests
 ```
