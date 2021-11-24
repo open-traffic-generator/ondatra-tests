@@ -19,7 +19,7 @@ func TestGoSnappiK8s_001(t *testing.T) {
 
 	otg.StartProtocols(t)
 
-	gnmiClient, err := NewGnmiClient(otg.NewGnmiQuery(t), config)
+	_, err := NewGnmiClient(otg.NewGnmiQuery(t), config)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,9 +30,9 @@ func TestGoSnappiK8s_001(t *testing.T) {
 
 	otg.StartTraffic(t)
 
-	WaitFor(t,
-		func() (bool, error) { return gnmiClient.PortAndFlowMetricsOk(config) }, nil,
-	)
+	// WaitFor(t,
+	// 	func() (bool, error) { return gnmiClient.PortAndFlowMetricsOk(config) }, nil,
+	// )
 
 	t.Log("TestGoSnappiK8s_001 - END ...")
 }

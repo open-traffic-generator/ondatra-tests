@@ -9,67 +9,63 @@ type ExpectedBgpMetrics struct {
 	Received   int32
 }
 
-func TxRxRoutesOk(tx, rx []int) bool {
-	if len(tx) != len(rx) {
-		return false
-	}
-
-	totalTx := 0
-	for _, t := range tx {
-		// not ok if not routes sent for any of the peer
-		if t == 0 {
-			return false
-		}
-		totalTx += t
-	}
-
-	for i := range rx {
-		// not ok if expected rx doesn't match sum of all tx minus self tx
-		if rx[i] != totalTx-tx[i] {
-			return false
-		}
-	}
-
-	return true
+type ExpectedPortMetrics struct {
+	FramesRx int32
 }
 
-func (client *GnmiClient) PortAndFlowMetricsOk(config gosnappi.Config) (bool, error) {
-	expected := 0
-	for _, f := range config.Flows().Items() {
-		expected += int(f.Duration().FixedPackets().Packets())
+type ExpectedFlowMetrics struct {
+	FramesRx     int32
+	FramesRxRate float32
+}
+
+type ExpectedState struct {
+	Port map[string]ExpectedPortMetrics
+	Flow map[string]ExpectedFlowMetrics
+	Bgp4 map[string]ExpectedBgpMetrics
+	Bgp6 map[string]ExpectedBgpMetrics
+}
+
+func NewExpectedState() ExpectedState {
+	e := ExpectedState{
+		Port: map[string]ExpectedPortMetrics{},
+		Flow: map[string]ExpectedFlowMetrics{},
+		Bgp4: map[string]ExpectedBgpMetrics{},
+		Bgp6: map[string]ExpectedBgpMetrics{},
+	}
+	return e
+}
+
+func (client *GnmiClient) FlowMetricsOk(expectedState ExpectedState) (bool, error) {
+	dNames := []string{}
+	for name := range expectedState.Flow {
+		dNames = append(dNames, name)
 	}
 
-	fMetrics, err := client.GetFlowMetrics(nil)
+	fMetrics, err := client.GetFlowMetrics(dNames)
 	if err != nil {
 		return false, err
 	}
-	pMetrics, err := client.GetPortMetrics(nil)
-	if err != nil {
-		return false, err
-	}
+
 	PrintMetricsTable(&MetricsTableOpts{
 		ClearPrevious: false,
 		FlowMetrics:   fMetrics,
-		PortMetrics:   pMetrics,
 	})
 
-	actual := 0
-	for _, m := range fMetrics.Items() {
-		actual += int(m.FramesRx())
+	expected := true
+	for _, f := range fMetrics.Items() {
+		expectedMetrics := expectedState.Flow[f.Name()]
+		if f.FramesRx() != expectedMetrics.FramesRx || f.FramesRxRate() != expectedMetrics.FramesRxRate {
+			expected = false
+		}
 	}
 
-	return expected == actual, nil
+	return expected, nil
 }
 
-func (client *GnmiClient) AllBgp4SessionUp(config gosnappi.Config, expectedBgpMetrics map[string]ExpectedBgpMetrics) (bool, error) {
+func (client *GnmiClient) AllBgp4SessionUp(expectedState ExpectedState) (bool, error) {
 	dNames := []string{}
-	for _, d := range config.Devices().Items() {
-		bgp := d.Bgp()
-		for _, ip := range bgp.Ipv4Interfaces().Items() {
-			for _, peer := range ip.Peers().Items() {
-				dNames = append(dNames, peer.Name())
-			}
-		}
+	for name := range expectedState.Bgp4 {
+		dNames = append(dNames, name)
 	}
 
 	dMetrics, err := client.GetBgpv4Metrics(dNames)
@@ -82,26 +78,21 @@ func (client *GnmiClient) AllBgp4SessionUp(config gosnappi.Config, expectedBgpMe
 		Bgpv4Metrics:  dMetrics,
 	})
 
-	expected := 0
+	expected := true
 	for _, d := range dMetrics.Items() {
-		expectedMetrics := expectedBgpMetrics[d.Name()]
-		if d.SessionState() == gosnappi.Bgpv4MetricSessionState.UP && d.RoutesAdvertised() == expectedMetrics.Advertised && d.RoutesReceived() == expectedMetrics.Received {
-			expected += 1
+		expectedMetrics := expectedState.Bgp4[d.Name()]
+		if d.SessionState() != gosnappi.Bgpv4MetricSessionState.UP || d.RoutesAdvertised() != expectedMetrics.Advertised || d.RoutesReceived() != expectedMetrics.Received {
+			expected = false
 		}
 	}
 
-	return len(dNames) == expected, nil
+	return expected, nil
 }
 
-func (client *GnmiClient) AllBgp6SessionUp(config gosnappi.Config, expectedBgpMetrics map[string]ExpectedBgpMetrics) (bool, error) {
+func (client *GnmiClient) AllBgp6SessionUp(expectedState ExpectedState) (bool, error) {
 	dNames := []string{}
-	for _, d := range config.Devices().Items() {
-		bgp := d.Bgp()
-		for _, ipv6 := range bgp.Ipv6Interfaces().Items() {
-			for _, peer := range ipv6.Peers().Items() {
-				dNames = append(dNames, peer.Name())
-			}
-		}
+	for name := range expectedState.Bgp6 {
+		dNames = append(dNames, name)
 	}
 
 	dMetrics, err := client.GetBgpv6Metrics(dNames)
@@ -114,23 +105,13 @@ func (client *GnmiClient) AllBgp6SessionUp(config gosnappi.Config, expectedBgpMe
 		Bgpv6Metrics:  dMetrics,
 	})
 
-	expected := 0
+	expected := true
 	for _, d := range dMetrics.Items() {
-		expectedMetrics := expectedBgpMetrics[d.Name()]
-		if d.SessionState() == gosnappi.Bgpv6MetricSessionState.UP && d.RoutesAdvertised() == expectedMetrics.Advertised && d.RoutesReceived() == expectedMetrics.Received {
-			expected += 1
+		expectedMetrics := expectedState.Bgp6[d.Name()]
+		if d.SessionState() != gosnappi.Bgpv6MetricSessionState.UP || d.RoutesAdvertised() != expectedMetrics.Advertised || d.RoutesReceived() != expectedMetrics.Received {
+			expected = false
 		}
 	}
 
-	return len(dNames) == expected, nil
-}
-
-type PortMetric struct {
-	Name     string
-	FramesTx int32
-}
-
-type FlowMetric struct {
-	Name     string
-	FramesRx int32
+	return expected, nil
 }

@@ -29,13 +29,19 @@ import (
 )
 
 func TestBGPPolicyRouteInstallation(t *testing.T) {
+	dut1 := ondatra.DUTs(t)["dut1"]
+	dut1Config := dut1.Config().New().WithAristaFile("../resources/dutconfig/arista1.txt")
+	dut1Config.Push(t)
+	dut2 := ondatra.DUTs(t)["dut2"]
+	dut2Config := dut2.Config().New().WithAristaFile("../resources/dutconfig/arista2.txt")
+	dut2Config.Push(t)
+
 	otg := ondatra.OTGs(t)
 	defer otg.NewConfig(t)
 	defer otg.StopProtocols(t)
 	defer otg.StopTraffic(t)
 
-	expected := map[string]ExpectedBgpMetrics{}
-	config := configureOTG(t, otg, expected)
+	config, expected := configureOTG(t, otg)
 	otg.PushConfig(t, config)
 	otg.StartProtocols(t)
 
@@ -44,22 +50,18 @@ func TestBGPPolicyRouteInstallation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	WaitFor(t,
-		func() (bool, error) {
-			return gnmiClient.AllBgp4SessionUp(config, expected)
-		}, nil,
-	)
-	WaitFor(t,
-		func() (bool, error) { return gnmiClient.AllBgp6SessionUp(config, expected) }, nil,
-	)
+	WaitFor(t, func() (bool, error) { return gnmiClient.AllBgp4SessionUp(expected) }, nil)
+
+	WaitFor(t, func() (bool, error) { return gnmiClient.AllBgp6SessionUp(expected) }, nil)
+
 	otg.StartTraffic(t)
-	WaitFor(t,
-		func() (bool, error) { return gnmiClient.PortAndFlowMetricsOk(config) }, nil,
-	)
+
+	WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
 }
 
-func configureOTG(t *testing.T, otg *ondatra.OTG, expected map[string]ExpectedBgpMetrics) gosnappi.Config {
+func configureOTG(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, ExpectedState) {
 	config := otg.NewConfig(t)
+	expected := NewExpectedState()
 
 	port1 := config.Ports().Add().SetName("ixia-c-port1")
 	port2 := config.Ports().Add().SetName("ixia-c-port2")
@@ -169,13 +171,8 @@ func configureOTG(t *testing.T, otg *ondatra.OTG, expected map[string]ExpectedBg
 		SetCount(5).
 		SetStep(2)
 
-	expected[dut2Bgp4Peer.Name()] = ExpectedBgpMetrics{Advertised: 5, Received: 5}
-	expected[dut2Bgp6Peer.Name()] = ExpectedBgpMetrics{Advertised: 5, Received: 5}
-	expected[dut1Bgp4Peer.Name()] = ExpectedBgpMetrics{Advertised: 5, Received: 5}
-	expected[dut1Bgp6Peer.Name()] = ExpectedBgpMetrics{Advertised: 5, Received: 5}
-
 	// OTG traffic configuration
-	f1 := config.Flows().Add().SetName("Ipv4")
+	f1 := config.Flows().Add().SetName("v4.ok")
 	f1.Metrics().SetEnable(true)
 	f1.TxRx().Device().
 		SetTxNames([]string{dut2Bgp4PeerRoutes.Name()}).
@@ -203,9 +200,9 @@ func configureOTG(t *testing.T, otg *ondatra.OTG, expected map[string]ExpectedBg
 	e1d.Dst().SetValue("00:00:00:00:00:00")
 	v4d := f1d.Packet().Add().Ipv4()
 	v4d.Src().SetValues([]string{"50.50.50.1", "90.90.90.1"})
-	v4d.Dst().SetValues([]string{"4.4.4.1", "30.30.30.1"})
+	v4d.Dst().SetValues([]string{"4.4.4.1", "31.30.30.1"})
 
-	f2 := config.Flows().Add().SetName("Ipv6")
+	f2 := config.Flows().Add().SetName("v6.ok")
 	f2.Metrics().SetEnable(true)
 	f2.TxRx().Device().
 		SetTxNames([]string{dut2Bgp6PeerRoutes.Name()}).
@@ -220,5 +217,13 @@ func configureOTG(t *testing.T, otg *ondatra.OTG, expected map[string]ExpectedBg
 	v6.Src().Increment().SetStart("0:60:60:60::1").SetStep("::1").SetCount(5)
 	v6.Dst().Increment().SetStart("0:40:40:40::1").SetStep("::1").SetCount(5)
 
-	return config
+	expected.Bgp4[dut1Bgp4Peer.Name()] = ExpectedBgpMetrics{Advertised: 5, Received: 5}
+	expected.Bgp4[dut2Bgp4Peer.Name()] = ExpectedBgpMetrics{Advertised: 5, Received: 5}
+	expected.Bgp6[dut1Bgp6Peer.Name()] = ExpectedBgpMetrics{Advertised: 5, Received: 5}
+	expected.Bgp6[dut2Bgp6Peer.Name()] = ExpectedBgpMetrics{Advertised: 5, Received: 5}
+	expected.Flow[f1.Name()] = ExpectedFlowMetrics{FramesRx: 1000, FramesRxRate: 0}
+	expected.Flow[f1d.Name()] = ExpectedFlowMetrics{FramesRx: 0, FramesRxRate: 0}
+	expected.Flow[f2.Name()] = ExpectedFlowMetrics{FramesRx: 1000, FramesRxRate: 0}
+
+	return config, expected
 }
