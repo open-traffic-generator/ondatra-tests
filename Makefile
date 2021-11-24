@@ -16,11 +16,5 @@ kne_init:
 
 kne_shut:
 	./kne/kne_cli/kne_cli delete resources/topology/topology-001.txt
-	OUT=$(kubectl get svc -n ixia-c); \
-	while [ $(OUT) != "No resources found in ixia-c namespace." ]; do \
-		echo "Resources still being deleted, waiting for 5 secs"; \
-		echo $(OUT); \
-		sleep 5; \
-		OUT=$(kubectl get svc -n ixia-c); \
-	done
+
 	
