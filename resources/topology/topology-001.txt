@@ -2,7 +2,7 @@ name: "ixia-c"
 nodes: {
     name: "ixia-c-port1"
     type: IXIA_TG
-    version: "0.0.1-2289"
+    version: "0.0.1-2399"
     services: {
         key: 5555
         value: {
@@ -22,6 +22,9 @@ nodes: {
     name: "arista1"
     type: ARISTA_CEOS
     config: {
+        config_path: "/mnt/flash"
+        config_file: "startup-config"
+        file: "../dutconfig/enable_ssh_arista_config.txt"
     	image: "gcr.io/kt-nts-athena-dev/athena/ceosimage:4.26.0F"
     }
     services:{
@@ -36,6 +39,9 @@ nodes: {
     name: "arista2"
     type: ARISTA_CEOS
     config: {
+        config_path: "/mnt/flash"
+        config_file: "startup-config"
+        file: "../dutconfig/enable_ssh_arista_config.txt"
     	image: "gcr.io/kt-nts-athena-dev/athena/ceosimage:4.26.0F"
     }
     services:{
@@ -49,7 +55,7 @@ nodes: {
 nodes: {
     name: "ixia-c-port2"
     type: IXIA_TG
-    version: "0.0.1-2289"
+    version: "0.0.1-2399"
     services: {
         key: 5555
         value: {
@@ -68,7 +74,7 @@ nodes: {
 nodes: {
     name: "ixia-c-port3"
     type: IXIA_TG
-    version: "0.0.1-2289"
+    version: "0.0.1-2399"
     services: {
         key: 5555
         value: {
