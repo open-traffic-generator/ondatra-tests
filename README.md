@@ -1,6 +1,6 @@
 # Ondatra Open Traffic Generator Tests
 A repository of tests that uses the [ondatra test framework](https://github.com/openconfig/ondatra) 
-and the [open-traffic-generator gosnappi package](https://github.com/open-traffic-generator).
+and the [open-traffic-generator gosnappi package](https://github.com/open-traffic-generator/snappi/tree/main/gosnappi).
 
 ## Getting started
 In order to execute and/or develop tests you will need a running 
