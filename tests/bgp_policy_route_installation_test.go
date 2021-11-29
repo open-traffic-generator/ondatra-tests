@@ -29,13 +29,6 @@ import (
 )
 
 func TestBGPPolicyRouteInstallation(t *testing.T) {
-	dut1 := ondatra.DUTs(t)["dut1"]
-	dut1Config := dut1.Config().New().WithAristaFile("../resources/dutconfig/arista1.txt")
-	dut1Config.Push(t)
-	dut2 := ondatra.DUTs(t)["dut2"]
-	dut2Config := dut2.Config().New().WithAristaFile("../resources/dutconfig/arista2.txt")
-	dut2Config.Push(t)
-
 	otg := ondatra.OTGs(t)
 	defer otg.NewConfig(t)
 	defer otg.StopProtocols(t)

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# one time step to authenticate and pull resources locally
+# the .keys/<service key> needs to be downloaded from the gcloud iam&admin service accounts
+# sudo snap install google-cloud-sdk --classic
+# cat ~/.keys/kt-nts-athena-dev-b52945713b45.json | docker login -u _json_key --password-stdin https://gcr.io
+# docker pull gcr.io/kt-nts-athena-dev/athena/ceosimage:4.26.0F
+
 # create the cluster
 kind create cluster --config  ../resources/kind_cluster.yaml
 kubectl cluster-info --context kind-kind
@@ -25,21 +31,14 @@ curl -kLO https://github.com/open-traffic-generator/ixia-c-operator/releases/dow
 docker pull ixiacom/ixia-c-operator:$VERSION
 kubectl apply -f ixiatg-operator.yaml
 
-# create ixia secret
+# reference: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry
+# -n is the namespace
+# docker-registry is the type of secret
+# ixia-pull-secret is the name of the secret
 kubectl create secret -n ixiatg-op-system docker-registry ixia-pull-secret \
         --docker-server=us-central1-docker.pkg.dev \
         --docker-username=_json_key \
-        --docker-password="$(cat kt-nts-athena-dev-3ba2488cc69b.json)" \
+        --docker-password="$(cat ~/.keys/kt-nts-athena-dev-b52945713b45.json)" \
         --docker-email=himanshu.ashwini@keysight.com 
 kubectl annotate secret ixia-pull-secret -n ixiatg-op-system secretsync.ixiatg.com/replicate='true'
 
-echo "############### DEPLOY KNE TOPOLOGY ###############"
-./kne_init.sh
-echo "############### DONE KNE TOPOLOGY ###############"
-sleep $SLEEP_TIME
-
-echo "############### DISPLAY TOPOLOGY ###############"
-kubectl get all -A
-kubectl get Topology -A
-kubectl get all -n ixia
-echo "############### DONE DISPLAY TOPOLOGY ###############"
