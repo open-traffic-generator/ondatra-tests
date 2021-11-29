@@ -101,7 +101,7 @@ func (client *GnmiClient) AllBgp6SessionUp(expectedState ExpectedState) (bool, e
 	}
 
 	PrintMetricsTable(&MetricsTableOpts{
-		ClearPrevious: true,
+		ClearPrevious: false,
 		Bgpv6Metrics:  dMetrics,
 	})
 
