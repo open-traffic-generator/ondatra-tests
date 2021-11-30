@@ -46,7 +46,6 @@ func TestBGPRouteInstall(t *testing.T) {
 	}
 
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllBgp4SessionUp(expected) }, nil)
-
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllBgp6SessionUp(expected) }, nil)
 
 	otg.StartTraffic(t)
@@ -56,7 +55,6 @@ func TestBGPRouteInstall(t *testing.T) {
 
 func configureOTG(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
 	config := otg.NewConfig(t)
-	expected := helpers.NewExpectedState()
 
 	port1 := config.Ports().Add().SetName("ixia-c-port1")
 	port2 := config.Ports().Add().SetName("ixia-c-port2")
@@ -165,7 +163,7 @@ func configureOTG(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.Expe
 		SetStep(2)
 
 	// OTG traffic configuration
-	f1 := config.Flows().Add().SetName("p1.v4.p2.ok")
+	f1 := config.Flows().Add().SetName("p1.v4.p2.permit")
 	f1.Metrics().SetEnable(true)
 	f1.TxRx().Device().
 		SetTxNames([]string{dutPort1Bgp4PeerRoutes.Name()}).
@@ -177,10 +175,10 @@ func configureOTG(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.Expe
 	e1.Src().SetValue(dutPort1Eth.Mac())
 	e1.Dst().SetValue("00:00:00:00:00:00")
 	v4 := f1.Packet().Add().Ipv4()
-	v4.Src().Increment().SetStart("40.40.40.1").SetStep("0.0.0.1").SetCount(5)
+	v4.Src().SetValue("40.40.40.1")
 	v4.Dst().Increment().SetStart("50.50.50.1").SetStep("0.0.0.1").SetCount(5)
 
-	f1d := config.Flows().Add().SetName("p1.v4.p2.dropped")
+	f1d := config.Flows().Add().SetName("p1.v4.p2.deny")
 	f1d.Metrics().SetEnable(true)
 	f1d.TxRx().Device().
 		SetTxNames([]string{dutPort1Bgp4PeerRoutes.Name()}).
@@ -192,10 +190,10 @@ func configureOTG(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.Expe
 	e1d.Src().SetValue(dutPort1Eth.Mac())
 	e1d.Dst().SetValue("00:00:00:00:00:00")
 	v4d := f1d.Packet().Add().Ipv4()
-	v4d.Src().SetValues([]string{"40.40.40.1", "40.40.40.2"})
+	v4d.Src().SetValue("40.40.40.1")
 	v4d.Dst().SetValues([]string{"60.60.60.1", "70.70.70.1"})
 
-	f2 := config.Flows().Add().SetName("p1.v6.p2.ok")
+	f2 := config.Flows().Add().SetName("p1.v6.p2.permit")
 	f2.Metrics().SetEnable(true)
 	f2.TxRx().Device().
 		SetTxNames([]string{dutPort1Bgp6PeerRoutes.Name()}).
@@ -207,16 +205,40 @@ func configureOTG(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.Expe
 	e2.Src().SetValue(dutPort1Eth.Mac())
 	e2.Dst().SetValue("00:00:00:00:00:00")
 	v6 := f2.Packet().Add().Ipv6()
-	v6.Src().Increment().SetStart("0:40:40:40::1").SetStep("::1").SetCount(5)
+	v6.Src().SetValue("0:40:40:40::1")
 	v6.Dst().Increment().SetStart("0:50:50:50::1").SetStep("::1").SetCount(5)
 
-	expected.Bgp4[dutPort1Bgp4Peer.Name()] = helpers.ExpectedBgpMetrics{Advertised: 5, Received: 5}
-	expected.Bgp4[dutPort2Bgp4Peer.Name()] = helpers.ExpectedBgpMetrics{Advertised: 5, Received: 5}
-	expected.Bgp6[dutPort1Bgp6Peer.Name()] = helpers.ExpectedBgpMetrics{Advertised: 5, Received: 5}
-	expected.Bgp6[dutPort2Bgp6Peer.Name()] = helpers.ExpectedBgpMetrics{Advertised: 5, Received: 5}
-	expected.Flow[f1.Name()] = helpers.ExpectedFlowMetrics{FramesRx: 1000, FramesRxRate: 0}
-	expected.Flow[f1d.Name()] = helpers.ExpectedFlowMetrics{FramesRx: 0, FramesRxRate: 0}
-	expected.Flow[f2.Name()] = helpers.ExpectedFlowMetrics{FramesRx: 1000, FramesRxRate: 0}
+	f2d := config.Flows().Add().SetName("p1.v6.p2.deny")
+	f2d.Metrics().SetEnable(true)
+	f2d.TxRx().Device().
+		SetTxNames([]string{dutPort1Bgp6PeerRoutes.Name()}).
+		SetRxNames([]string{dutPort2Bgp6PeerRoutes.Name()})
+	f2d.Size().SetFixed(512)
+	f2d.Rate().SetPps(500)
+	f2d.Duration().FixedPackets().SetPackets(1000)
+	e2d := f2d.Packet().Add().Ethernet()
+	e2d.Src().SetValue(dutPort1Eth.Mac())
+	e2d.Dst().SetValue("00:00:00:00:00:00")
+	v6d := f2d.Packet().Add().Ipv6()
+	v6d.Src().SetValue("0:40:40:40::1")
+	v6d.Dst().SetValues([]string{"0:60:60:60::1", "0:70:70:70::2"})
+
+	expected := helpers.ExpectedState{
+		Bgp4: map[string]helpers.ExpectedBgpMetrics{
+			dutPort1Bgp4Peer.Name(): {Advertised: 5, Received: 5},
+			dutPort2Bgp4Peer.Name(): {Advertised: 5, Received: 5},
+		},
+		Bgp6: map[string]helpers.ExpectedBgpMetrics{
+			dutPort1Bgp6Peer.Name(): {Advertised: 5, Received: 5},
+			dutPort2Bgp6Peer.Name(): {Advertised: 5, Received: 5},
+		},
+		Flow: map[string]helpers.ExpectedFlowMetrics{
+			f1.Name():  {FramesRx: 1000, FramesRxRate: 0},
+			f1d.Name(): {FramesRx: 0, FramesRxRate: 0},
+			f2.Name():  {FramesRx: 1000, FramesRxRate: 0},
+			f2d.Name(): {FramesRx: 0, FramesRxRate: 0},
+		},
+	}
 
 	return config, expected
 }

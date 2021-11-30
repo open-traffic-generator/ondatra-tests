@@ -165,9 +165,8 @@ func PrintMetricsTable(opts *MetricsTableOpts) {
 
 	if opts.Bgpv4Metrics != nil {
 		border := strings.Repeat("-", 20*9+5)
-		out += "\nBgpv4 Metrics\n" + border + "\n"
-		out += fmt.Sprintf(
-			"%-20s%-20s%-20s%-20s%-20s%-20s%-20s%-20s%-20s\n",
+		out += "\nBGPv4 Metrics\n" + border + "\n"
+		rowNames := []string{
 			"Name",
 			"Session State",
 			"Session Flaps",
@@ -177,40 +176,45 @@ func PrintMetricsTable(opts *MetricsTableOpts) {
 			"Route Withdraws Rx",
 			"Keepalives Tx",
 			"Keepalives Rx",
-		)
-		for _, d := range opts.Bgpv4Metrics.Items() {
-			if d != nil {
-				name := d.Name()
-				sessionState := d.SessionState()
-				sessionFlapCount := d.SessionFlapCount()
-				routesAdvertised := d.RoutesAdvertised()
-				routesReceived := d.RoutesReceived()
-				keepalivesSent := d.KeepalivesSent()
-				keepalivesReceived := d.KeepalivesReceived()
-				routeWithdrawsSent := d.RouteWithdrawsSent()
-				routeWithdrawsReceived := d.RouteWithdrawsReceived()
-				out += fmt.Sprintf(
-					"%-20v%-20v%-20v%-20v%-20v%-20v%-20v%-20v%-20v\n",
-					name,
-					sessionState,
-					sessionFlapCount,
-					routesAdvertised,
-					routesReceived,
-					routeWithdrawsSent,
-					routeWithdrawsReceived,
-					keepalivesSent,
-					keepalivesReceived,
-				)
+		}
+
+		for _, rowName := range rowNames {
+			out += fmt.Sprintf("%-28s", rowName)
+			for _, d := range opts.Bgpv4Metrics.Items() {
+				if d != nil {
+					switch rowName {
+					case "Name":
+						out += fmt.Sprintf("%-25v", d.Name())
+					case "Session State":
+						out += fmt.Sprintf("%-25v", d.SessionState())
+					case "Session Flaps":
+						out += fmt.Sprintf("%-25v", d.SessionFlapCount())
+					case "Routes Advertised":
+						out += fmt.Sprintf("%-25v", d.RoutesAdvertised())
+					case "Routes Received":
+						out += fmt.Sprintf("%-25v", d.RoutesReceived())
+					case "Route Withdraws Tx":
+						out += fmt.Sprintf("%-25v", d.RouteWithdrawsSent())
+					case "Route Withdraws Rx":
+						out += fmt.Sprintf("%-25v", d.RouteWithdrawsReceived())
+					case "Keepalives Tx":
+						out += fmt.Sprintf("%-25v", d.KeepalivesSent())
+					case "Keepalives Rx":
+						out += fmt.Sprintf("%-25v", d.KeepalivesReceived())
+					}
+				}
 			}
+
+			out += "\n"
+
 		}
 		out += border + "\n\n"
 	}
 
 	if opts.Bgpv6Metrics != nil {
 		border := strings.Repeat("-", 20*9+5)
-		out += "\nBgpv6 Metrics\n" + border + "\n"
-		out += fmt.Sprintf(
-			"%-20s%-20s%-20s%-20s%-20s%-20s%-20s%-20s%-20s\n",
+		out += "\nBGPv6 Metrics\n" + border + "\n"
+		rowNames := []string{
 			"Name",
 			"Session State",
 			"Session Flaps",
@@ -220,34 +224,118 @@ func PrintMetricsTable(opts *MetricsTableOpts) {
 			"Route Withdraws Rx",
 			"Keepalives Tx",
 			"Keepalives Rx",
-		)
-		for _, d := range opts.Bgpv6Metrics.Items() {
-			if d != nil {
-				name := d.Name()
-				sessionState := d.SessionState()
-				sessionFlapCount := d.SessionFlapCount()
-				routesAdvertised := d.RoutesAdvertised()
-				routesReceived := d.RoutesReceived()
-				keepalivesSent := d.KeepalivesSent()
-				keepalivesReceived := d.KeepalivesReceived()
-				routeWithdrawsSent := d.RouteWithdrawsSent()
-				routeWithdrawsReceived := d.RouteWithdrawsReceived()
-				out += fmt.Sprintf(
-					"%-20v%-20v%-20v%-20v%-20v%-20v%-20v%-20v%-20v\n",
-					name,
-					sessionState,
-					sessionFlapCount,
-					routesAdvertised,
-					routesReceived,
-					routeWithdrawsSent,
-					routeWithdrawsReceived,
-					keepalivesSent,
-					keepalivesReceived,
-				)
+		}
+
+		for _, rowName := range rowNames {
+			out += fmt.Sprintf("%-28s", rowName)
+			for _, d := range opts.Bgpv6Metrics.Items() {
+				if d != nil {
+					switch rowName {
+					case "Name":
+						out += fmt.Sprintf("%-25v", d.Name())
+					case "Session State":
+						out += fmt.Sprintf("%-25v", d.SessionState())
+					case "Session Flaps":
+						out += fmt.Sprintf("%-25v", d.SessionFlapCount())
+					case "Routes Advertised":
+						out += fmt.Sprintf("%-25v", d.RoutesAdvertised())
+					case "Routes Received":
+						out += fmt.Sprintf("%-25v", d.RoutesReceived())
+					case "Route Withdraws Tx":
+						out += fmt.Sprintf("%-25v", d.RouteWithdrawsSent())
+					case "Route Withdraws Rx":
+						out += fmt.Sprintf("%-25v", d.RouteWithdrawsReceived())
+					case "Keepalives Tx":
+						out += fmt.Sprintf("%-25v", d.KeepalivesSent())
+					case "Keepalives Rx":
+						out += fmt.Sprintf("%-25v", d.KeepalivesReceived())
+					}
+				}
 			}
+
+			out += "\n"
+
 		}
 		out += border + "\n\n"
 	}
+
+	// if opts.IsisMetrics != nil {
+	// 	border := strings.Repeat("-", 20*9+5)
+	// 	out += "\nIS-IS Metrics\n" + border + "\n"
+	// 	rowNames := []string{
+	// 		"Name",
+	// 		"L1 Sessions UP",
+	// 		"L1 Sessions Flap",
+	// 		"L1 Broadcast Hellos Sent",
+	// 		"L1 Broadcast Hellos Recv",
+	// 		"L1 P2P Hellos Sent",
+	// 		"L1 P2P Hellos Recv",
+	// 		"L1 Lsp Sent",
+	// 		"L1 Lsp Recv",
+	// 		"L1 Database Size",
+	// 		"L2 Sessions UP",
+	// 		"L2 Sessions Flap",
+	// 		"L2 Broadcast Hellos Sent",
+	// 		"L2 Broadcast Hellos Recv",
+	// 		"L2 P2P Hellos Sent",
+	// 		"L2 P2P Hellos Recv",
+	// 		"L2 Lsp Sent",
+	// 		"L2 Lsp Recv",
+	// 		"L2 Database Size",
+	// 	}
+
+	// 	for _, rowName := range rowNames {
+	// 		out += fmt.Sprintf("%-28s", rowName)
+	// 		for _, d := range opts.IsisMetrics.Items() {
+	// 			if d != nil {
+	// 				switch rowName {
+	// 				case "Name":
+	// 					out += fmt.Sprintf("%-15v", d.Name())
+	// 				case "L1 Sessions UP":
+	// 					out += fmt.Sprintf("%-15v", d.L1SessionsUp())
+	// 				case "L1 Sessions Flap":
+	// 					out += fmt.Sprintf("%-15v", d.L1SessionFlap())
+	// 				case "L1 Broadcast Hellos Sent":
+	// 					out += fmt.Sprintf("%-15v", d.L1BroadcastHellosSent())
+	// 				case "L1 Broadcast Hellos Recv":
+	// 					out += fmt.Sprintf("%-15v", d.L1BroadcastHellosReceived())
+	// 				case "L1 P2P Hellos Sent":
+	// 					out += fmt.Sprintf("%-15v", d.L1PointToPointHellosSent())
+	// 				case "L1 P2P Hellos Recv":
+	// 					out += fmt.Sprintf("%-15v", d.L1PointToPointHellosReceived())
+	// 				case "L1 Lsp Sent":
+	// 					out += fmt.Sprintf("%-15v", d.L1LspSent())
+	// 				case "L1 Lsp Recv":
+	// 					out += fmt.Sprintf("%-15v", d.L1LspReceived())
+	// 				case "L1 Database Size":
+	// 					out += fmt.Sprintf("%-15v", d.L1DatabaseSize())
+	// 				case "L2 Sessions UP":
+	// 					out += fmt.Sprintf("%-15v", d.L2SessionsUp())
+	// 				case "L2 Sessions Flap":
+	// 					out += fmt.Sprintf("%-15v", d.L2SessionFlap())
+	// 				case "L2 Broadcast Hellos Sent":
+	// 					out += fmt.Sprintf("%-15v", d.L2BroadcastHellosSent())
+	// 				case "L2 Broadcast Hellos Recv":
+	// 					out += fmt.Sprintf("%-15v", d.L2BroadcastHellosReceived())
+	// 				case "L2 P2P Hellos Sent":
+	// 					out += fmt.Sprintf("%-15v", d.L2PointToPointHellosSent())
+	// 				case "L2 P2P Hellos Recv":
+	// 					out += fmt.Sprintf("%-15v", d.L2PointToPointHellosReceived())
+	// 				case "L2 Lsp Sent":
+	// 					out += fmt.Sprintf("%-15v", d.L2LspSent())
+	// 				case "L2 Lsp Recv":
+	// 					out += fmt.Sprintf("%-15v", d.L2LspReceived())
+	// 				case "L2 Database Size":
+	// 					out += fmt.Sprintf("%-15v", d.L2DatabaseSize())
+	// 				}
+	// 			}
+	// 		}
+
+	// 		out += "\n"
+
+	// 	}
+	// 	out += border + "\n\n"
+	// }
 
 	if opts.PortMetrics != nil {
 		border := strings.Repeat("-", 15*4+5)
@@ -273,15 +361,15 @@ func PrintMetricsTable(opts *MetricsTableOpts) {
 	}
 
 	if opts.FlowMetrics != nil {
-		border := strings.Repeat("-", 15*3+5)
+		border := strings.Repeat("-", 25*3+5)
 		out += "\nFlow Metrics\n" + border + "\n"
-		out += fmt.Sprintf("%-15s%-15s%-15s\n", "Name", "Frames Rx", "FPS Rx")
+		out += fmt.Sprintf("%-25s%-25s%-25s\n", "Name", "Frames Rx", "FPS Rx")
 		for _, m := range opts.FlowMetrics.Items() {
 			if m != nil {
 				name := m.Name()
 				rx := m.FramesRx()
 				rxRate := m.FramesRxRate()
-				out += fmt.Sprintf("%-15v%-15v%-15v\n", name, rx, rxRate)
+				out += fmt.Sprintf("%-25v%-25v%-25v\n", name, rx, rxRate)
 			}
 		}
 		out += border + "\n\n"

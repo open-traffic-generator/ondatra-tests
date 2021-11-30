@@ -27,7 +27,7 @@ dt:
 
 bgp_route_install:
 	kne/kne_cli/kne_cli --kubecfg resources/kneconfig/config topology push resources/topology/ixia-arista-ixia.txt arista1 resources/dutconfig/bgp_route_install/set_dut.txt
-	-CGO_ENALBED=0 go test ./... -timeout 60s -run TestBGPRouteInstall -v -config ../resources/kneconfig/kne-003.yaml -testbed ../resources/testbed/ixia-arista-ixia.txt
+	-CGO_ENALBED=0 go test -v ./... -timeout 60s -run TestBGPRouteInstall -config ../resources/kneconfig/kne-003.yaml -testbed ../resources/testbed/ixia-arista-ixia.txt
 	kne/kne_cli/kne_cli --kubecfg resources/kneconfig/config topology push resources/topology/ixia-arista-ixia.txt arista1 resources/dutconfig/bgp_route_install/unset_dut.txt
 
 test2:
