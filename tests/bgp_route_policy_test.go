@@ -30,13 +30,13 @@ import (
 	"tests/tests/helpers"
 )
 
-func TestBGPRouteInstall(t *testing.T) {
+func TestBGPRoutePolicy(t *testing.T) {
 	otg := ondatra.OTGs(t)
 	defer otg.NewConfig(t)
 	defer otg.StopProtocols(t)
 	defer otg.StopTraffic(t)
 
-	config, expected := bgpRouteInstallConfig(t, otg)
+	config, expected := bgpRoutePolicyConfig(t, otg)
 	otg.PushConfig(t, config)
 	otg.StartProtocols(t)
 
@@ -53,7 +53,7 @@ func TestBGPRouteInstall(t *testing.T) {
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
 }
 
-func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
 	config := otg.NewConfig(t)
 
 	port1 := config.Ports().Add().SetName("ixia-c-port1")
