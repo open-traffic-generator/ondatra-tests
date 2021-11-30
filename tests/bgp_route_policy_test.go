@@ -1,7 +1,7 @@
 /* Test BGP Policy Installation
 
 Topology:
-IXIA (40.40.40.0/24) ----- ARISTA ------ IXIA (50.50.50.0/24)
+IXIA (40.40.40.0/24) <-----> ARISTA <------> IXIA (50.50.50.0/24)
 
 Flows:
 - permit: 40.40.40.1 -> 50.50.50.1+
