@@ -1,4 +1,4 @@
-package tests
+package helpers
 
 import (
 	"github.com/open-traffic-generator/snappi/gosnappi"

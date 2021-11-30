@@ -1,0 +1,9 @@
+interface Ethernet1
+   no ipv6 address
+   no ip address
+!
+interface Ethernet2
+   no ipv6 address
+   no ip address
+!
+no router bgp

@@ -18,3 +18,17 @@ kne_init:
 
 kne_shut:
 	./kne/kne_cli/kne_cli delete resources/topology/topology-001.txt
+
+ct:
+	kne/kne_cli/kne_cli --kubecfg resources/kneconfig/config create resources/topology/ixia-arista-ixia.txt
+
+dt:
+	kne/kne_cli/kne_cli --kubecfg resources/kneconfig/config delete resources/topology/ixia-arista-ixia.txt
+
+bgp_route_install:
+	kne/kne_cli/kne_cli --kubecfg resources/kneconfig/config topology push resources/topology/ixia-arista-ixia.txt arista1 resources/dutconfig/bgp_route_install/set_dut.txt
+	-CGO_ENALBED=0 go test ./... -timeout 60s -run TestBGPRouteInstall -v -config ../resources/kneconfig/kne-003.yaml -testbed ../resources/testbed/ixia-arista-ixia.txt
+	kne/kne_cli/kne_cli --kubecfg resources/kneconfig/config topology push resources/topology/ixia-arista-ixia.txt arista1 resources/dutconfig/bgp_route_install/unset_dut.txt
+
+test2:
+	cd tests && CGO_ENALBED=0 go test -timeout 30s -run ^TestBGPPolicyRouteInstallation$ tests/tests -v -config ../resources/kneconfig/kne-003.yaml -testbed ../resources/testbed/testbed-001.txt
