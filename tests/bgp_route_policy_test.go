@@ -1,23 +1,11 @@
-/* Test BGP Policy Route Installation
+/* Test BGP Policy Installation
 
 Topology:
-INFO[0000] Adding Link: ixia-c-port1:eth1 arista1:eth1
-INFO[0000] Adding Link: arista1:eth2 arista2:eth1
-INFO[0000] Adding Link: arista2:eth2 ixia-c-port2:eth1
-INFO[0000] Adding Link: arista2:eth3 ixia-c-port3:eth1
+IXIA (40.40.40.0/24) ----- ARISTA ------ IXIA (50.50.50.0/24)
 
-Configuration:
-Establish two BGP sessions:
-(1) between ATE port-1 and DUT port-1, and
-(2) between ATE port-2 and DUT port-2.
-
-Advertise prefixes from ATE port-1, observe received prefixes at ATE port-2.
-Send traffic flow in both IPv4 and IPv6 of various SrcNet and DstNet pairs
-between ATE port-1 and ATE port-2.
-
-Validation:
-- Traffic is forwarded to all installed routes.
-- Traffic is not forwarded for denied or withdrawn routes.
+Flows:
+- permit: 40.40.40.1 -> 50.50.50.1+
+- deny: 50.50.50.1 -> 40.40.40.1+
 */
 package tests
 
@@ -46,7 +34,6 @@ func TestBGPRoutePolicy(t *testing.T) {
 	}
 
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllBgp4SessionUp(expected) }, nil)
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllBgp6SessionUp(expected) }, nil)
 
 	otg.StartTraffic(t)
 
@@ -68,10 +55,6 @@ func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, help
 		SetName("dutPort1.ipv4").
 		SetAddress("1.1.1.1").
 		SetGateway("1.1.1.3")
-	dutPort1Ipv6 := dutPort1Eth.Ipv6Addresses().Add().
-		SetName("dutPort1.ipv6").
-		SetAddress("0:1:1:1::1").
-		SetGateway("0:1:1:1::3")
 	dutPort2 := config.Devices().Add().SetName("dutPort2")
 	dutPort2Eth := dutPort2.Ethernets().Add().
 		SetName("dutPort2.eth").
@@ -81,10 +64,6 @@ func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, help
 		SetName("dutPort2.ipv4").
 		SetAddress("2.2.2.2").
 		SetGateway("2.2.2.3")
-	dutPort2Ipv6 := dutPort2Eth.Ipv6Addresses().Add().
-		SetName("dutPort2.ipv6").
-		SetAddress("0:2:2:2::2").
-		SetGateway("0:2:2:2::3")
 
 	dutPort1Bgp := dutPort1.Bgp().
 		SetRouterId(dutPort1Ipv4.Address())
@@ -95,13 +74,6 @@ func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, help
 		SetPeerAddress(dutPort1Ipv4.Gateway()).
 		SetAsNumber(1111).
 		SetAsType(gosnappi.BgpV4PeerAsType.EBGP)
-	dutPort1Bgp6Peer := dutPort1Bgp.Ipv6Interfaces().Add().
-		SetIpv6Name(dutPort1Ipv6.Name()).
-		Peers().Add().
-		SetName("dutPort1.bgp6.peer").
-		SetPeerAddress(dutPort1Ipv6.Gateway()).
-		SetAsNumber(1111).
-		SetAsType(gosnappi.BgpV6PeerAsType.EBGP)
 
 	dutPort1Bgp4PeerRoutes := dutPort1Bgp4Peer.V4Routes().Add().
 		SetName("dutPort1.bgp4.peer.rr4").
@@ -111,16 +83,6 @@ func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, help
 	dutPort1Bgp4PeerRoutes.Addresses().Add().
 		SetAddress("40.40.40.0").
 		SetPrefix(24).
-		SetCount(5).
-		SetStep(2)
-	dutPort1Bgp6PeerRoutes := dutPort1Bgp6Peer.V6Routes().Add().
-		SetName("dutPort1.bgp4.peer.rr6").
-		SetNextHopIpv6Address(dutPort1Ipv6.Address()).
-		SetNextHopAddressType(gosnappi.BgpV6RouteRangeNextHopAddressType.IPV6).
-		SetNextHopMode(gosnappi.BgpV6RouteRangeNextHopMode.MANUAL)
-	dutPort1Bgp6PeerRoutes.Addresses().Add().
-		SetAddress("0:40:40:40::0").
-		SetPrefix(64).
 		SetCount(5).
 		SetStep(2)
 
@@ -133,13 +95,6 @@ func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, help
 		SetPeerAddress(dutPort2Ipv4.Gateway()).
 		SetAsNumber(2222).
 		SetAsType(gosnappi.BgpV4PeerAsType.EBGP)
-	dutPort2Bgp6Peer := dutPort2Bgp.Ipv6Interfaces().Add().
-		SetIpv6Name(dutPort2Ipv6.Name()).
-		Peers().Add().
-		SetName("dutPort2.bgp6.peer").
-		SetPeerAddress(dutPort2Ipv6.Gateway()).
-		SetAsNumber(2222).
-		SetAsType(gosnappi.BgpV6PeerAsType.EBGP)
 
 	dutPort2Bgp4PeerRoutes := dutPort2Bgp4Peer.V4Routes().Add().
 		SetName("dutPort2.bgp4.peer.rr4").
@@ -151,19 +106,9 @@ func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, help
 		SetPrefix(24).
 		SetCount(5).
 		SetStep(2)
-	dutPort2Bgp6PeerRoutes := dutPort2Bgp6Peer.V6Routes().Add().
-		SetName("dutPort2.bgp4.peer.rr6").
-		SetNextHopIpv6Address(dutPort2Ipv6.Address()).
-		SetNextHopAddressType(gosnappi.BgpV6RouteRangeNextHopAddressType.IPV6).
-		SetNextHopMode(gosnappi.BgpV6RouteRangeNextHopMode.MANUAL)
-	dutPort2Bgp6PeerRoutes.Addresses().Add().
-		SetAddress("0:50:50:50::0").
-		SetPrefix(64).
-		SetCount(5).
-		SetStep(2)
 
 	// OTG traffic configuration
-	f1 := config.Flows().Add().SetName("p1.v4.p2.permit")
+	f1 := config.Flows().Add().SetName("p1.p2.permit")
 	f1.Metrics().SetEnable(true)
 	f1.TxRx().Device().
 		SetTxNames([]string{dutPort1Bgp4PeerRoutes.Name()}).
@@ -178,65 +123,29 @@ func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, help
 	v4.Src().SetValue("40.40.40.1")
 	v4.Dst().Increment().SetStart("50.50.50.1").SetStep("0.0.0.1").SetCount(5)
 
-	f1d := config.Flows().Add().SetName("p1.v4.p2.deny")
+	f1d := config.Flows().Add().SetName("p2.p1.deny")
 	f1d.Metrics().SetEnable(true)
 	f1d.TxRx().Device().
-		SetTxNames([]string{dutPort1Bgp4PeerRoutes.Name()}).
-		SetRxNames([]string{dutPort2Bgp4PeerRoutes.Name()})
+		SetTxNames([]string{dutPort2Bgp4PeerRoutes.Name()}).
+		SetRxNames([]string{dutPort1Bgp4PeerRoutes.Name()})
 	f1d.Size().SetFixed(512)
 	f1d.Rate().SetPps(500)
 	f1d.Duration().FixedPackets().SetPackets(1000)
 	e1d := f1d.Packet().Add().Ethernet()
-	e1d.Src().SetValue(dutPort1Eth.Mac())
+	e1d.Src().SetValue(dutPort2Eth.Mac())
 	e1d.Dst().SetValue("00:00:00:00:00:00")
 	v4d := f1d.Packet().Add().Ipv4()
-	v4d.Src().SetValue("40.40.40.1")
-	v4d.Dst().SetValues([]string{"60.60.60.1", "70.70.70.1"})
-
-	f2 := config.Flows().Add().SetName("p1.v6.p2.permit")
-	f2.Metrics().SetEnable(true)
-	f2.TxRx().Device().
-		SetTxNames([]string{dutPort1Bgp6PeerRoutes.Name()}).
-		SetRxNames([]string{dutPort2Bgp6PeerRoutes.Name()})
-	f2.Size().SetFixed(512)
-	f2.Rate().SetPps(500)
-	f2.Duration().FixedPackets().SetPackets(1000)
-	e2 := f2.Packet().Add().Ethernet()
-	e2.Src().SetValue(dutPort1Eth.Mac())
-	e2.Dst().SetValue("00:00:00:00:00:00")
-	v6 := f2.Packet().Add().Ipv6()
-	v6.Src().SetValue("0:40:40:40::1")
-	v6.Dst().Increment().SetStart("0:50:50:50::1").SetStep("::1").SetCount(5)
-
-	f2d := config.Flows().Add().SetName("p1.v6.p2.deny")
-	f2d.Metrics().SetEnable(true)
-	f2d.TxRx().Device().
-		SetTxNames([]string{dutPort1Bgp6PeerRoutes.Name()}).
-		SetRxNames([]string{dutPort2Bgp6PeerRoutes.Name()})
-	f2d.Size().SetFixed(512)
-	f2d.Rate().SetPps(500)
-	f2d.Duration().FixedPackets().SetPackets(1000)
-	e2d := f2d.Packet().Add().Ethernet()
-	e2d.Src().SetValue(dutPort1Eth.Mac())
-	e2d.Dst().SetValue("00:00:00:00:00:00")
-	v6d := f2d.Packet().Add().Ipv6()
-	v6d.Src().SetValue("0:40:40:40::1")
-	v6d.Dst().SetValues([]string{"0:60:60:60::1", "0:70:70:70::2"})
+	v4d.Src().SetValue("50.50.50.1")
+	v4d.Dst().Increment().SetStart("40.40.40.1").SetStep("0.0.0.1").SetCount(5)
 
 	expected := helpers.ExpectedState{
 		Bgp4: map[string]helpers.ExpectedBgpMetrics{
 			dutPort1Bgp4Peer.Name(): {Advertised: 5, Received: 5},
 			dutPort2Bgp4Peer.Name(): {Advertised: 5, Received: 5},
 		},
-		Bgp6: map[string]helpers.ExpectedBgpMetrics{
-			dutPort1Bgp6Peer.Name(): {Advertised: 5, Received: 5},
-			dutPort2Bgp6Peer.Name(): {Advertised: 5, Received: 5},
-		},
 		Flow: map[string]helpers.ExpectedFlowMetrics{
 			f1.Name():  {FramesRx: 1000, FramesRxRate: 0},
 			f1d.Name(): {FramesRx: 0, FramesRxRate: 0},
-			f2.Name():  {FramesRx: 1000, FramesRxRate: 0},
-			f2d.Name(): {FramesRx: 0, FramesRxRate: 0},
 		},
 	}
 

@@ -1,23 +1,13 @@
-/* Test BGP Policy Route Installation
+/* Test BGP Route Installation
 
 Topology:
-INFO[0000] Adding Link: ixia-c-port1:eth1 arista1:eth1
-INFO[0000] Adding Link: arista1:eth2 arista2:eth1
-INFO[0000] Adding Link: arista2:eth2 ixia-c-port2:eth1
-INFO[0000] Adding Link: arista2:eth3 ixia-c-port3:eth1
+IXIA (40.40.40.0/24, 0:40:40:40::0/64) ----- ARISTA ------ IXIA (50.50.50.0/24, 0:50:50:50::0/64)
 
-Configuration:
-Establish two BGP sessions:
-(1) between ATE port-1 and DUT port-1, and
-(2) between ATE port-2 and DUT port-2.
-
-Advertise prefixes from ATE port-1, observe received prefixes at ATE port-2.
-Send traffic flow in both IPv4 and IPv6 of various SrcNet and DstNet pairs
-between ATE port-1 and ATE port-2.
-
-Validation:
-- Traffic is forwarded to all installed routes.
-- Traffic is not forwarded for denied or withdrawn routes.
+Flows:
+- permit: 40.40.40.1 -> 50.50.50.1+
+- deny: 40.40.40.1 -> 60.60.60.1, 70.70.70.1
+- permit: 0:40:40:40::1 -> 0:50:50:50::1+
+- deny: 0:40:40:40::1 -> 0:60:60:60::1, 0:70:70:70::1
 */
 package tests
 
