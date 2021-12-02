@@ -1,9 +1,13 @@
 interface Ethernet1
+   no ipv6 address
    no ip address
 !
 interface Ethernet2
+   no ipv6 address
    no ip address
 !
 no router bgp
-no route-map
-no ip prefix-list
+no route-map BGP_V4_MAP
+no route-map BGP_V6_MAP
+no ip prefix-list V4_ALLOW
+no ipv6 prefix-list V6_ALLOW

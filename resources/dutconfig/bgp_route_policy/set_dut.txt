@@ -1,20 +1,41 @@
 interface Ethernet1
     no switchport
     ip address 1.1.1.3/24
+    ipv6 address 0:1:1:1::3/64
 !
 interface Ethernet2
     no switchport
     ip address 2.2.2.3/24
+    ipv6 address 0:2:2:2::3/64
 !
 ip routing
 !
-ip prefix-list V4_ALLOW permit 50.50.50.0/24
+ipv6 unicast-routing
+!
+ip prefix-list V4_ALLOW
+    permit 50.50.50.0/24
+!
+ipv6 prefix-list V6_ALLOW
+    permit 0:50:50:50::0/64
+!
 route-map BGP_V4_MAP permit 10
     match ip address prefix-list V4_ALLOW
+!
+route-map BGP_V6_MAP permit 10
+    match ipv6 address prefix-list V6_ALLOW
 !
 router bgp 3333
     router-id 3.3.3.3
     neighbor 1.1.1.1 remote-as 1111
     neighbor 2.2.2.2 remote-as 2222
-    bgp route install-map BGP_V4_MAP
+    neighbor 0:1:1:1::1 remote-as 1111
+    neighbor 0:2:2:2::2 remote-as 2222
+    address-family ipv4
+        bgp route install-map BGP_V4_MAP
+    !
+    address-family ipv6
+        neighbor 0:1:1:1::1 activate
+        neighbor 0:2:2:2::2 activate
+        bgp route install-map BGP_V6_MAP
+    !
 !
