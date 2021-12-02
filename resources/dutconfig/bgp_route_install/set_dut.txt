@@ -18,8 +18,8 @@ router bgp 3333
     neighbor 2.2.2.2 remote-as 2222
     neighbor 0:1:1:1::1 remote-as 1111
     neighbor 0:2:2:2::2 remote-as 2222
-!
-address-family ipv6
-    neighbor 0:1:1:1::1 activate
-    neighbor 0:2:2:2::2 activate
+    address-family ipv6
+        neighbor 0:1:1:1::1 activate
+        neighbor 0:2:2:2::2 activate
+    !
 !
