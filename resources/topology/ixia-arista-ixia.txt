@@ -2,7 +2,7 @@ name: "ixia-c"
 nodes: {
     name: "ixia-c-port1"
     type: IXIA_TG
-    version: "0.0.1-2399"
+    version: "0.0.1-2446"
     services: {
         key: 5555
         value: {
@@ -38,7 +38,7 @@ nodes: {
 nodes: {
     name: "ixia-c-port2"
     type: IXIA_TG
-    version: "0.0.1-2399"
+    version: "0.0.1-2446"
     services: {
         key: 5555
         value: {
