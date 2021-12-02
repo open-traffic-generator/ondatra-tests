@@ -4,10 +4,10 @@ Topology:
 IXIA (40.40.40.0/24, 0:40:40:40::0/64) -----> ARISTA ------> IXIA (50.50.50.0/24, 0:50:50:50::0/64)
 
 Flows:
-- permit: 40.40.40.1 -> 50.50.50.1+
-- deny: 40.40.40.1 -> 60.60.60.1, 70.70.70.1
-- permit: 0:40:40:40::1 -> 0:50:50:50::1+
-- deny: 0:40:40:40::1 -> 0:60:60:60::1, 0:70:70:70::1
+- permit v4: 40.40.40.1 -> 50.50.50.1+
+- deny v4: 40.40.40.1 -> 60.60.60.1+
+- permit v4: 0:40:40:40::1 -> 0:50:50:50::1+
+- deny v4: 0:40:40:40::1 -> 0:60:60:60::1+
 */
 package tests
 
@@ -181,7 +181,7 @@ func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, hel
 	e1d.Dst().SetValue("00:00:00:00:00:00")
 	v4d := f1d.Packet().Add().Ipv4()
 	v4d.Src().SetValue("40.40.40.1")
-	v4d.Dst().SetValues([]string{"60.60.60.1", "70.70.70.1"})
+	v4d.Dst().Increment().SetStart("60.60.60.1").SetStep("0.0.0.1").SetCount(5)
 
 	f2 := config.Flows().Add().SetName("p1.v6.p2.permit")
 	f2.Metrics().SetEnable(true)
@@ -211,7 +211,7 @@ func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, hel
 	e2d.Dst().SetValue("00:00:00:00:00:00")
 	v6d := f2d.Packet().Add().Ipv6()
 	v6d.Src().SetValue("0:40:40:40::1")
-	v6d.Dst().SetValues([]string{"0:60:60:60::1", "0:70:70:70::2"})
+	v6d.Dst().Increment().SetStart("0:60:60:60::1").SetStep("::1").SetCount(5)
 
 	expected := helpers.ExpectedState{
 		Bgp4: map[string]helpers.ExpectedBgpMetrics{

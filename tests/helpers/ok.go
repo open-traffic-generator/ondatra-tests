@@ -14,7 +14,7 @@ type ExpectedPortMetrics struct {
 }
 
 type ExpectedFlowMetrics struct {
-	FramesRx     int32
+	FramesRx     int64
 	FramesRxRate float32
 }
 
