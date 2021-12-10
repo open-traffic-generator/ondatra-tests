@@ -6,8 +6,10 @@
 [submodule "kne"]
 	path = kne
 	url = https://github.com/google/kne
+	branch = main
     ignore = dirty
 [submodule "meshnet-cni"]
 	path = meshnet-cni
 	url = https://github.com/networkop/meshnet-cni
     ignore = dirty
+
