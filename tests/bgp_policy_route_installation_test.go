@@ -29,7 +29,11 @@ import (
 )
 
 func TestBGPPolicyRouteInstallation(t *testing.T) {
-	otg := ondatra.OTGs(t)
+	ate := ondatra.ATE(t, "ate1")
+	ondatra.ATE(t, "ate2")
+	ondatra.ATE(t, "ate3")
+	otg := ate.OTG()
+
 	defer otg.NewConfig(t)
 	defer otg.StopProtocols(t)
 	defer otg.StopTraffic(t)
@@ -52,7 +56,7 @@ func TestBGPPolicyRouteInstallation(t *testing.T) {
 	WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
 }
 
-func configureOTG(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, ExpectedState) {
+func configureOTG(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, ExpectedState) {
 	config := otg.NewConfig(t)
 	expected := NewExpectedState()
 
