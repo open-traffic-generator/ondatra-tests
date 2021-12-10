@@ -1,5 +1,5 @@
 username: admin
 password: admin
-topology: /home/anbalogh/github/open-traffic-generator/ondatra-tests/resources/topology/topology-001.txt
-cli: /home/anbalogh/github/open-traffic-generator/ondatra-tests/kne/kne_cli/kne_cli
-kubecfg: /home/anbalogh/.kube/config
+topology: /home/hashwini/github/open-traffic-generator/ondatra-tests/resources/topology/topology-001.txt
+cli: /home/hashwini/github/open-traffic-generator/ondatra-tests/kne/kne_cli/kne_cli
+kubecfg: /home/hashwini/.kube/config
