@@ -33,6 +33,7 @@ type MetricsTableOpts struct {
 	PortMetrics   gosnappi.MetricsResponsePortMetricIter
 	Bgpv4Metrics  gosnappi.MetricsResponseBgpv4MetricIter
 	Bgpv6Metrics  gosnappi.MetricsResponseBgpv6MetricIter
+	IsisMetrics   gosnappi.MetricsResponseIsisMetricIter
 }
 
 func Timer(start time.Time, name string) {
