@@ -34,3 +34,9 @@ bgp_route_policy:
 	kne/kne_cli/kne_cli --kubecfg resources/kneconfig/config topology push resources/topology/ixia-arista-ixia.txt arista1 resources/dutconfig/bgp_route_policy/set_dut.txt
 	-CGO_ENALBED=0 go test -v -timeout 60s -run TestBGPRoutePolicy tests/tests -config ../resources/kneconfig/kne-003.yaml -testbed ../resources/testbed/ixia-arista-ixia.txt
 	kne/kne_cli/kne_cli --kubecfg resources/kneconfig/config topology push resources/topology/ixia-arista-ixia.txt arista1 resources/dutconfig/bgp_route_policy/unset_dut.txt
+
+isis_route_install:
+	kne/kne_cli/kne_cli --kubecfg resources/kneconfig/config topology push resources/topology/ixia-arista-ixia.txt arista1 resources/dutconfig/bgp_route_install/set_dut.txt
+	-CGO_ENALBED=0 go test -v -timeout 60s -run TestISISRouteInstall tests/tests -config ../resources/kneconfig/kne-003.yaml -testbed ../resources/testbed/ixia-arista-ixia.txt
+	kne/kne_cli/kne_cli --kubecfg resources/kneconfig/config topology push resources/topology/ixia-arista-ixia.txt arista1 resources/dutconfig/isis_route_install/unset_dut.txt
+
