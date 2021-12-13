@@ -1,8 +1,6 @@
 package helpers
 
 import (
-	"fmt"
-
 	"github.com/open-traffic-generator/snappi/gosnappi"
 )
 
@@ -127,56 +125,56 @@ func (client *GnmiClient) AllBgp6SessionUp(expectedState ExpectedState) (bool, e
 }
 
 func (client *GnmiClient) AllIsisSessionUp(expectedState ExpectedState, isisInterfaceLevelType gosnappi.IsisInterfaceLevelTypeEnum, expDatabaseSize int32) (bool, error) {
-	rNames := []string{}
+	// rNames := []string{}
 
-	dNames := []string{}
-	for name := range expectedState.Bgp6 {
-		dNames = append(dNames, name)
-	}
+	// dNames := []string{}
+	// for name := range expectedState.Bgp6 {
+	// 	dNames = append(dNames, name)
+	// }
 
-	dMetrics, err := client.GetIsisMetrics(dNames)
-	if err != nil {
-		return false, err
-	}
+	// dMetrics, err := client.GetIsisMetrics(dNames)
+	// if err != nil {
+	// 	return false, err
+	// }
 
-	PrintMetricsTable(&MetricsTableOpts{
-		ClearPrevious: false,
-		IsisMetrics:   dMetrics,
-	})
+	// PrintMetricsTable(&MetricsTableOpts{
+	// 	ClearPrevious: false,
+	// 	IsisMetrics:   dMetrics,
+	// })
 
-	for _, router := range rNames {
-		routerFound := false
-		for _, d := range dMetrics.Items() {
-			name := d.Name()
-			if name == router {
-				routerFound = true
-				l1SessionUpCount := d.L1SessionsUp()
-				l2SessionUpCount := d.L2SessionsUp()
-				l1DatabaseSize := d.L1DatabaseSize()
-				l2DatabaseSize := d.L2DatabaseSize()
+	// for _, router := range rNames {
+	// 	routerFound := false
+	// 	for _, d := range dMetrics.Items() {
+	// 		name := d.Name()
+	// 		if name == router {
+	// 			routerFound = true
+	// 			l1SessionUpCount := d.L1SessionsUp()
+	// 			l2SessionUpCount := d.L2SessionsUp()
+	// 			l1DatabaseSize := d.L1DatabaseSize()
+	// 			l2DatabaseSize := d.L2DatabaseSize()
 
-				switch isisInterfaceLevelType {
-				case gosnappi.IsisInterfaceLevelType.LEVEL_1:
-					if l1SessionUpCount != 1 || l2SessionUpCount != 0 || l1DatabaseSize != expDatabaseSize {
-						return false, nil
-					}
-				case gosnappi.IsisInterfaceLevelType.LEVEL_2:
-					if l1SessionUpCount != 0 || l2SessionUpCount != 1 || l2DatabaseSize != expDatabaseSize {
-						return false, nil
-					}
-				case gosnappi.IsisInterfaceLevelType.LEVEL_1_2:
-					if l1SessionUpCount != 1 || l2SessionUpCount != 1 || l1DatabaseSize != expDatabaseSize || l2DatabaseSize != expDatabaseSize {
-						return false, nil
-					}
-				default:
-					return false, fmt.Errorf("invalid IS-IS interface level type : %v", isisInterfaceLevelType)
-				}
-			}
-		}
-		if !routerFound {
-			return false, nil
-		}
-	}
+	// 			switch isisInterfaceLevelType {
+	// 			case gosnappi.IsisInterfaceLevelType.LEVEL_1:
+	// 				if l1SessionUpCount != 1 || l2SessionUpCount != 0 || l1DatabaseSize != expDatabaseSize {
+	// 					return false, nil
+	// 				}
+	// 			case gosnappi.IsisInterfaceLevelType.LEVEL_2:
+	// 				if l1SessionUpCount != 0 || l2SessionUpCount != 1 || l2DatabaseSize != expDatabaseSize {
+	// 					return false, nil
+	// 				}
+	// 			case gosnappi.IsisInterfaceLevelType.LEVEL_1_2:
+	// 				if l1SessionUpCount != 1 || l2SessionUpCount != 1 || l1DatabaseSize != expDatabaseSize || l2DatabaseSize != expDatabaseSize {
+	// 					return false, nil
+	// 				}
+	// 			default:
+	// 				return false, fmt.Errorf("invalid IS-IS interface level type : %v", isisInterfaceLevelType)
+	// 			}
+	// 		}
+	// 	}
+	// 	if !routerFound {
+	// 		return false, nil
+	// 	}
+	// }
 
 	return true, nil
 }
