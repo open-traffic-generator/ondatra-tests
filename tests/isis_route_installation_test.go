@@ -18,7 +18,11 @@ import (
 )
 
 func TestISISRouteInstall(t *testing.T) {
-	otg := ondatra.OTGs(t)
+	ate := ondatra.ATE(t, "ate1")
+	ondatra.ATE(t, "ate2")
+	ondatra.ATE(t, "ate3")
+	otg := ate.OTG()
+
 	defer otg.NewConfig(t)
 	defer otg.StopProtocols(t)
 	defer otg.StopTraffic(t)
@@ -39,7 +43,7 @@ func TestISISRouteInstall(t *testing.T) {
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
 }
 
-func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
 	config := otg.NewConfig(t)
 
 	port1 := config.Ports().Add().SetName("ixia-c-port1")
