@@ -26,6 +26,9 @@
             "CGO_ENABLED": 0,
         }
     },
+    "go.toolsEnvVars": {
+        "CGO_ENABLED": 0
+    },
     "files.insertFinalNewline": true,
     "files.eol": "\n",
     "diffEditor.ignoreTrimWhitespace": false,

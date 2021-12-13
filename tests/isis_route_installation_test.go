@@ -32,7 +32,7 @@ func TestISISRouteInstall(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllIsisSessionUp(expected) }, nil)
+	// helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllIsisSessionUp(expected) }, nil)
 
 	otg.StartTraffic(t)
 
