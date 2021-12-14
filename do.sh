@@ -337,12 +337,13 @@ test() {
     name=$(grep -Eo "Test[0-9a-zA-Z]+" ${2})
     prefix=$(basename ${2} | sed 's/_test.go//g')
     topo=resources/topology/ixia-arista-ixia.txt
+    tb=resources/testbed/ixia-arista-ixia.txt
 
     kne_cli -v trace --kubecfg resources/kneconfig/config topology push ${topo} arista1 resources/dutconfig/${prefix}/set_dut.txt || exit 1
 
     CGO_ENABLED=0 go test -v -timeout 60s -run ${name} tests/tests \
         -config ../resources/kneconfig/kne-003.yaml \
-        -testbed ../${topo} \
+        -testbed ../${tb} \
     || true
     
     kne_cli -v trace --kubecfg resources/kneconfig/config topology push ${topo} arista1 resources/dutconfig/${prefix}/unset_dut.txt
