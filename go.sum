@@ -581,6 +581,8 @@ github.com/open-traffic-generator/snappi/gosnappi v0.6.12 h1:Ues9ODRJ/ACEGcrHjqV
 github.com/open-traffic-generator/snappi/gosnappi v0.6.12/go.mod h1:yy1mdBicujeM24qLEEz+DDqCazoeg4yXTJjOKeiSUr4=
 github.com/open-traffic-generator/snappi/gosnappi v0.6.16 h1:ktbeOGkLYLjD9QX8GGoF4Qo/CpwavbS+myYbUjLkx54=
 github.com/open-traffic-generator/snappi/gosnappi v0.6.16/go.mod h1:yy1mdBicujeM24qLEEz+DDqCazoeg4yXTJjOKeiSUr4=
+github.com/open-traffic-generator/snappi/gosnappi v0.6.21 h1:g97pPO7MuquzwBDyaVPOrq4f43RSoS2E5SAlULi5YBo=
+github.com/open-traffic-generator/snappi/gosnappi v0.6.21/go.mod h1:yy1mdBicujeM24qLEEz+DDqCazoeg4yXTJjOKeiSUr4=
 github.com/openconfig/gnmi v0.0.0-20200414194230-1597cc0f2600/go.mod h1:M/EcuapNQgvzxo1DDXHK4tx3QpYM/uG4l591v33jG2A=
 github.com/openconfig/gnmi v0.0.0-20200508230933-d19cebf5e7be/go.mod h1:M/EcuapNQgvzxo1DDXHK4tx3QpYM/uG4l591v33jG2A=
 github.com/openconfig/gnmi v0.0.0-20210707145734-c69a5df04b53 h1:xT/AVinvSf+uP/amEFrU1JJYBZXqikEyNtBPnfyefoE=

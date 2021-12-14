@@ -1,15 +1,30 @@
 {
     "git.autoRepositoryDetection": false,
-    "git.ignoredRepositories": [
-        "ondatra",
-        "kne",
-        "meshnet-cni",
-    ],
     "go.testFlags": [
-        "-v", 
-        "-config", 
+        "-v",
+        "-config",
         "../resources/kneconfig/kne-001.yaml",
-        "-testbed", 
+        "-testbed",
         "../resources/testbed/testbed-001.txt"
     ],
+    "editor.rulers": [
+        80,
+        90
+    ],
+    "go.useLanguageServer": true,
+    "go.testEnvVars": {
+        "CGO_ENABLED": 0,
+    },
+    "editor.formatOnSave": true,
+    "gopls": {
+        "build.env": {
+            "CGO_ENABLED": 0,
+        }
+    },
+    "go.toolsEnvVars": {
+        "CGO_ENABLED": 0
+    },
+    "files.insertFinalNewline": true,
+    "files.eol": "\n",
+    "diffEditor.ignoreTrimWhitespace": false,
 }
