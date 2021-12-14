@@ -11,18 +11,22 @@ This repository consists of Open Traffic Generator tests written in [gosnappi](h
 
 2. Clone this repository and setup testbed. At the end of this step, you should have:
    - A kind cluster deployed with meshnet-cni, metallb and Ixia-c operator configured
-   - A docker image for test client 
+   - Ready-to-execute test (with all the libraries built)
 
    ```sh
    git clone --recurse-submodules https://github.com/open-traffic-generator/ondatra-tests.git
    cd ondatra-tests && ./do.sh setup_testbed
    ```
 
+   > You may be prompted to logout, login again re-execute same command
+
 3. Execute a sample test
 
    ```sh
-   # get inside test client
-   docker exec -it ondatra-tests /bin/bash
+   # create topology if it does not exist
+   ./do.sh newtop
    # run test
-   go test -run ^TestBgpRouteInstall$ -v
+   ./do.sh test tests/bgp_route_install_test.go
+   # delete topology if not needed anymore
+   ./do.sh rmtop
    ```

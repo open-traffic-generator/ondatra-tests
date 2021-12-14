@@ -63,6 +63,7 @@ get_go() {
 get_go_test_deps() {
     go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
     go install golang.org/x/tools/cmd/goimports@v0.1.7
+    go mod download
 }
 
 get_protoc() {
