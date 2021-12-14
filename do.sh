@@ -305,9 +305,9 @@ setup_repo() {
 
 setup_testbed() {
     setup_host
-    $0 setup_cluster
-    $0 setup_test_client
-    # setup_repo
+    exec $0 setup_cluster
+    exec $0 setup_test_client
+    exec $0 setup_repo
 }
 
 case $1 in
