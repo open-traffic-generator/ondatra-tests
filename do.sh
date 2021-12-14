@@ -7,6 +7,7 @@ KNE_COMMIT=2d0821b
 MESHNET_COMMIT=4bf3db7
 
 OPERATOR_RELEASE=0.0.70
+IXIA_C_RELEASE=0.0.1-2446
 
 
 set -e
@@ -116,7 +117,7 @@ get_kne() {
 
 gcloud_auth() {
     gcloud auth application-default login --no-launch-browser
-    gcloud auth configure-docker 
+    gcloud auth configure-docker --quiet us-central1-docker.pkg.dev
 }
 
 get_gcloud() {
@@ -265,14 +266,46 @@ setup_gcp_secret() {
         -n ixiatg-op-system docker-registry ixia-pull-secret \
         --docker-server=us-central1-docker.pkg.dev \
         --docker-username="${email}" \
-        --docker-password="${password}"
+        --docker-password="${password}" \
+        --docker-email="${email}"
     kubectl annotate secret ixia-pull-secret -n ixiatg-op-system secretsync.ixiatg.com/replicate='true'
+}
+
+load_images() {
+    IMG=""
+    TAG=""
+    yml=ixia-configmap.yaml
+
+    rm -rf ${yml}
+    echo "Loading docker images for Ixia-c release ${IXIA_C_RELEASE} ..."
+    curl -kLO https://github.com/open-traffic-generator/ixia-c/releases/download/v${IXIA_C_RELEASE}/${yml}
+
+    while read line
+    do
+        if [ -z "${IMG}" ]
+        then
+            IMG=$(echo "$line" | grep path | cut -d\" -f4)
+        elif [ -z "${TAG}" ]
+        then
+            TAG=$(echo "$line" | grep tag | cut -d\" -f4)
+        else
+            PTH="$IMG:$TAG"
+            IMG=""
+            TAG=""
+
+            echo "Loading $PTH"
+            sudo docker pull $PTH
+            sudo $HOME/go/bin/kind load docker-image $PTH
+        fi
+    done <${yml}
+
+    rm -rf ${yml}
 }
 
 setup_repo() {
     get_gcloud
     gcloud_auth
-    setup_gcp_secret
+    load_images
 }
 
 setup_testbed() {
