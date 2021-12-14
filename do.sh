@@ -45,7 +45,7 @@ get_test_deps() {
     # these will be run inside container and hence do not use sudo
     # apt-get update
     # apt-get install -y --no-install-recommends curl git vim wget unzip sudo ca-certificates
-    apt-get install -y --no-install-recommends wget unzip
+    sudo apt-get install -y --no-install-recommends wget unzip
 }
 
 get_go() {
@@ -67,10 +67,12 @@ get_go_test_deps() {
 
 get_protoc() {
     curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}
-	sudo unzip ${PROTOC_ZIP} -d /usr/local
+    rm -rf $HOME/.local
+	unzip ${PROTOC_ZIP} -d $HOME/.local
 	rm -f ${PROTOC_ZIP}
-    sudo chown $(id -u):$(id -g) /usr/local/bin/protoc
-    sudo chown -R $(id -u):$(id -g) /usr/local/include/google
+    echo 'export PATH=$PATH:$HOME/.local/bin' >> $HOME/.profile
+    # source path for current session
+    . $HOME/.profile
 	protoc --version
 }
 
