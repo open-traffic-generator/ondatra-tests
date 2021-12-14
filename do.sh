@@ -98,7 +98,10 @@ get_kind() {
 
 get_kubectl() {
     echo "Copying kubectl from kind cluster to host ..."
-    docker cp kind-control-plane:/usr/bin/kubectl $HOME/go/bin/
+    sudo docker cp kind-control-plane:/usr/bin/kubectl $HOME/go/bin/
+    rm -rf $HOME/.kube
+    sudo cp -r /root/.kube $HOME/
+    sudo chown -R $(id -u):$(id -g) $HOME/.kube
 }
 
 get_kne() {
@@ -115,7 +118,7 @@ wait_for_all_pods_to_be_ready() {
     do
         for p in $(kubectl get pods -n ${n} -o 'jsonpath={.items[*].metadata.name}')
         do
-            cecho "Waiting for pod/${p} in namespace ${n} (timeout=300s)..."
+            echo "Waiting for pod/${p} in namespace ${n} (timeout=300s)..."
             kubectl wait -n ${n} pod/${p} --for condition=ready --timeout=300s
         done
     done
@@ -147,15 +150,40 @@ get_metallb() {
     wait_for_all_pods_to_be_ready
 
     prefix=$(docker network inspect -f '{{.IPAM.Config}}' kind | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" | tail -n 1)
-    echo "Exposing servics on ${prefix}.100 - ${prefix}.250"
+    yml=metallb-config.yaml
+    echo "apiVersion: v1" > ${yml}
+    echo "kind: ConfigMap" >> ${yml}
+    echo "metadata:" >> ${yml}
+    echo "  namespace: metallb-system" >> ${yml}
+    echo "  name: config" >> ${yml}
+    echo "data:" >> ${yml}
+    echo "  config: |" >> ${yml}
+    echo "   address-pools:" >> ${yml}
+    echo "    - name: default" >> ${yml}
+    echo "      protocol: layer2" >> ${yml}
+    echo "      addresses:" >> ${yml}
+    echo "      - ${prefix}.100 - ${prefix}.250" >> ${yml}
+
+    echo "Applying metallb config map for exposing internal services via public IP addresses ..."
+    cat ${yml}
+    kubectl apply -f ${yml}
+    rm -rf ${yml}
 }
 
 setup() {
     install_deps && get_protoc && get_go
 }
 
+rm_kind_cluster() {
+    sudo $HOME/go/bin/kind delete cluster 2> /dev/null
+    sudo rm -rf /root/.kube
+    rm -rf $HOME/.kube
+    rm -rf $HOME/go/bin/kubectl
+}
+
 setup_kind_cluster() {
-    kind create cluster --wait 5m
+    rm_kind_cluster
+    sudo $HOME/go/bin/kind create cluster --wait 5m
     get_kubectl
     get_meshnet
     get_metallb
@@ -167,15 +195,16 @@ setup_cluster() {
     get_docker
     get_go
     get_kind
+    setup_kind_cluster
 }
 
-setup_test_client() {
+# setup_test_client() {
 
-}
+# }
 
 setup_testbed() {
     setup_cluster
-    setup_test_client
+    # setup_test_client
 }
 
 case $1 in
