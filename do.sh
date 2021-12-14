@@ -100,10 +100,7 @@ get_kind() {
 
 get_kubectl() {
     echo "Copying kubectl from kind cluster to host ..."
-    sudo docker cp kind-control-plane:/usr/bin/kubectl $HOME/go/bin/
-    rm -rf $HOME/.kube
-    sudo cp -r /root/.kube $HOME/
-    sudo chown -R $(id -u):$(id -g) $HOME/.kube
+    docker cp kind-control-plane:/usr/bin/kubectl $HOME/go/bin/
 }
 
 get_kne() {
@@ -171,7 +168,7 @@ get_metallb() {
     
     wait_for_all_pods_to_be_ready
 
-    prefix=$(sudo docker network inspect -f '{{.IPAM.Config}}' kind | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" | tail -n 1)
+    prefix=$(docker network inspect -f '{{.IPAM.Config}}' kind | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" | tail -n 1)
     yml=metallb-config.yaml
     echo "apiVersion: v1" > ${yml}
     echo "kind: ConfigMap" >> ${yml}
@@ -192,29 +189,27 @@ get_metallb() {
     rm -rf ${yml}
 }
 
-setup() {
-    install_deps && get_protoc && get_go
-}
-
 rm_kind_cluster() {
-    sudo $HOME/go/bin/kind delete cluster 2> /dev/null
-    sudo rm -rf /root/.kube
+    kind delete cluster 2> /dev/null
     rm -rf $HOME/.kube
     rm -rf $HOME/go/bin/kubectl
 }
 
 setup_kind_cluster() {
     rm_kind_cluster
-    sudo $HOME/go/bin/kind create cluster --wait 5m
+    kind create cluster --wait 5m
     get_kubectl
     get_meshnet
     get_metallb
     get_ixia_c_operator
 }
 
-setup_cluster() {
+setup_host() {
     get_cluster_deps
     get_docker
+}
+
+setup_cluster() {
     get_go
     get_kind
     setup_kind_cluster
@@ -238,17 +233,17 @@ setup_ondatra_tests() {
 }
 
 rm_test_client() {
-    sudo docker stop ondatra-tests 2> /dev/null
-    sudo docker rm ondatra-tests 2> /dev/null
-    sudo docker rmi -f ondatra-tests:client 2> /dev/null
+    docker stop ondatra-tests 2> /dev/null
+    docker rm ondatra-tests 2> /dev/null
+    docker rmi -f ondatra-tests:client 2> /dev/null
 }
 
 setup_test_client() {
     rm_test_client
     echo "Building test client ..."
-    sudo docker build -t ondatra-tests:client .
-    sudo docker run -td --network host --name ondatra-tests ondatra-tests:client
-    sudo docker cp $HOME/.kube/config ondatra-tests:/home/ondatra-tests/resources/kneconfig/
+    docker build -t ondatra-tests:client .
+    docker run -td --network host --name ondatra-tests ondatra-tests:client
+    docker cp $HOME/.kube/config ondatra-tests:/home/ondatra-tests/resources/kneconfig/
 }
 
 setup_gcp_secret() {
@@ -294,8 +289,8 @@ load_images() {
             TAG=""
 
             echo "Loading $PTH"
-            sudo docker pull $PTH
-            sudo $HOME/go/bin/kind load docker-image $PTH
+            docker pull $PTH
+            kind load docker-image $PTH
         fi
     done <${yml}
 
@@ -309,9 +304,10 @@ setup_repo() {
 }
 
 setup_testbed() {
-    setup_cluster
-    setup_test_client
-    setup_repo
+    setup_host
+    $0 setup_cluster
+    $0 setup_test_client
+    # setup_repo
 }
 
 case $1 in
