@@ -319,6 +319,7 @@ setup_testbed() {
     setup_cluster
     setup_repo
     setup_test_client
+    echo "Please logout and login again !"
 }
 
 newtop() {
