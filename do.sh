@@ -42,8 +42,9 @@ get_cluster_deps() {
 }
 
 get_test_deps() {
-    sudo apt-get update
-    sudo apt-get install -y --no-install-recommends curl git vim wget unzip sudo
+    # these will be run inside container and hence do not use sudo
+    apt-get update
+    apt-get install -y --no-install-recommends curl git vim wget unzip sudo ca-certificates
 }
 
 get_go() {
@@ -113,6 +114,26 @@ get_kne() {
     rm -rf kne
 }
 
+gcloud_auth() {
+    gcloud auth application-default login --no-launch-browser
+    gcloud auth configure-docker 
+}
+
+get_gcloud() {
+    gcloud version 2>/dev/null && return
+    echo "Setting up gcloud"
+    dl=google-cloud-sdk-349.0.0-linux-x86_64.tar.gz
+    cd $HOME
+    curl -kLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/${dl}
+    tar xzvf $dl && rm -rf $dl
+    cd -
+    echo 'export PATH=$PATH:$HOME/google-cloud-sdk/bin' >> $HOME/.profile
+    # source path for current session
+    . $HOME/.profile
+
+    gcloud init
+}
+
 wait_for_all_pods_to_be_ready() {
     for n in $(kubectl get namespaces -o 'jsonpath={.items[*].metadata.name}')
     do
@@ -149,7 +170,7 @@ get_metallb() {
     
     wait_for_all_pods_to_be_ready
 
-    prefix=$(docker network inspect -f '{{.IPAM.Config}}' kind | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" | tail -n 1)
+    prefix=$(sudo docker network inspect -f '{{.IPAM.Config}}' kind | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" | tail -n 1)
     yml=metallb-config.yaml
     echo "apiVersion: v1" > ${yml}
     echo "kind: ConfigMap" >> ${yml}
@@ -198,13 +219,66 @@ setup_cluster() {
     setup_kind_cluster
 }
 
-# setup_test_client() {
+build_ondatra() {
+    cd ./ondatra
+    go mod tidy -e
+    go generate -v ./...
+    go build -v ./...
+    cd -
+}
 
-# }
+setup_ondatra_tests() {
+    get_test_deps
+    get_go
+    get_go_test_deps
+    get_protoc
+    get_kne
+    build_ondatra
+}
+
+rm_test_client() {
+    sudo docker stop ondatra-tests 2> /dev/null
+    sudo docker rm ondatra-tests 2> /dev/null
+    sudo docker rmi -f ondatra-tests:client 2> /dev/null
+}
+
+setup_test_client() {
+    rm_test_client
+    echo "Building test client ..."
+    sudo docker build -t ondatra-tests:client .
+    sudo docker run -td --network host --name ondatra-tests ondatra-tests:client
+    sudo docker cp $HOME/.kube/config ondatra-tests:/home/ondatra-tests/resources/kneconfig/
+}
+
+setup_gcp_secret() {
+    echo "Setting up K8S pull secret for GCP ..."
+    echo -n "Enter GCP Email: "
+    read email
+    echo -n "Enter GCP Password: "
+    stty -echo
+    read password
+    stty echo
+    echo
+
+    kubectl delete secret -n ixiatg-op-system ixia-pull-secret 2> /dev/null
+    kubectl create secret \
+        -n ixiatg-op-system docker-registry ixia-pull-secret \
+        --docker-server=us-central1-docker.pkg.dev \
+        --docker-username="${email}" \
+        --docker-password="${password}"
+    kubectl annotate secret ixia-pull-secret -n ixiatg-op-system secretsync.ixiatg.com/replicate='true'
+}
+
+setup_repo() {
+    get_gcloud
+    gcloud_auth
+    setup_gcp_secret
+}
 
 setup_testbed() {
     setup_cluster
-    # setup_test_client
+    setup_test_client
+    setup_repo
 }
 
 case $1 in
