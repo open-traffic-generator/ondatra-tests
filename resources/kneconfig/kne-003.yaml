@@ -1,5 +1,5 @@
 username: admin
 password: admin
 topology: ../resources/topology/ixia-arista-ixia.txt
-cli: ../kne/kne_cli/kne_cli
+cli: kne_cli
 kubecfg: ../resources/kneconfig/config

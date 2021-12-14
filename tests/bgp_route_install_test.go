@@ -23,7 +23,6 @@ import (
 func TestBGPRouteInstall(t *testing.T) {
 	ate := ondatra.ATE(t, "ate1")
 	ondatra.ATE(t, "ate2")
-	ondatra.ATE(t, "ate3")
 	otg := ate.OTG()
 
 	defer otg.NewConfig(t)

@@ -1,10 +1,5 @@
 {
     "git.autoRepositoryDetection": false,
-    "git.ignoredRepositories": [
-        "ondatra",
-        "kne",
-        "meshnet-cni",
-    ],
     "go.testFlags": [
         "-v",
         "-config",

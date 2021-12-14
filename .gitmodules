@@ -2,4 +2,3 @@
 	path = ondatra
 	url = https://github.com/open-traffic-generator/ondatra
 	branch = ate_otg
-    ignore = dirty

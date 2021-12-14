@@ -9,7 +9,6 @@ MESHNET_COMMIT=4bf3db7
 OPERATOR_RELEASE=0.0.70
 IXIA_C_RELEASE=0.0.1-2446
 
-
 set -e
 
 if [ "$(id -u)" -eq 0 ] && [ -n "$SUDO_USER" ]
@@ -44,8 +43,9 @@ get_cluster_deps() {
 
 get_test_deps() {
     # these will be run inside container and hence do not use sudo
-    apt-get update
-    apt-get install -y --no-install-recommends curl git vim wget unzip sudo ca-certificates
+    # apt-get update
+    # apt-get install -y --no-install-recommends curl git vim wget unzip sudo ca-certificates
+    apt-get install -y --no-install-recommends wget unzip
 }
 
 get_go() {
@@ -67,8 +67,10 @@ get_go_test_deps() {
 
 get_protoc() {
     curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}
-	unzip ${PROTOC_ZIP} -d /usr/local
+	sudo unzip ${PROTOC_ZIP} -d /usr/local
 	rm -f ${PROTOC_ZIP}
+    sudo chown $(id -u):$(id -g) /usr/local/bin/protoc
+    sudo chown -R $(id -u):$(id -g) /usr/local/include/google
 	protoc --version
 }
 
@@ -92,6 +94,8 @@ get_docker() {
     sudo usermod -aG docker $USER
 
     sudo docker version
+    echo "Please logout, login and execute previously entered command again !"
+    exit 0
 }
 
 get_kind() {
@@ -204,28 +208,25 @@ setup_kind_cluster() {
     get_ixia_c_operator
 }
 
-setup_host() {
+setup_cluster() {
     get_cluster_deps
     get_docker
-}
-
-setup_cluster() {
     get_go
     get_kind
     setup_kind_cluster
 }
 
 build_ondatra() {
-    cd ./ondatra
+    cd ondatra
     go mod tidy -e
     go generate -v ./...
-    go build -v ./...
+    CGO_ENABLED=0 go build -v ./...
     cd -
 }
 
 setup_ondatra_tests() {
     get_test_deps
-    get_go
+    # get_go
     get_go_test_deps
     get_protoc
     get_kne
@@ -239,11 +240,13 @@ rm_test_client() {
 }
 
 setup_test_client() {
-    rm_test_client
+    # rm_test_client
     echo "Building test client ..."
-    docker build -t ondatra-tests:client .
-    docker run -td --network host --name ondatra-tests ondatra-tests:client
-    docker cp $HOME/.kube/config ondatra-tests:/home/ondatra-tests/resources/kneconfig/
+    # docker build -t ondatra-tests:client .
+    # docker run -td --network host --name ondatra-tests ondatra-tests:client
+    # docker cp $HOME/.kube/config ondatra-tests:/home/ondatra-tests/resources/kneconfig/
+    setup_ondatra_tests
+    cp $HOME/.kube/config resources/kneconfig/
 }
 
 setup_gcp_secret() {
@@ -264,6 +267,12 @@ setup_gcp_secret() {
         --docker-password="${password}" \
         --docker-email="${email}"
     kubectl annotate secret ixia-pull-secret -n ixiatg-op-system secretsync.ixiatg.com/replicate='true'
+}
+
+load_ceos() {
+    ceos="us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ceos:4.26.1F"
+    docker pull ${ceos}
+    kind load docker-image ${ceos}
 }
 
 load_images() {
@@ -295,6 +304,7 @@ load_images() {
     done <${yml}
 
     rm -rf ${yml}
+    load_ceos
 }
 
 setup_repo() {
@@ -304,14 +314,38 @@ setup_repo() {
 }
 
 setup_testbed() {
-    setup_host
-    exec $0 setup_cluster
-    exec $0 setup_test_client
-    exec $0 setup_repo
+    setup_cluster
+    setup_repo
+    setup_test_client
+}
+
+newtop() {
+    kne_cli -v trace --kubecfg resources/kneconfig/config create resources/topology/ixia-arista-ixia.txt
+    wait_for_all_pods_to_be_ready
+}
+
+rmtop() {
+    kne_cli -v trace --kubecfg resources/kneconfig/config delete resources/topology/ixia-arista-ixia.txt
+}
+
+test() {
+    echo "Here ${2}"
+    name=$(grep -Eo "Test[0-9a-zA-Z]+" ${2})
+    prefix=$(basename ${2} | sed 's/_test.go//g')
+    topo=resources/topology/ixia-arista-ixia.txt
+
+    kne_cli -v trace --kubecfg resources/kneconfig/config topology push ${topo} arista1 resources/dutconfig/${prefix}/set_dut.txt || exit 1
+
+    CGO_ENABLED=0 go test -v -timeout 60s -run ${name} tests/tests \
+        -config ../resources/kneconfig/kne-003.yaml \
+        -testbed ../${topo} \
+    || true
+    
+    kne_cli -v trace --kubecfg resources/kneconfig/config topology push ${topo} arista1 resources/dutconfig/${prefix}/unset_dut.txt
 }
 
 case $1 in
     *   )
-    $1 || echo "usage: $0 [name of any function in script]"
+        $1 ${@} || echo "usage: $0 [name of any function in script]"
     ;;
 esac
