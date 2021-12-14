@@ -221,7 +221,7 @@ setup_cluster() {
 
 build_ondatra() {
     cd ondatra
-    go mod tidy -e
+    go mod tidy -compat=1.17
     go generate -v ./...
     CGO_ENABLED=0 go build -v ./...
     cd -

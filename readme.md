@@ -30,3 +30,9 @@ This repository consists of Open Traffic Generator tests written in [gosnappi](h
    # delete topology if not needed anymore
    ./do.sh rmtop
    ```
+
+4. (Optional) To execute any arbitrary function inside the script
+
+   ```sh
+   ./do.sh <func name>
+   ```
