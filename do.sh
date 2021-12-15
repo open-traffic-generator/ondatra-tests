@@ -10,6 +10,8 @@ OPERATOR_RELEASE=0.0.70
 IXIA_C_RELEASE=0.0.1-2446
 
 set -e
+# source path for current session
+. $HOME/.profile
 
 if [ "$(id -u)" -eq 0 ] && [ -n "$SUDO_USER" ]
 then
