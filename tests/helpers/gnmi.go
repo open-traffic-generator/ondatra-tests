@@ -199,3 +199,33 @@ func (c *GnmiClient) GetBgpv6Metrics(deviceNames []string) (gosnappi.MetricsResp
 
 	return metrics, nil
 }
+
+func (c *GnmiClient) GetIsisMetrics(routerNames []string) (gosnappi.MetricsResponseIsisMetricIter, error) {
+	defer Timer(time.Now(), "GetIsisMetrics GNMI")
+	if len(routerNames) == 0 {
+		routerNames = []string{}
+		for _, d := range c.cfg.Devices().Items() {
+			isis := d.Isis()
+			routerNames = append(routerNames, isis.Name())
+		}
+	}
+	c.SetQueries("isis_metrics", routerNames)
+	metrics := gosnappi.NewApi().NewGetMetricsResponse().StatusCode200().IsisMetrics()
+	c.query.ProtoHandler = func(msg proto.Message) error {
+		response := msg.(*gnmiproto.SubscribeResponse)
+		notification := response.GetUpdate()
+		for _, update := range notification.GetUpdate() {
+			jsonBytes := update.GetVal().GetJsonVal()
+			isisMetric := metrics.Add()
+			if err := isisMetric.FromJson(string(jsonBytes)); err != nil {
+				return fmt.Errorf("could not marshal json to protobuf: %v", err)
+			}
+		}
+		return nil
+	}
+	log.Println("Getting ISIS metrics ...")
+	if err := c.client.Subscribe(c.ctx, *c.query); err != nil {
+		return nil, fmt.Errorf("could not subscribe to gNMI server for ISIS metrics: %v", err)
+	}
+	return metrics, nil
+}

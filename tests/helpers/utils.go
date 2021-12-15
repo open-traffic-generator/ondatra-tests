@@ -260,83 +260,80 @@ func PrintMetricsTable(opts *MetricsTableOpts) {
 		out += border + "\n\n"
 	}
 
-	// if opts.IsisMetrics != nil {
-	// 	border := strings.Repeat("-", 20*9+5)
-	// 	out += "\nIS-IS Metrics\n" + border + "\n"
-	// 	rowNames := []string{
-	// 		"Name",
-	// 		"L1 Sessions UP",
-	// 		"L1 Sessions Flap",
-	// 		"L1 Broadcast Hellos Sent",
-	// 		"L1 Broadcast Hellos Recv",
-	// 		"L1 P2P Hellos Sent",
-	// 		"L1 P2P Hellos Recv",
-	// 		"L1 Lsp Sent",
-	// 		"L1 Lsp Recv",
-	// 		"L1 Database Size",
-	// 		"L2 Sessions UP",
-	// 		"L2 Sessions Flap",
-	// 		"L2 Broadcast Hellos Sent",
-	// 		"L2 Broadcast Hellos Recv",
-	// 		"L2 P2P Hellos Sent",
-	// 		"L2 P2P Hellos Recv",
-	// 		"L2 Lsp Sent",
-	// 		"L2 Lsp Recv",
-	// 		"L2 Database Size",
-	// 	}
-
-	// 	for _, rowName := range rowNames {
-	// 		out += fmt.Sprintf("%-28s", rowName)
-	// 		for _, d := range opts.IsisMetrics.Items() {
-	// 			if d != nil {
-	// 				switch rowName {
-	// 				case "Name":
-	// 					out += fmt.Sprintf("%-15v", d.Name())
-	// 				case "L1 Sessions UP":
-	// 					out += fmt.Sprintf("%-15v", d.L1SessionsUp())
-	// 				case "L1 Sessions Flap":
-	// 					out += fmt.Sprintf("%-15v", d.L1SessionFlap())
-	// 				case "L1 Broadcast Hellos Sent":
-	// 					out += fmt.Sprintf("%-15v", d.L1BroadcastHellosSent())
-	// 				case "L1 Broadcast Hellos Recv":
-	// 					out += fmt.Sprintf("%-15v", d.L1BroadcastHellosReceived())
-	// 				case "L1 P2P Hellos Sent":
-	// 					out += fmt.Sprintf("%-15v", d.L1PointToPointHellosSent())
-	// 				case "L1 P2P Hellos Recv":
-	// 					out += fmt.Sprintf("%-15v", d.L1PointToPointHellosReceived())
-	// 				case "L1 Lsp Sent":
-	// 					out += fmt.Sprintf("%-15v", d.L1LspSent())
-	// 				case "L1 Lsp Recv":
-	// 					out += fmt.Sprintf("%-15v", d.L1LspReceived())
-	// 				case "L1 Database Size":
-	// 					out += fmt.Sprintf("%-15v", d.L1DatabaseSize())
-	// 				case "L2 Sessions UP":
-	// 					out += fmt.Sprintf("%-15v", d.L2SessionsUp())
-	// 				case "L2 Sessions Flap":
-	// 					out += fmt.Sprintf("%-15v", d.L2SessionFlap())
-	// 				case "L2 Broadcast Hellos Sent":
-	// 					out += fmt.Sprintf("%-15v", d.L2BroadcastHellosSent())
-	// 				case "L2 Broadcast Hellos Recv":
-	// 					out += fmt.Sprintf("%-15v", d.L2BroadcastHellosReceived())
-	// 				case "L2 P2P Hellos Sent":
-	// 					out += fmt.Sprintf("%-15v", d.L2PointToPointHellosSent())
-	// 				case "L2 P2P Hellos Recv":
-	// 					out += fmt.Sprintf("%-15v", d.L2PointToPointHellosReceived())
-	// 				case "L2 Lsp Sent":
-	// 					out += fmt.Sprintf("%-15v", d.L2LspSent())
-	// 				case "L2 Lsp Recv":
-	// 					out += fmt.Sprintf("%-15v", d.L2LspReceived())
-	// 				case "L2 Database Size":
-	// 					out += fmt.Sprintf("%-15v", d.L2DatabaseSize())
-	// 				}
-	// 			}
-	// 		}
-
-	// 		out += "\n"
-
-	// 	}
-	// 	out += border + "\n\n"
-	// }
+	if opts.IsisMetrics != nil {
+		border := strings.Repeat("-", 20*9+5)
+		out += "\nIS-IS Metrics\n" + border + "\n"
+		rowNames := []string{
+			"Name",
+			"L1 Sessions UP",
+			"L1 Sessions Flap",
+			"L1 Broadcast Hellos Sent",
+			"L1 Broadcast Hellos Recv",
+			"L1 P2P Hellos Sent",
+			"L1 P2P Hellos Recv",
+			"L1 Lsp Sent",
+			"L1 Lsp Recv",
+			"L1 Database Size",
+			"L2 Sessions UP",
+			"L2 Sessions Flap",
+			"L2 Broadcast Hellos Sent",
+			"L2 Broadcast Hellos Recv",
+			"L2 P2P Hellos Sent",
+			"L2 P2P Hellos Recv",
+			"L2 Lsp Sent",
+			"L2 Lsp Recv",
+			"L2 Database Size",
+		}
+		for _, rowName := range rowNames {
+			out += fmt.Sprintf("%-28s", rowName)
+			for _, d := range opts.IsisMetrics.Items() {
+				if d != nil {
+					switch rowName {
+					case "Name":
+						out += fmt.Sprintf("%-25v", d.Name())
+					case "L1 Sessions UP":
+						out += fmt.Sprintf("%-25v", d.L1SessionsUp())
+					case "L1 Sessions Flap":
+						out += fmt.Sprintf("%-25v", d.L1SessionFlap())
+					case "L1 Broadcast Hellos Sent":
+						out += fmt.Sprintf("%-25v", d.L1BroadcastHellosSent())
+					case "L1 Broadcast Hellos Recv":
+						out += fmt.Sprintf("%-25v", d.L1BroadcastHellosReceived())
+					case "L1 P2P Hellos Sent":
+						out += fmt.Sprintf("%-25v", d.L1PointToPointHellosSent())
+					case "L1 P2P Hellos Recv":
+						out += fmt.Sprintf("%-25v", d.L1PointToPointHellosReceived())
+					case "L1 Lsp Sent":
+						out += fmt.Sprintf("%-25v", d.L1LspSent())
+					case "L1 Lsp Recv":
+						out += fmt.Sprintf("%-25v", d.L1LspReceived())
+					case "L1 Database Size":
+						out += fmt.Sprintf("%-25v", d.L1DatabaseSize())
+					case "L2 Sessions UP":
+						out += fmt.Sprintf("%-25v", d.L2SessionsUp())
+					case "L2 Sessions Flap":
+						out += fmt.Sprintf("%-25v", d.L2SessionFlap())
+					case "L2 Broadcast Hellos Sent":
+						out += fmt.Sprintf("%-25v", d.L2BroadcastHellosSent())
+					case "L2 Broadcast Hellos Recv":
+						out += fmt.Sprintf("%-25v", d.L2BroadcastHellosReceived())
+					case "L2 P2P Hellos Sent":
+						out += fmt.Sprintf("%-25v", d.L2PointToPointHellosSent())
+					case "L2 P2P Hellos Recv":
+						out += fmt.Sprintf("%-25v", d.L2PointToPointHellosReceived())
+					case "L2 Lsp Sent":
+						out += fmt.Sprintf("%-25v", d.L2LspSent())
+					case "L2 Lsp Recv":
+						out += fmt.Sprintf("%-25v", d.L2LspReceived())
+					case "L2 Database Size":
+						out += fmt.Sprintf("%-25v", d.L2DatabaseSize())
+					}
+				}
+			}
+			out += "\n"
+		}
+		out += border + "\n\n"
+	}
 
 	if opts.PortMetrics != nil {
 		border := strings.Repeat("-", 15*4+5)

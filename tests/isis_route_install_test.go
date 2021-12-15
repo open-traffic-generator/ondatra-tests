@@ -20,7 +20,6 @@ import (
 func TestISISRouteInstall(t *testing.T) {
 	ate := ondatra.ATE(t, "ate1")
 	ondatra.ATE(t, "ate2")
-	ondatra.ATE(t, "ate3")
 	otg := ate.OTG()
 
 	defer otg.NewConfig(t)
@@ -36,7 +35,7 @@ func TestISISRouteInstall(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllIsisSessionUp(expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllIsisSessionUp(expected) }, nil)
 
 	otg.StartTraffic(t)
 
@@ -45,10 +44,8 @@ func TestISISRouteInstall(t *testing.T) {
 
 func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
 	config := otg.NewConfig(t)
-
 	port1 := config.Ports().Add().SetName("ixia-c-port1")
 	port2 := config.Ports().Add().SetName("ixia-c-port2")
-
 	dutPort1 := config.Devices().Add().SetName("dutPort1")
 	dutPort1Eth := dutPort1.Ethernets().Add().
 		SetName("dutPort1.eth").
@@ -75,7 +72,6 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 		SetName("dutPort2.ipv6").
 		SetAddress("0:2:2:2::2").
 		SetGateway("0:2:2:2::3")
-
 	// dut1 ISIS Router
 	dutPort1Isis := dutPort1.Isis().
 		SetName("dutPort1.isis.router").
@@ -93,7 +89,6 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 	dutPort1Isis.Advanced().SetMaxLspSize(1492)
 	dutPort1Isis.Advanced().SetPsnpInterval(2000)
 	dutPort1Isis.Advanced().SetEnableAttachedBit(false)
-
 	//isis interface
 	dutPort1IsisIntf := dutPort1Isis.Interfaces().
 		Add().
@@ -111,7 +106,6 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 	//isis advanced settings
 	dutPort1IsisIntf.
 		Advanced().SetAutoAdjustSupportedProtocols(true)
-
 	//v4 routes
 	dutPort1Isisv4routes := dutPort1Isis.
 		V4Routes().
@@ -124,7 +118,6 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 		SetPrefix(24).
 		SetCount(5).
 		SetStep(2)
-
 	//v6 routes
 	dutPort1Isisv6routes := dutPort1Isis.
 		V6Routes().
@@ -137,7 +130,6 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 		SetPrefix(64).
 		SetCount(5).
 		SetStep(2)
-
 	// dut2 ISIS Router
 	dutPort2Isis := dutPort2.Isis().
 		SetName("dutPort2.isis.router").
@@ -155,7 +147,6 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 	dutPort2Isis.Advanced().SetMaxLspSize(1492)
 	dutPort2Isis.Advanced().SetPsnpInterval(2000)
 	dutPort2Isis.Advanced().SetEnableAttachedBit(false)
-
 	//isis interface
 	dutPort2IsisIntf := dutPort2Isis.Interfaces().
 		Add().
@@ -173,7 +164,6 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 	//isis advanced settings
 	dutPort2IsisIntf.
 		Advanced().SetAutoAdjustSupportedProtocols(true)
-
 	dutPort2IsisV4RoutesPermit := dutPort2Isis.
 		V4Routes().
 		Add().
@@ -185,17 +175,6 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 		SetPrefix(24).
 		SetCount(5).
 		SetStep(2)
-
-	dutPort2IsisRoutesDeny := dutPort2Isis.V4Routes().Add().
-		SetName("dutPort2.isis.rr4.deny").
-		SetLinkMetric(10).
-		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
-	dutPort2IsisRoutesDeny.Addresses().Add().
-		SetAddress("60.60.60.0").
-		SetPrefix(24).
-		SetCount(5).
-		SetStep(2)
-
 	dutPort2IsisV6RoutesPermit := dutPort2Isis.V6Routes().Add().
 		SetName("dutPort2.isis.rr6.permit").
 		SetLinkMetric(10).
@@ -205,17 +184,6 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 		SetPrefix(64).
 		SetCount(5).
 		SetStep(2)
-
-	dutPort2IsisV6RoutesDeny := dutPort2Isis.V6Routes().Add().
-		SetName("dutPort2.isis.rr6.deny").
-		SetLinkMetric(10).
-		SetOriginType(gosnappi.IsisV6RouteRangeOriginType.INTERNAL)
-	dutPort2IsisV6RoutesDeny.Addresses().Add().
-		SetAddress("0:60:60:60::0").
-		SetPrefix(64).
-		SetCount(5).
-		SetStep(2)
-
 	// OTG traffic configuration
 	f1 := config.Flows().Add().SetName("p1.v4.p2.permit")
 	f1.Metrics().SetEnable(true)
@@ -231,12 +199,11 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 	v4 := f1.Packet().Add().Ipv4()
 	v4.Src().SetValue("40.40.40.1")
 	v4.Dst().Increment().SetStart("50.50.50.1").SetStep("0.0.0.1").SetCount(5)
-
 	f1d := config.Flows().Add().SetName("p1.v4.p2.deny")
 	f1d.Metrics().SetEnable(true)
 	f1d.TxRx().Device().
 		SetTxNames([]string{dutPort1Isisv4routes.Name()}).
-		SetRxNames([]string{dutPort2IsisRoutesDeny.Name()})
+		SetRxNames([]string{dutPort2IsisV4RoutesPermit.Name()})
 	f1d.Size().SetFixed(512)
 	f1d.Rate().SetPps(500)
 	f1d.Duration().FixedPackets().SetPackets(1000)
@@ -246,7 +213,6 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 	v4d := f1d.Packet().Add().Ipv4()
 	v4d.Src().SetValue("40.40.40.1")
 	v4d.Dst().Increment().SetStart("60.60.60.1").SetStep("0.0.0.1").SetCount(5)
-
 	f2 := config.Flows().Add().SetName("p1.v6.p2.permit")
 	f2.Metrics().SetEnable(true)
 	f2.TxRx().Device().
@@ -261,12 +227,11 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 	v6 := f2.Packet().Add().Ipv6()
 	v6.Src().SetValue("0:40:40:40::1")
 	v6.Dst().Increment().SetStart("0:50:50:50::1").SetStep("::1").SetCount(5)
-
 	f2d := config.Flows().Add().SetName("p1.v6.p2.deny")
 	f2d.Metrics().SetEnable(true)
 	f2d.TxRx().Device().
 		SetTxNames([]string{dutPort1Isisv6routes.Name()}).
-		SetRxNames([]string{dutPort2IsisV6RoutesDeny.Name()})
+		SetRxNames([]string{dutPort2IsisV6RoutesPermit.Name()})
 	f2d.Size().SetFixed(512)
 	f2d.Rate().SetPps(500)
 	f2d.Duration().FixedPackets().SetPackets(1000)
@@ -276,7 +241,6 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 	v6d := f2d.Packet().Add().Ipv6()
 	v6d.Src().SetValue("0:40:40:40::1")
 	v6d.Dst().Increment().SetStart("0:60:60:60::1").SetStep("::1").SetCount(5)
-
 	expected := helpers.ExpectedState{
 		Isis: map[string]helpers.ExpectedIsisMetrics{
 			dutPort1Isis.Name(): {L1SessionsUp: 0, L2SessionsUp: 1, L1DatabaseSize: 0, L2DatabaseSize: 3},
@@ -289,6 +253,5 @@ func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config,
 			f2d.Name(): {FramesRx: 0, FramesRxRate: 0},
 		},
 	}
-
 	return config, expected
 }
