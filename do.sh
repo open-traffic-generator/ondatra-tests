@@ -38,6 +38,10 @@ fi
 # Avoid warnings for non-interactive apt-get install
 export DEBIAN_FRONTEND=noninteractive
 
+cecho() {
+    echo "\n\033[1;32m${1}\033[0m\n"
+}
+
 get_cluster_deps() {
     sudo apt-get update
     sudo apt-get install -y --no-install-recommends curl git vim apt-transport-https ca-certificates gnupg lsb-release
@@ -52,7 +56,7 @@ get_test_deps() {
 
 get_go() {
     go version 2> /dev/null && return
-    echo "Installing Go ..."
+    cecho "Installing Go ..."
     # install golang per https://golang.org/doc/install#tarball
     curl -kL https://dl.google.com/go/${GO_TARGZ} | sudo tar -C /usr/local/ -xzf -
     echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> $HOME/.profile
@@ -81,7 +85,7 @@ get_protoc() {
 
 get_docker() {
     sudo docker version 2> /dev/null && return
-    echo "Installing docker ..."
+    cecho "Installing docker ..."
     sudo apt-get remove docker docker-engine docker.io containerd runc 2> /dev/null || true
 
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
@@ -93,13 +97,13 @@ get_docker() {
     sudo apt-get update
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 
-    echo "Adding $USER to group docker"
+    cecho "Adding $USER to group docker"
     # use docker without sudo
     sudo groupadd docker || true
     sudo usermod -aG docker $USER
 
     sudo docker version
-    echo "Please logout, login and execute previously entered command again !"
+    cecho "Please logout, login and execute previously entered command again !"
     exit 0
 }
 
@@ -108,12 +112,12 @@ get_kind() {
 }
 
 get_kubectl() {
-    echo "Copying kubectl from kind cluster to host ..."
+    cecho "Copying kubectl from kind cluster to host ..."
     docker cp kind-control-plane:/usr/bin/kubectl $HOME/go/bin/
 }
 
 get_kne() {
-    echo "Getting kne commit: $KNE_COMMIT ..."
+    cecho "Getting kne commit: $KNE_COMMIT ..."
     rm -rf kne
     git clone https://github.com/google/kne
     cd kne && git checkout $KNE_COMMIT && cd -
@@ -128,7 +132,7 @@ gcloud_auth() {
 
 get_gcloud() {
     gcloud version 2>/dev/null && return
-    echo "Setting up gcloud"
+    cecho "Setting up gcloud"
     dl=google-cloud-sdk-349.0.0-linux-x86_64.tar.gz
     cd $HOME
     curl -kLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/${dl}
@@ -146,14 +150,17 @@ wait_for_all_pods_to_be_ready() {
     do
         for p in $(kubectl get pods -n ${n} -o 'jsonpath={.items[*].metadata.name}')
         do
-            echo "Waiting for pod/${p} in namespace ${n} (timeout=300s)..."
+            cecho "Waiting for pod/${p} in namespace ${n} (timeout=300s)..."
             kubectl wait -n ${n} pod/${p} --for condition=ready --timeout=300s
         done
     done
+
+    kubectl get pods -A
+    kubectl get services -A
 }
 
 get_meshnet() {
-    echo "Getting meshnet-cni commit: $MESHNET_COMMIT ..."
+    cecho "Getting meshnet-cni commit: $MESHNET_COMMIT ..."
     rm -rf meshnet-cni && git clone https://github.com/networkop/meshnet-cni
     cd meshnet-cni && git checkout $MESHNET_COMMIT
     kubectl apply -k manifests/base
@@ -164,13 +171,13 @@ get_meshnet() {
 }
 
 get_ixia_c_operator() {
-    echo "Getting ixia-c-operator ${OPERATOR_RELEASE} ..."
+    cecho "Getting ixia-c-operator ${OPERATOR_RELEASE} ..."
     kubectl apply -f https://github.com/open-traffic-generator/ixia-c-operator/releases/download/v${OPERATOR_RELEASE}/ixiatg-operator.yaml
     wait_for_all_pods_to_be_ready
 }
 
 get_metallb() {
-    echo "Getting metallb ..."
+    cecho "Getting metallb ..."
     kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/namespace.yaml
     kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)" 
     kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml
@@ -192,7 +199,7 @@ get_metallb() {
     echo "      addresses:" >> ${yml}
     echo "      - ${prefix}.100 - ${prefix}.250" >> ${yml}
 
-    echo "Applying metallb config map for exposing internal services via public IP addresses ..."
+    cecho "Applying metallb config map for exposing internal services via public IP addresses ..."
     cat ${yml}
     kubectl apply -f ${yml}
     rm -rf ${yml}
@@ -246,16 +253,16 @@ rm_test_client() {
 
 setup_test_client() {
     # rm_test_client
-    echo "Building test client ..."
+    cecho "Building test client ..."
     # docker build -t ondatra-tests:client .
     # docker run -td --network host --name ondatra-tests ondatra-tests:client
     # docker cp $HOME/.kube/config ondatra-tests:/home/ondatra-tests/resources/kneconfig/
     setup_ondatra_tests
-    cp $HOME/.kube/config resources/kneconfig/
+    cp $HOME/.kube/config resources/global/kubecfg
 }
 
 setup_gcp_secret() {
-    echo "Setting up K8S pull secret for GCP ..."
+    cecho "Setting up K8S pull secret for GCP ..."
     echo -n "Enter GCP Email: "
     read email
     echo -n "Enter GCP Password: "
@@ -286,7 +293,7 @@ load_images() {
     yml=ixia-configmap.yaml
 
     rm -rf ${yml}
-    echo "Loading docker images for Ixia-c release ${IXIA_C_RELEASE} ..."
+    cecho "Loading docker images for Ixia-c release ${IXIA_C_RELEASE} ..."
     curl -kLO https://github.com/open-traffic-generator/ixia-c/releases/download/v${IXIA_C_RELEASE}/${yml}
 
     while read line
@@ -302,7 +309,7 @@ load_images() {
             IMG=""
             TAG=""
 
-            echo "Loading $PTH"
+            cecho "Loading $PTH"
             docker pull $PTH
             kind load docker-image $PTH
         fi
@@ -322,37 +329,36 @@ setup_testbed() {
     setup_cluster
     setup_repo
     setup_test_client
-    echo "Please logout and login again !"
+    cecho "Please logout and login again !"
 }
 
 newtop() {
-    kne_cli -v trace --kubecfg resources/kneconfig/config create resources/topology/ixia-arista-ixia.txt
+    kne_cli -v trace --kubecfg resources/global/kubecfg create resources/topology/ixia-arista-ixia.txt
     wait_for_all_pods_to_be_ready
 }
 
 rmtop() {
-    kne_cli -v trace --kubecfg resources/kneconfig/config delete resources/topology/ixia-arista-ixia.txt
+    kne_cli -v trace --kubecfg resources/global/kubecfg delete resources/topology/ixia-arista-ixia.txt
 }
 
-test() {
-    echo "Here ${2}"
+run() {
     name=$(grep -Eo "Test[0-9a-zA-Z]+" ${2})
     prefix=$(basename ${2} | sed 's/_test.go//g')
     topo=resources/topology/ixia-arista-ixia.txt
     tb=resources/testbed/ixia-arista-ixia.txt
 
-    kne_cli -v trace --kubecfg resources/kneconfig/config topology push ${topo} arista1 resources/dutconfig/${prefix}/set_dut.txt || exit 1
-
+    mkdir -p logs
+    kne_cli -v trace --kubecfg resources/global/kubecfg topology push ${topo} arista1 resources/dutconfig/${prefix}/set_dut.txt || exit 1
+    cecho "Staring tests, output will be stored in logs/${prefix}.log"
     CGO_ENABLED=0 go test -v -timeout 60s -run ${name} tests/tests \
-        -config ../resources/kneconfig/kne-003.yaml \
-        -testbed ../${tb} \
+        -config ../resources/global/kneconfig.yaml \
+        -testbed ../${tb} | tee logs/${prefix}.log \
     || true
-    
-    kne_cli -v trace --kubecfg resources/kneconfig/config topology push ${topo} arista1 resources/dutconfig/${prefix}/unset_dut.txt
+    kne_cli -v trace --kubecfg resources/global/kubecfg topology push ${topo} arista1 resources/dutconfig/${prefix}/unset_dut.txt
 }
 
 case $1 in
     *   )
-        $1 ${@} || echo "usage: $0 [name of any function in script]"
+        $1 ${@} || cecho "usage: $0 [name of any function in script]"
     ;;
 esac

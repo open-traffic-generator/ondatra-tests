@@ -2,4 +2,4 @@ username: admin
 password: admin
 topology: ../resources/topology/ixia-arista-ixia.txt
 cli: kne_cli
-kubecfg: ../resources/kneconfig/config
+kubecfg: ../resources/global/kubecfg
