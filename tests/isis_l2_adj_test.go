@@ -1,11 +1,12 @@
 /* Test ISIS Route Installation
 Topology:
-IXIA (40.40.40.0/24, 0:40:40:40::0/64) -----> ARISTA ------> IXIA (50.50.50.0/24, 60.60.60.0/24, 0:50:50:50::0/64, 0:60:60:60::0/64)
+IXIA (40.40.40.0/24, 0:40:40:40::0/64) -----> ARISTA ------> IXIA (50.50.50.0/24, 0:50:50:50::0/64)
+
 Flows:
 - permit v4: 40.40.40.1 -> 50.50.50.1+
 - deny v4: 40.40.40.1 -> 60.60.60.1+
-- permit v6: 0:40:40:40::1 -> 0:50:50:50::1+
-- deny v6: 0:40:40:40::1 -> 0:60:60:60::1+
+- permit v4: 0:40:40:40::1 -> 0:50:50:50::1+
+- deny v4: 0:40:40:40::1 -> 0:60:60:60::1+
 */
 package tests
 
@@ -17,7 +18,7 @@ import (
 	"github.com/openconfig/ondatra"
 )
 
-func TestISISRouteInstall(t *testing.T) {
+func TestIsisL2Adj(t *testing.T) {
 	ate := ondatra.ATE(t, "ate1")
 	ondatra.ATE(t, "ate2")
 	otg := ate.OTG()

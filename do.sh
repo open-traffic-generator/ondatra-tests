@@ -261,6 +261,7 @@ setup_test_client() {
     cp $HOME/.kube/config resources/global/kubecfg
 }
 
+# TODO: this is currently not exercised anywhere in the script
 setup_gcp_secret() {
     cecho "Setting up K8S pull secret for GCP ..."
     echo -n "Enter GCP Email: "
