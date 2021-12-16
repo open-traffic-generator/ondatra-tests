@@ -2,14 +2,14 @@ interface Ethernet1
    no ip address
    no ipv6 address 
    no isis enable arista1
-   no isis circuit-type level-1-2
+   no isis circuit-type level-2
    no isis network point-to-point
 !
 interface Ethernet2
    no ip address
    no ipv6 address
    no isis enable arista1
-   no isis circuit-type level-1-2
+   no isis circuit-type level-2
    no isis network point-to-point
 !
 no router isis arista1
