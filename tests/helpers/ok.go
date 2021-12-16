@@ -1,6 +1,8 @@
 package helpers
 
 import (
+	"time"
+
 	"github.com/open-traffic-generator/snappi/gosnappi"
 )
 
@@ -143,6 +145,11 @@ func (client *GnmiClient) AllIsisSessionUp(expectedState ExpectedState) (bool, e
 		if d.L1SessionsUp() != expectedMetrics.L1SessionsUp || d.L1DatabaseSize() != expectedMetrics.L1DatabaseSize || d.L1SessionsUp() != expectedMetrics.L1SessionsUp || d.L2DatabaseSize() != expectedMetrics.L2DatabaseSize {
 			expected = false
 		}
+	}
+
+	// TODO: wait explicitly until telemetry API (for talking to DUT) is available
+	if expected {
+		time.Sleep(2 * time.Second)
 	}
 	return expected, nil
 }

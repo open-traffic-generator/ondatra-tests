@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/open-traffic-generator/snappi/gosnappi"
+	"github.com/openconfig/ondatra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -389,4 +390,9 @@ func GetCapturePorts(c gosnappi.Config) []string {
 		capturePorts = append(capturePorts, capture.PortNames()...)
 	}
 	return capturePorts
+}
+
+func CleanupTest(otg *ondatra.OTGAPI, t *testing.T) {
+	otg.StopTraffic(t)
+	otg.StopProtocols(t)
 }

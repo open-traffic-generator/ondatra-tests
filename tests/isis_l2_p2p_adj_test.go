@@ -21,13 +21,11 @@ import (
 func TestIsisL2P2pAdj(t *testing.T) {
 	ate := ondatra.ATE(t, "ate1")
 	ondatra.ATE(t, "ate2")
+
 	otg := ate.OTG()
+	defer helpers.CleanupTest(otg, t)
 
-	defer otg.NewConfig(t)
-	defer otg.StopProtocols(t)
-	defer otg.StopTraffic(t)
-
-	config, expected := isisRouteInstallConfig(t, otg)
+	config, expected := isisL2P2pAdjConfig(t, otg)
 	otg.PushConfig(t, config)
 	otg.StartProtocols(t)
 
@@ -43,7 +41,7 @@ func TestIsisL2P2pAdj(t *testing.T) {
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
 }
 
-func isisRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
+func isisL2P2pAdjConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
 	config := otg.NewConfig(t)
 	port1 := config.Ports().Add().SetName("ixia-c-port1")
 	port2 := config.Ports().Add().SetName("ixia-c-port2")
