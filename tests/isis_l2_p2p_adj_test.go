@@ -1,4 +1,4 @@
-/* Test ISIS Route Installation
+/* Test ISIS L2 P2P Adjacencies
 Topology:
 IXIA (40.40.40.0/24, 0:40:40:40::0/64) -----> ARISTA ------> IXIA (50.50.50.0/24, 0:50:50:50::0/64)
 
@@ -18,7 +18,7 @@ import (
 	"github.com/openconfig/ondatra"
 )
 
-func TestIsisL2Adj(t *testing.T) {
+func TestIsisL2P2pAdj(t *testing.T) {
 	ate := ondatra.ATE(t, "ate1")
 	ondatra.ATE(t, "ate2")
 	otg := ate.OTG()
