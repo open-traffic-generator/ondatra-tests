@@ -163,6 +163,7 @@ func PrintMetricsTable(opts *MetricsTableOpts) {
 	if opts == nil {
 		return
 	}
+	opts.ClearPrevious = true
 	out := "\n"
 
 	if opts.Bgpv4Metrics != nil {
@@ -395,4 +396,5 @@ func GetCapturePorts(c gosnappi.Config) []string {
 func CleanupTest(otg *ondatra.OTGAPI, t *testing.T) {
 	otg.StopTraffic(t)
 	otg.StopProtocols(t)
+	otg.PushConfig(t, otg.NewConfig(t))
 }
