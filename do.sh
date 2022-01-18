@@ -73,7 +73,7 @@ get_go_test_deps() {
 }
 
 get_protoc() {
-    curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}
+    curl -kLO https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}
     rm -rf $HOME/.local
 	unzip ${PROTOC_ZIP} -d $HOME/.local
 	rm -f ${PROTOC_ZIP}
@@ -89,19 +89,30 @@ get_docker() {
     cecho "Installing docker ..."
     sudo apt-get remove docker docker-engine docker.io containerd runc 2> /dev/null || true
 
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+    curl -kfsSL https://download.docker.com/linux/ubuntu/gpg \
         | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
         | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
+    # 1st hack to not detect MitM when a corporate proxy is sitting in between
+    conf=/etc/apt/apt.conf.d/99docker-skip-cert-verify.conf
+    echo "Acquire { https::Verify-Peer false }" | sudo tee -a "$conf"
+
     sudo apt-get update
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+    # undo 1st hack
+    sudo rm -rf "$conf"
 
     cecho "Adding $USER to group docker"
     # use docker without sudo
     sudo groupadd docker || true
     sudo usermod -aG docker $USER
+
+    # 2nd hack to skip verifying docker images while pulling
+    reg=$(sudo docker info | grep Registry | cut -d\  -f 3)
+    echo "{\"insecure-registries\": [\"${reg}\"]}" | sudo tee -a /etc/docker/daemon.json
+    sudo systemctl restart docker
 
     sudo docker version
     cecho "Please logout, login and execute previously entered command again !"
