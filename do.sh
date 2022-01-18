@@ -84,7 +84,6 @@ get_protoc() {
 }
 
 get_docker() {
-
     sudo docker version 2> /dev/null && return
     cecho "Installing docker ..."
     sudo apt-get remove docker docker-engine docker.io containerd runc 2> /dev/null || true
@@ -95,24 +94,23 @@ get_docker() {
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
         | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-    # 1st hack to not detect MitM when a corporate proxy is sitting in between
-    conf=/etc/apt/apt.conf.d/99docker-skip-cert-verify.conf
-    echo "Acquire { https::Verify-Peer false }" | sudo tee -a "$conf"
 
+    # hack to not detect MitM when a corporate proxy is sitting in between
+    conf=/etc/apt/apt.conf.d/99docker-skip-cert-verify.conf
+    curl -fsL https://download.docker.com/linux/ubuntu/gpg 2>&1 > /dev/null \
+        || echo "Acquire { https::Verify-Peer false }" | sudo tee -a "$conf" \
+        && sudo mkdir -p /etc/docker \
+        && echo '{ "registry-mirrors": ["https://docker-remote.artifactorylbj.it.keysight.com"] }' | sudo tee -a /etc/docker/daemon.json
+    
     sudo apt-get update
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-    # undo 1st hack
+    # partially undo hack
     sudo rm -rf "$conf"
 
     cecho "Adding $USER to group docker"
     # use docker without sudo
     sudo groupadd docker || true
     sudo usermod -aG docker $USER
-
-    # 2nd hack to skip verifying docker images while pulling
-    # reg=$(sudo docker info | grep Registry | cut -d\  -f 3)
-    # echo "{\"insecure-registries\": [\"${reg}\"]}" | sudo tee -a /etc/docker/daemon.json
-    # sudo systemctl restart docker
 
     sudo docker version
     cecho "Please logout, login and execute previously entered command again !"
