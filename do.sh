@@ -84,6 +84,7 @@ get_protoc() {
 }
 
 get_docker() {
+
     sudo docker version 2> /dev/null && return
     cecho "Installing docker ..."
     sudo apt-get remove docker docker-engine docker.io containerd runc 2> /dev/null || true
@@ -174,6 +175,11 @@ get_ixia_c_operator() {
     cecho "Getting ixia-c-operator ${OPERATOR_RELEASE} ..."
     kubectl apply -f https://github.com/open-traffic-generator/ixia-c-operator/releases/download/v${OPERATOR_RELEASE}/ixiatg-operator.yaml
     wait_for_all_pods_to_be_ready
+}
+
+rm_ixia_c_operator() {
+    cecho "Removing ixia-c-operator ${OPERATOR_RELEASE} ..."
+    kubectl delete -f https://github.com/open-traffic-generator/ixia-c-operator/releases/download/v${OPERATOR_RELEASE}/ixiatg-operator.yaml
 }
 
 get_metallb() {
@@ -328,7 +334,6 @@ setup_repo() {
 
 setup_testbed() {
     setup_cluster
-    setup_repo
     setup_test_client
     cecho "Please logout and login again !"
 }
