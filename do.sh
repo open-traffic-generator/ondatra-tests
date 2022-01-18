@@ -109,7 +109,7 @@ get_docker() {
     sudo usermod -aG docker $USER
 
     # 2nd hack to skip verifying docker images while pulling
-    reg=$(docker info | grep Registry | cut -d\  -f 3)
+    reg=$(sudo docker info | grep Registry | cut -d\  -f 3)
     echo "{\"insecure-registries\": [\"${reg}\"]}" | sudo tee -a /etc/docker/daemon.json
     sudo systemctl restart docker
 
