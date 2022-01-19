@@ -106,6 +106,9 @@ get_docker() {
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io
     # partially undo hack
     sudo rm -rf "$conf"
+    # remove docker.list from apt-get if hack is applied (otherwise apt-get update will fail)
+    curl -fsL https://download.docker.com/linux/ubuntu/gpg 2>&1 > /dev/null \
+        || sudo rm -rf /etc/apt/sources.list.d/docker.list
 
     cecho "Adding $USER to group docker"
     # use docker without sudo
@@ -200,20 +203,9 @@ get_metallb() {
     wait_for_all_pods_to_be_ready
 
     prefix=$(docker network inspect -f '{{.IPAM.Config}}' kind | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" | tail -n 1)
-    yml=metallb-config.yaml
-    echo "apiVersion: v1" > ${yml}
-    echo "kind: ConfigMap" >> ${yml}
-    echo "metadata:" >> ${yml}
-    echo "  namespace: metallb-system" >> ${yml}
-    echo "  name: config" >> ${yml}
-    echo "data:" >> ${yml}
-    echo "  config: |" >> ${yml}
-    echo "   address-pools:" >> ${yml}
-    echo "    - name: default" >> ${yml}
-    echo "      protocol: layer2" >> ${yml}
-    echo "      addresses:" >> ${yml}
-    echo "      - ${prefix}.100 - ${prefix}.250" >> ${yml}
 
+    yml=metallb-config.yaml
+    sed -e "s/\${prefix}/${prefix}/g" resources/global/metallb-config.yaml > ${yml}
     cecho "Applying metallb config map for exposing internal services via public IP addresses ..."
     cat ${yml}
     kubectl apply -f ${yml}
@@ -228,7 +220,7 @@ rm_kind_cluster() {
 
 setup_kind_cluster() {
     rm_kind_cluster
-    kind create cluster --wait 5m
+    kind create cluster --config=resources/global/kind-config.yaml --wait 5m
     get_kubectl
     get_meshnet
     get_metallb
@@ -253,7 +245,6 @@ build_ondatra() {
 
 setup_ondatra_tests() {
     get_test_deps
-    # get_go
     get_go_test_deps
     get_protoc
     get_kne
