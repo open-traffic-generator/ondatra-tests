@@ -7,7 +7,6 @@ KNE_COMMIT=2d0821b
 MESHNET_COMMIT=4bf3db7
 
 OPERATOR_RELEASE=0.0.70
-IXIA_C_RELEASE=0.0.1-2446
 
 set -e
 # source path for current session
@@ -161,6 +160,10 @@ get_gcloud() {
 wait_for_all_pods_to_be_ready() {
     for n in $(kubectl get namespaces -o 'jsonpath={.items[*].metadata.name}')
     do
+        if [ "${1}" = "-ns" ] && [ "${2}" != "${n}" ]
+        then
+            continue
+        fi
         for p in $(kubectl get pods -n ${n} -o 'jsonpath={.items[*].metadata.name}')
         do
             cecho "Waiting for pod/${p} in namespace ${n} (timeout=300s)..."
@@ -168,7 +171,9 @@ wait_for_all_pods_to_be_ready() {
         done
     done
 
+    cecho "Pods:"
     kubectl get pods -A
+    cecho "Services:"
     kubectl get services -A
 }
 
@@ -177,7 +182,7 @@ get_meshnet() {
     rm -rf meshnet-cni && git clone https://github.com/networkop/meshnet-cni
     cd meshnet-cni && git checkout $MESHNET_COMMIT
     kubectl apply -k manifests/base
-    wait_for_all_pods_to_be_ready
+    wait_for_all_pods_to_be_ready -ns meshnet
 
     cd -
     rm -rf meshnet-cni
@@ -186,7 +191,7 @@ get_meshnet() {
 get_ixia_c_operator() {
     cecho "Getting ixia-c-operator ${OPERATOR_RELEASE} ..."
     kubectl apply -f https://github.com/open-traffic-generator/ixia-c-operator/releases/download/v${OPERATOR_RELEASE}/ixiatg-operator.yaml
-    wait_for_all_pods_to_be_ready
+    wait_for_all_pods_to_be_ready -ns ixiatg-op-system
 }
 
 rm_ixia_c_operator() {
@@ -200,16 +205,15 @@ get_metallb() {
     kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)" 
     kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml
     
-    wait_for_all_pods_to_be_ready
+    wait_for_all_pods_to_be_ready -ns metallb-system
 
     prefix=$(docker network inspect -f '{{.IPAM.Config}}' kind | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" | tail -n 1)
 
-    yml=metallb-config.yaml
-    sed -e "s/\${prefix}/${prefix}/g" resources/global/metallb-config.yaml > ${yml}
+    yml=resources/global/metallb-config
+    sed -e "s/\${prefix}/${prefix}/g" ${yml}.template.yaml > ${yml}.yaml
     cecho "Applying metallb config map for exposing internal services via public IP addresses ..."
-    cat ${yml}
-    kubectl apply -f ${yml}
-    rm -rf ${yml}
+    cat ${yml}.yaml
+    kubectl apply -f ${yml}.yaml
 }
 
 rm_kind_cluster() {
@@ -288,20 +292,20 @@ setup_gcp_secret() {
     kubectl annotate secret ixia-pull-secret -n ixiatg-op-system secretsync.ixiatg.com/replicate='true'
 }
 
-load_ceos() {
-    ceos="us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ceos:4.26.1F"
-    docker pull ${ceos}
-    kind load docker-image ${ceos}
+load_dut_img() {
+    img=$(cat resources/global/${1}-${2}.yaml | cut -d\  -f2)
+    cecho "Loading container image for DUT ${2}: ${img} ..."
+    
+    docker pull ${img}
+    kind load docker-image ${img}
 }
 
 load_images() {
     IMG=""
     TAG=""
-    yml=ixia-configmap.yaml
 
-    rm -rf ${yml}
-    cecho "Loading docker images for Ixia-c release ${IXIA_C_RELEASE} ..."
-    curl -kLO https://github.com/open-traffic-generator/ixia-c/releases/download/v${IXIA_C_RELEASE}/${yml}
+    yml=resources/global/${1}-ixia-configmap.yaml
+    cecho "Loading container images for Ixia-c from ${yml} ..."
 
     while read line
     do
@@ -322,14 +326,49 @@ load_images() {
         fi
     done <${yml}
 
-    rm -rf ${yml}
-    load_ceos
+    load_dut_img ${1} ${2}
+}
+
+ghcr_login() {
+    cecho "Enter Github username and personal-access-token (https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)"
+    echo -n "username: "
+    read username
+    echo -n "token: "
+    stty -echo
+    read pat
+    stty echo
+    echo
+
+    echo ${pat} | docker login ghcr.io -u ${username} --password-stdin
+}
+
+generate_topology_configs() {
+    ixia_version=$(grep '"release":' resources/global/${1}-ixia-configmap.yaml | cut -d\" -f4)
+    dut_image=$(cat resources/global/${1}-${2}.yaml | cut -d\  -f2)
+
+    for f in $(ls resources/topology/*.template.txt)
+    do
+        txt=$(echo "${f}" | sed -e "s/.template.txt//g")
+        cat ${txt}.template.txt | \
+            sed -e "s/\${ixia_version}/${ixia_version}/g" | \
+            sed -e "s#\${dut_image}#${dut_image}#" | \
+            tee ${txt}.txt > /dev/null
+    done
 }
 
 setup_repo() {
-    get_gcloud
-    gcloud_auth
-    load_images
+    if [ "${2}" = "ghcr" ]
+    then
+        ghcr_login
+        load_images ${2} ${3}
+    else
+        get_gcloud
+        gcloud_auth
+        load_images ${2} ${3}
+    fi
+    
+    generate_topology_configs ${2} ${3}
+    kubectl apply -f resources/global/${2}-ixia-configmap.yaml
 }
 
 setup_testbed() {
@@ -340,7 +379,7 @@ setup_testbed() {
 
 newtop() {
     kne_cli -v trace --kubecfg resources/global/kubecfg create resources/topology/ixia-arista-ixia.txt
-    wait_for_all_pods_to_be_ready
+    wait_for_all_pods_to_be_ready -n ixia-c
 }
 
 rmtop() {

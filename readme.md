@@ -34,13 +34,13 @@ This repository consists of Open Traffic Generator tests written in [gosnappi](h
    - Obtain images over GCP (requires a valid GCP account with access to project [kt-nts-athena-dev](https://console.cloud.google.com/home/dashboard?project=kt-nts-athena-dev))
 
    ```sh
-   ./do.sh setup_repo
+   ./do.sh setup_repo gcp arista
    ```
 
    - Or, obtain images over docker.io and ghcr.io (requires a valid github account with [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token))
 
    ```sh
-   ./do.sh setup_repo ghcr
+   ./do.sh setup_repo ghcr arista
    ```
 
 3. Execute a sample test

@@ -14,4 +14,7 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 /resources/global/kubecfg
+/resources/global/metallb-config.yaml
+/resources/topology
+!/resources/topology/*.template.txt
 /logs
