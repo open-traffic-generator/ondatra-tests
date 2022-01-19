@@ -8,6 +8,8 @@ MESHNET_COMMIT=4bf3db7
 
 OPERATOR_RELEASE=0.0.70
 
+KNEBIND_CONFIG="../resources/global/knebind-config.yaml"
+
 set -e
 # source path for current session
 . $HOME/.profile
@@ -415,31 +417,56 @@ setup_testbed() {
     cecho "Please logout and login again !"
 }
 
+get_knebind_conf() {
+    cd tests
+    KCLI=$(grep "cli:" ${KNEBIND_CONFIG} | cut -d: -f2 | sed -e "s/ //g")
+    KCFG=$(grep "kubecfg:" ${KNEBIND_CONFIG} | cut -d: -f2 | sed -e "s/ //g")
+    KTOP=$(grep "topology:" ${KNEBIND_CONFIG} | cut -d: -f2 | sed -e "s/ //g")
+    KTBD=$(echo ${KTOP} | sed -e "s#/topology/#/testbed/#g")
+    echo ${KTBD}
+    cd -
+}
+
 newtop() {
-    kne_cli -v trace --kubecfg resources/global/kubecfg create resources/topology/ixia-arista-ixia.txt
+    get_knebind_conf
+
+    cd tests
+    ${KCLI} -v trace --kubecfg ${KCFG} create ${KTOP}
     wait_for_pod_counts ixia-c 1
     wait_for_all_pods_to_be_ready -ns ixia-c
+    cd -
 }
 
 rmtop() {
-    kne_cli -v trace --kubecfg resources/global/kubecfg delete resources/topology/ixia-arista-ixia.txt
+    get_knebind_conf
+
+    cd tests
+    ${KCLI} -v trace --kubecfg ${KCFG} delete ${KTOP}
     wait_for_pod_counts ixia-c 0
+    cd -
 }
 
 run() {
     name=$(grep -Eo "Test[0-9a-zA-Z]+" ${1})
     prefix=$(basename ${1} | sed 's/_test.go//g')
+
+    get_knebind_conf
+
     topo=resources/topology/ixia-arista-ixia.txt
     tb=resources/testbed/ixia-arista-ixia.txt
 
     mkdir -p logs
-    kne_cli -v trace --kubecfg resources/global/kubecfg topology push ${topo} arista1 resources/dutconfig/${prefix}/set_dut.txt || exit 1
+    cd tests
+    ${KCLI} -v trace --kubecfg ${KCFG} topology push ${KTOP} arista1 ../resources/dutconfig/${prefix}/set_dut.txt || exit 1
+    cd -
     cecho "Staring tests, output will be stored in logs/${prefix}.log"
     CGO_ENABLED=0 go test -v -timeout 60s -run ${name} tests/tests \
-        -config ../resources/global/kneconfig.yaml \
-        -testbed ../${tb} | tee logs/${prefix}.log \
+        -config ${KNEBIND_CONFIG} \
+        -testbed ${KTBD} | tee logs/${prefix}.log \
     || true
-    kne_cli -v trace --kubecfg resources/global/kubecfg topology push ${topo} arista1 resources/dutconfig/${prefix}/unset_dut.txt
+    cd tests
+    kne_cli -v trace --kubecfg ${KCFG} topology push ${KTOP} arista1 ../resources/dutconfig/${prefix}/unset_dut.txt
+    cd -
 }
 
 case $1 in

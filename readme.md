@@ -43,7 +43,8 @@ This repository consists of Open Traffic Generator tests written in [gosnappi](h
    ./do.sh setup_repo ghcr arista
    ```
 
-3. Execute a sample test
+3. Execute a sample test.  
+   Operations below are performed based on contents of `resources/global/knebind-config.yaml` which can be changed (e.g. when a different topology config is needed).
 
    ```sh
    # create topology if it does not exist
