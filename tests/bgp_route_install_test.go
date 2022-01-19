@@ -21,6 +21,9 @@ import (
 )
 
 func TestBGPRouteInstall(t *testing.T) {
+	helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_install/set_dut.txt"})
+	defer helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_install/unset_dut.txt"})
+
 	ate := ondatra.ATE(t, "ate1")
 	ondatra.ATE(t, "ate2")
 

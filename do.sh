@@ -452,21 +452,12 @@ run() {
 
     get_knebind_conf
 
-    topo=resources/topology/ixia-arista-ixia.txt
-    tb=resources/testbed/ixia-arista-ixia.txt
-
     mkdir -p logs
-    cd tests
-    ${KCLI} -v trace --kubecfg ${KCFG} topology push ${KTOP} arista1 ../resources/dutconfig/${prefix}/set_dut.txt || exit 1
-    cd -
     cecho "Staring tests, output will be stored in logs/${prefix}.log"
     CGO_ENABLED=0 go test -v -timeout 60s -run ${name} tests/tests \
         -config ${KNEBIND_CONFIG} \
         -testbed ${KTBD} | tee logs/${prefix}.log \
     || true
-    cd tests
-    kne_cli -v trace --kubecfg ${KCFG} topology push ${KTOP} arista1 ../resources/dutconfig/${prefix}/unset_dut.txt
-    cd -
 }
 
 case $1 in
