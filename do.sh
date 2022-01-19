@@ -177,11 +177,47 @@ wait_for_all_pods_to_be_ready() {
     kubectl get services -A
 }
 
+wait_for_pod_counts() {
+    namespace=${1}
+    count=${2}
+    start=$SECONDS
+    while true
+    do
+        echo "Waiting for all pods to be expected under namespace ${1}..."
+        
+        echo "Expected Pods ${2}"
+        pod_count=$(kubectl get pods -n ${1} --no-headers 2> /dev/null | wc -l)
+        echo "Actual Pods ${pod_count}"
+        # if expected pod count is 0, then check that actual count is 0 as well
+        if [ "${2}" = 0 ] && [ "${pod_count}" = 0 ]
+        then
+            break
+        else if [ "${2}" -gt 0 ]
+        then
+            # if expected pod count is more than 0, then ensure actual count is more than 0 as well
+            break
+        fi
+        fi
+
+        elapsed=$(( SECONDS - start ))
+        if [ $elapsed -gt 300 ]
+        then
+            echo "All pods are not as expected under namespace ${1} with 300 seconds"
+            exit 1
+        fi
+        sleep 0.5
+    done
+
+    cecho "Pods:"
+    kubectl get pods -A
+}
+
 get_meshnet() {
     cecho "Getting meshnet-cni commit: $MESHNET_COMMIT ..."
     rm -rf meshnet-cni && git clone https://github.com/networkop/meshnet-cni
     cd meshnet-cni && git checkout $MESHNET_COMMIT
     kubectl apply -k manifests/base
+    wait_for_pod_counts meshnet 1
     wait_for_all_pods_to_be_ready -ns meshnet
 
     cd -
@@ -191,6 +227,7 @@ get_meshnet() {
 get_ixia_c_operator() {
     cecho "Getting ixia-c-operator ${OPERATOR_RELEASE} ..."
     kubectl apply -f https://github.com/open-traffic-generator/ixia-c-operator/releases/download/v${OPERATOR_RELEASE}/ixiatg-operator.yaml
+    wait_for_pod_counts ixiatg-op-system 1
     wait_for_all_pods_to_be_ready -ns ixiatg-op-system
 }
 
@@ -205,6 +242,7 @@ get_metallb() {
     kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)" 
     kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml
     
+    wait_for_pod_counts metallb-system 1
     wait_for_all_pods_to_be_ready -ns metallb-system
 
     prefix=$(docker network inspect -f '{{.IPAM.Config}}' kind | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" | tail -n 1)
@@ -379,11 +417,13 @@ setup_testbed() {
 
 newtop() {
     kne_cli -v trace --kubecfg resources/global/kubecfg create resources/topology/ixia-arista-ixia.txt
+    wait_for_pod_counts ixia-c 1
     wait_for_all_pods_to_be_ready -ns ixia-c
 }
 
 rmtop() {
     kne_cli -v trace --kubecfg resources/global/kubecfg delete resources/topology/ixia-arista-ixia.txt
+    wait_for_pod_counts ixia-c 0
 }
 
 run() {
