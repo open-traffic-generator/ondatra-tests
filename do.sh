@@ -357,18 +357,18 @@ generate_topology_configs() {
 }
 
 setup_repo() {
-    if [ "${2}" = "ghcr" ]
+    if [ "${1}" = "ghcr" ]
     then
         ghcr_login
-        load_images ${2} ${3}
+        load_images ${1} ${2}
     else
         get_gcloud
         gcloud_auth
-        load_images ${2} ${3}
+        load_images ${1} ${2}
     fi
     
-    generate_topology_configs ${2} ${3}
-    kubectl apply -f resources/global/${2}-ixia-configmap.yaml
+    generate_topology_configs ${1} ${2}
+    kubectl apply -f resources/global/${1}-ixia-configmap.yaml
 }
 
 setup_testbed() {
@@ -379,7 +379,7 @@ setup_testbed() {
 
 newtop() {
     kne_cli -v trace --kubecfg resources/global/kubecfg create resources/topology/ixia-arista-ixia.txt
-    wait_for_all_pods_to_be_ready -n ixia-c
+    wait_for_all_pods_to_be_ready -ns ixia-c
 }
 
 rmtop() {
@@ -387,8 +387,8 @@ rmtop() {
 }
 
 run() {
-    name=$(grep -Eo "Test[0-9a-zA-Z]+" ${2})
-    prefix=$(basename ${2} | sed 's/_test.go//g')
+    name=$(grep -Eo "Test[0-9a-zA-Z]+" ${1})
+    prefix=$(basename ${1} | sed 's/_test.go//g')
     topo=resources/topology/ixia-arista-ixia.txt
     tb=resources/testbed/ixia-arista-ixia.txt
 
@@ -404,6 +404,9 @@ run() {
 
 case $1 in
     *   )
-        $1 ${@} || cecho "usage: $0 [name of any function in script]"
+        # shift positional arguments so that arg 2 becomes arg 1, etc.
+        cmd=${1}
+        shift 1
+        ${cmd} ${@} || cecho "usage: $0 [name of any function in script]"
     ;;
 esac

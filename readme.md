@@ -9,11 +9,11 @@ This repository consists of Open Traffic Generator tests written in [gosnappi](h
    - 6-8 CPU cores
    - 128GB Persistent Storage
 
-2. Ensure you have a valid GCP account
+2. Ensure you have a valid Github account and (optionally) GCP account
 
 3. None of the steps below should be executed as a sudo. The script will automatically prompt for:
    - sudo password when needed
-   - GCP credentials when needed
+   - Github or GCP credentials when needed
 
 4. Patience - since building and running tests might take longer than usual the first time (due to large number of generated code inside ondatra)
 
