@@ -194,7 +194,7 @@ wait_for_pod_counts() {
         if [ "${2}" = 0 ] && [ "${pod_count}" = 0 ]
         then
             break
-        else if [ "${2}" -gt 0 ]
+        else if [ "${2}" -gt 0 ] && [ "${pod_count}" -gt 0 ]
         then
             # if expected pod count is more than 0, then ensure actual count is more than 0 as well
             break

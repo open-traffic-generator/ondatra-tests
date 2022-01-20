@@ -24,7 +24,7 @@ nodes: {
     config: {
         config_path: "/mnt/flash"
         config_file: "startup-config"
-        file: "../dutconfig/enable_ssh_arista_config.txt"
+        file: "../dutconfig/init_arista.txt"
     	image: "${dut_image}"
     }
     services:{
@@ -32,6 +32,13 @@ nodes: {
         value: {
             name: "ssh"
             inside: 22
+        }
+    }
+    services:{
+        key: 6030 
+        value: {
+            name: "gnmi"
+            inside: 6030
         }
     }
 }

@@ -20,3 +20,6 @@ aaa authentication policy local allow-nopassword-remote-login
 !
 username admin privilege 15 role network-admin nopassword
 !
+management api gnmi
+    transport grpc default
+end
