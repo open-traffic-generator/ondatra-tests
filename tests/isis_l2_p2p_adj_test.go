@@ -26,7 +26,7 @@ func TestIsisL2P2pAdj(t *testing.T) {
 	ondatra.ATE(t, "ate2")
 
 	otg := ate.OTG()
-	defer helpers.CleanupTest(otg, t)
+	defer helpers.CleanupTest(otg, t, true)
 
 	config, expected := isisL2P2pAdjConfig(t, otg)
 	otg.PushConfig(t, config)
