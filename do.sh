@@ -7,7 +7,8 @@ KNE_COMMIT=2d0821b
 MESHNET_COMMIT=4bf3db7
 
 OPERATOR_RELEASE=0.0.70
-IXIA_C_RELEASE=0.0.1-2446
+
+KNEBIND_CONFIG="../resources/global/knebind-config.yaml"
 
 set -e
 # source path for current session
@@ -94,24 +95,26 @@ get_docker() {
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
         | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-    # 1st hack to not detect MitM when a corporate proxy is sitting in between
-    conf=/etc/apt/apt.conf.d/99docker-skip-cert-verify.conf
-    echo "Acquire { https::Verify-Peer false }" | sudo tee -a "$conf"
 
+    # hack to not detect MitM when a corporate proxy is sitting in between
+    conf=/etc/apt/apt.conf.d/99docker-skip-cert-verify.conf
+    curl -fsL https://download.docker.com/linux/ubuntu/gpg 2>&1 > /dev/null \
+        || echo "Acquire { https::Verify-Peer false }" | sudo tee -a "$conf" \
+        && sudo mkdir -p /etc/docker \
+        && echo '{ "registry-mirrors": ["https://docker-remote.artifactorylbj.it.keysight.com"] }' | sudo tee -a /etc/docker/daemon.json
+    
     sudo apt-get update
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-    # undo 1st hack
+    # partially undo hack
     sudo rm -rf "$conf"
+    # remove docker.list from apt-get if hack is applied (otherwise apt-get update will fail)
+    curl -fsL https://download.docker.com/linux/ubuntu/gpg 2>&1 > /dev/null \
+        || sudo rm -rf /etc/apt/sources.list.d/docker.list
 
     cecho "Adding $USER to group docker"
     # use docker without sudo
     sudo groupadd docker || true
     sudo usermod -aG docker $USER
-
-    # 2nd hack to skip verifying docker images while pulling
-    # reg=$(sudo docker info | grep Registry | cut -d\  -f 3)
-    # echo "{\"insecure-registries\": [\"${reg}\"]}" | sudo tee -a /etc/docker/daemon.json
-    # sudo systemctl restart docker
 
     sudo docker version
     cecho "Please logout, login and execute previously entered command again !"
@@ -159,6 +162,10 @@ get_gcloud() {
 wait_for_all_pods_to_be_ready() {
     for n in $(kubectl get namespaces -o 'jsonpath={.items[*].metadata.name}')
     do
+        if [ "${1}" = "-ns" ] && [ "${2}" != "${n}" ]
+        then
+            continue
+        fi
         for p in $(kubectl get pods -n ${n} -o 'jsonpath={.items[*].metadata.name}')
         do
             cecho "Waiting for pod/${p} in namespace ${n} (timeout=300s)..."
@@ -166,8 +173,45 @@ wait_for_all_pods_to_be_ready() {
         done
     done
 
+    cecho "Pods:"
     kubectl get pods -A
+    cecho "Services:"
     kubectl get services -A
+}
+
+wait_for_pod_counts() {
+    namespace=${1}
+    count=${2}
+    start=$SECONDS
+    while true
+    do
+        echo "Waiting for all pods to be expected under namespace ${1}..."
+        
+        echo "Expected Pods ${2}"
+        pod_count=$(kubectl get pods -n ${1} --no-headers 2> /dev/null | wc -l)
+        echo "Actual Pods ${pod_count}"
+        # if expected pod count is 0, then check that actual count is 0 as well
+        if [ "${2}" = 0 ] && [ "${pod_count}" = 0 ]
+        then
+            break
+        else if [ "${2}" -gt 0 ] && [ "${pod_count}" -gt 0 ]
+        then
+            # if expected pod count is more than 0, then ensure actual count is more than 0 as well
+            break
+        fi
+        fi
+
+        elapsed=$(( SECONDS - start ))
+        if [ $elapsed -gt 300 ]
+        then
+            echo "All pods are not as expected under namespace ${1} with 300 seconds"
+            exit 1
+        fi
+        sleep 0.5
+    done
+
+    cecho "Pods:"
+    kubectl get pods -A
 }
 
 get_meshnet() {
@@ -175,7 +219,8 @@ get_meshnet() {
     rm -rf meshnet-cni && git clone https://github.com/networkop/meshnet-cni
     cd meshnet-cni && git checkout $MESHNET_COMMIT
     kubectl apply -k manifests/base
-    wait_for_all_pods_to_be_ready
+    wait_for_pod_counts meshnet 1
+    wait_for_all_pods_to_be_ready -ns meshnet
 
     cd -
     rm -rf meshnet-cni
@@ -184,7 +229,13 @@ get_meshnet() {
 get_ixia_c_operator() {
     cecho "Getting ixia-c-operator ${OPERATOR_RELEASE} ..."
     kubectl apply -f https://github.com/open-traffic-generator/ixia-c-operator/releases/download/v${OPERATOR_RELEASE}/ixiatg-operator.yaml
-    wait_for_all_pods_to_be_ready
+    wait_for_pod_counts ixiatg-op-system 1
+    wait_for_all_pods_to_be_ready -ns ixiatg-op-system
+}
+
+rm_ixia_c_operator() {
+    cecho "Removing ixia-c-operator ${OPERATOR_RELEASE} ..."
+    kubectl delete -f https://github.com/open-traffic-generator/ixia-c-operator/releases/download/v${OPERATOR_RELEASE}/ixiatg-operator.yaml
 }
 
 get_metallb() {
@@ -193,27 +244,16 @@ get_metallb() {
     kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)" 
     kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml
     
-    wait_for_all_pods_to_be_ready
+    wait_for_pod_counts metallb-system 1
+    wait_for_all_pods_to_be_ready -ns metallb-system
 
     prefix=$(docker network inspect -f '{{.IPAM.Config}}' kind | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" | tail -n 1)
-    yml=metallb-config.yaml
-    echo "apiVersion: v1" > ${yml}
-    echo "kind: ConfigMap" >> ${yml}
-    echo "metadata:" >> ${yml}
-    echo "  namespace: metallb-system" >> ${yml}
-    echo "  name: config" >> ${yml}
-    echo "data:" >> ${yml}
-    echo "  config: |" >> ${yml}
-    echo "   address-pools:" >> ${yml}
-    echo "    - name: default" >> ${yml}
-    echo "      protocol: layer2" >> ${yml}
-    echo "      addresses:" >> ${yml}
-    echo "      - ${prefix}.100 - ${prefix}.250" >> ${yml}
 
+    yml=resources/global/metallb-config
+    sed -e "s/\${prefix}/${prefix}/g" ${yml}.template.yaml > ${yml}.yaml
     cecho "Applying metallb config map for exposing internal services via public IP addresses ..."
-    cat ${yml}
-    kubectl apply -f ${yml}
-    rm -rf ${yml}
+    cat ${yml}.yaml
+    kubectl apply -f ${yml}.yaml
 }
 
 rm_kind_cluster() {
@@ -224,7 +264,7 @@ rm_kind_cluster() {
 
 setup_kind_cluster() {
     rm_kind_cluster
-    kind create cluster --wait 5m
+    kind create cluster --config=resources/global/kind-config.yaml --wait 5m
     get_kubectl
     get_meshnet
     get_metallb
@@ -249,7 +289,6 @@ build_ondatra() {
 
 setup_ondatra_tests() {
     get_test_deps
-    # get_go
     get_go_test_deps
     get_protoc
     get_kne
@@ -293,20 +332,20 @@ setup_gcp_secret() {
     kubectl annotate secret ixia-pull-secret -n ixiatg-op-system secretsync.ixiatg.com/replicate='true'
 }
 
-load_ceos() {
-    ceos="us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ceos:4.26.1F"
-    docker pull ${ceos}
-    kind load docker-image ${ceos}
+load_dut_img() {
+    img=$(cat resources/global/${1}-${2}.yaml | cut -d\  -f2)
+    cecho "Loading container image for DUT ${2}: ${img} ..."
+    
+    docker pull ${img}
+    kind load docker-image ${img}
 }
 
 load_images() {
     IMG=""
     TAG=""
-    yml=ixia-configmap.yaml
 
-    rm -rf ${yml}
-    cecho "Loading docker images for Ixia-c release ${IXIA_C_RELEASE} ..."
-    curl -kLO https://github.com/open-traffic-generator/ixia-c/releases/download/v${IXIA_C_RELEASE}/${yml}
+    yml=resources/global/${1}-ixia-configmap.yaml
+    cecho "Loading container images for Ixia-c from ${yml} ..."
 
     while read line
     do
@@ -327,50 +366,105 @@ load_images() {
         fi
     done <${yml}
 
-    rm -rf ${yml}
-    load_ceos
+    load_dut_img ${1} ${2}
+}
+
+ghcr_login() {
+    cecho "Enter Github username and personal-access-token (https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)"
+    echo -n "username: "
+    read username
+    echo -n "token: "
+    stty -echo
+    read pat
+    stty echo
+    echo
+
+    echo ${pat} | docker login ghcr.io -u ${username} --password-stdin
+}
+
+generate_topology_configs() {
+    ixia_version=$(grep '"release":' resources/global/${1}-ixia-configmap.yaml | cut -d\" -f4)
+    dut_image=$(cat resources/global/${1}-${2}.yaml | cut -d\  -f2)
+
+    for f in $(ls resources/topology/*.template.txt)
+    do
+        txt=$(echo "${f}" | sed -e "s/.template.txt//g")
+        cat ${txt}.template.txt | \
+            sed -e "s/\${ixia_version}/${ixia_version}/g" | \
+            sed -e "s#\${dut_image}#${dut_image}#" | \
+            tee ${txt}.txt > /dev/null
+    done
 }
 
 setup_repo() {
-    get_gcloud
-    gcloud_auth
-    load_images
+    if [ "${1}" = "ghcr" ]
+    then
+        ghcr_login
+        load_images ${1} ${2}
+    else
+        get_gcloud
+        gcloud_auth
+        load_images ${1} ${2}
+    fi
+    
+    generate_topology_configs ${1} ${2}
+    kubectl apply -f resources/global/${1}-ixia-configmap.yaml
 }
 
 setup_testbed() {
     setup_cluster
-    setup_repo
     setup_test_client
     cecho "Please logout and login again !"
 }
 
+get_knebind_conf() {
+    cd tests
+    KCLI=$(grep "cli:" ${KNEBIND_CONFIG} | cut -d: -f2 | sed -e "s/ //g")
+    KCFG=$(grep "kubecfg:" ${KNEBIND_CONFIG} | cut -d: -f2 | sed -e "s/ //g")
+    KTOP=$(grep "topology:" ${KNEBIND_CONFIG} | cut -d: -f2 | sed -e "s/ //g")
+    KTBD=$(echo ${KTOP} | sed -e "s#/topology/#/testbed/#g")
+    echo ${KTBD}
+    cd -
+}
+
 newtop() {
-    kne_cli -v trace --kubecfg resources/global/kubecfg create resources/topology/ixia-arista-ixia.txt
-    wait_for_all_pods_to_be_ready
+    get_knebind_conf
+
+    cd tests
+    ${KCLI} -v trace --kubecfg ${KCFG} create ${KTOP}
+    wait_for_pod_counts ixia-c 1
+    wait_for_all_pods_to_be_ready -ns ixia-c
+    cd -
 }
 
 rmtop() {
-    kne_cli -v trace --kubecfg resources/global/kubecfg delete resources/topology/ixia-arista-ixia.txt
+    get_knebind_conf
+
+    cd tests
+    ${KCLI} -v trace --kubecfg ${KCFG} delete ${KTOP}
+    wait_for_pod_counts ixia-c 0
+    cd -
 }
 
 run() {
-    name=$(grep -Eo "Test[0-9a-zA-Z]+" ${2})
-    prefix=$(basename ${2} | sed 's/_test.go//g')
-    topo=resources/topology/ixia-arista-ixia.txt
-    tb=resources/testbed/ixia-arista-ixia.txt
+    name=$(grep -Eo "Test[0-9a-zA-Z]+" ${1})
+    prefix=$(basename ${1} | sed 's/_test.go//g')
+
+    get_knebind_conf
 
     mkdir -p logs
-    kne_cli -v trace --kubecfg resources/global/kubecfg topology push ${topo} arista1 resources/dutconfig/${prefix}/set_dut.txt || exit 1
     cecho "Staring tests, output will be stored in logs/${prefix}.log"
     CGO_ENABLED=0 go test -v -timeout 60s -run ${name} tests/tests \
-        -config ../resources/global/kneconfig.yaml \
-        -testbed ../${tb} | tee logs/${prefix}.log \
+        -config ${KNEBIND_CONFIG} \
+        -testbed ${KTBD} | tee logs/${prefix}.log \
     || true
-    kne_cli -v trace --kubecfg resources/global/kubecfg topology push ${topo} arista1 resources/dutconfig/${prefix}/unset_dut.txt
 }
 
 case $1 in
     *   )
-        $1 ${@} || cecho "usage: $0 [name of any function in script]"
+        # shift positional arguments so that arg 2 becomes arg 1, etc.
+        cmd=${1}
+        shift 1
+        ${cmd} ${@} || cecho "usage: $0 [name of any function in script]"
     ;;
 esac

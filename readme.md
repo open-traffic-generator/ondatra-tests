@@ -9,11 +9,11 @@ This repository consists of Open Traffic Generator tests written in [gosnappi](h
    - 6-8 CPU cores
    - 128GB Persistent Storage
 
-2. Ensure you have a valid GCP account
+2. Ensure you have a valid Github account and (optionally) GCP account
 
 3. None of the steps below should be executed as a sudo. The script will automatically prompt for:
    - sudo password when needed
-   - GCP credentials when needed
+   - Github or GCP credentials when needed
 
 4. Patience - since building and running tests might take longer than usual the first time (due to large number of generated code inside ondatra)
 
@@ -30,7 +30,21 @@ This repository consists of Open Traffic Generator tests written in [gosnappi](h
 
    > You may be prompted to logout, login and re-execute the same command again.
 
-2. Execute a sample test
+2. Load all Ixia-c images
+   - Obtain images over GCP (requires a valid GCP account with access to project [kt-nts-athena-dev](https://console.cloud.google.com/home/dashboard?project=kt-nts-athena-dev))
+
+   ```sh
+   ./do.sh setup_repo gcp arista
+   ```
+
+   - Or, obtain images over docker.io and ghcr.io (requires a valid github account with [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token))
+
+   ```sh
+   ./do.sh setup_repo ghcr arista
+   ```
+
+3. Execute a sample test.  
+   Operations below are performed based on contents of `resources/global/knebind-config.yaml` which can be changed (e.g. when a different topology config is needed).
 
    ```sh
    # create topology if it does not exist

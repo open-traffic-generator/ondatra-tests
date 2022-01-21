@@ -19,11 +19,14 @@ import (
 )
 
 func TestIsisL2P2pAdj(t *testing.T) {
+	helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/isis_l2_p2p_adj/set_dut.txt"})
+	defer helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/isis_l2_p2p_adj/unset_dut.txt"})
+
 	ate := ondatra.ATE(t, "ate1")
 	ondatra.ATE(t, "ate2")
 
 	otg := ate.OTG()
-	defer helpers.CleanupTest(otg, t)
+	defer helpers.CleanupTest(otg, t, true)
 
 	config, expected := isisL2P2pAdjConfig(t, otg)
 	otg.PushConfig(t, config)
