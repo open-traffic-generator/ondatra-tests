@@ -107,12 +107,18 @@ get_docker() {
     curl -fsL https://download.docker.com/linux/ubuntu/gpg 2>&1 > /dev/null \
         || sudo rm -rf /etc/apt/sources.list.d/docker.list
 
+    sudo docker version
+}
+
+use_docker_without_sudo() {
+    docker version 2> /dev/null && return
+
     cecho "Adding $USER to group docker"
     # use docker without sudo
-    sudo groupadd docker || true
+    sudo groupadd docker 2> /dev/null || true
     sudo usermod -aG docker $USER \
-    && newgrp docker \
-    && docker version
+    && newgrp docker
+    docker version
 }
 
 get_kind() {
@@ -267,6 +273,7 @@ setup_kind_cluster() {
 setup_cluster() {
     get_cluster_deps \
     && get_docker \
+    && use_docker_without_sudo \
     && get_go \
     && get_kind \
     && setup_kind_cluster
