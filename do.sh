@@ -10,7 +10,6 @@ OPERATOR_RELEASE=0.0.70
 
 KNEBIND_CONFIG="../resources/global/knebind-config.yaml"
 
-set -e
 # source path for current session
 . $HOME/.profile
 
@@ -44,8 +43,8 @@ cecho() {
 }
 
 get_cluster_deps() {
-    sudo apt-get update
-    sudo apt-get install -y --no-install-recommends curl git vim apt-transport-https ca-certificates gnupg lsb-release
+    sudo apt-get update \
+    && sudo apt-get install -y --no-install-recommends curl git vim apt-transport-https ca-certificates gnupg lsb-release
 }
 
 get_test_deps() {
@@ -59,29 +58,26 @@ get_go() {
     go version 2> /dev/null && return
     cecho "Installing Go ..."
     # install golang per https://golang.org/doc/install#tarball
-    curl -kL https://dl.google.com/go/${GO_TARGZ} | sudo tar -C /usr/local/ -xzf -
-    echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> $HOME/.profile
-    # source path for current session
-    . $HOME/.profile
-
-    go version
+    curl -kL https://dl.google.com/go/${GO_TARGZ} | sudo tar -C /usr/local/ -xzf - \
+    && echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> $HOME/.profile \
+    && . $HOME/.profile \
+    && go version
 }
 
 get_go_test_deps() {
-    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
-    go install golang.org/x/tools/cmd/goimports@v0.1.7
-    go mod download
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26 \
+    && go install golang.org/x/tools/cmd/goimports@v0.1.7 \
+    && go mod download
 }
 
 get_protoc() {
-    curl -kLO https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}
-    rm -rf $HOME/.local
-	unzip ${PROTOC_ZIP} -d $HOME/.local
-	rm -f ${PROTOC_ZIP}
-    echo 'export PATH=$PATH:$HOME/.local/bin' >> $HOME/.profile
-    # source path for current session
-    . $HOME/.profile
-	protoc --version
+    curl -kLO https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP} \
+    && rm -rf $HOME/.local \
+	&& unzip ${PROTOC_ZIP} -d $HOME/.local \
+	&& rm -f ${PROTOC_ZIP} \
+    && echo 'export PATH=$PATH:$HOME/.local/bin' >> $HOME/.profile \
+    && . $HOME/.profile \
+	&& protoc --version
 }
 
 get_docker() {
@@ -99,12 +95,12 @@ get_docker() {
     # hack to not detect MitM when a corporate proxy is sitting in between
     conf=/etc/apt/apt.conf.d/99docker-skip-cert-verify.conf
     curl -fsL https://download.docker.com/linux/ubuntu/gpg 2>&1 > /dev/null \
-        || echo "Acquire { https::Verify-Peer false }" | sudo tee -a "$conf" \
+        || echo "Acquire { https::Verify-Peer false }" | sudo tee "$conf" \
         && sudo mkdir -p /etc/docker \
         && echo '{ "registry-mirrors": ["https://docker-remote.artifactorylbj.it.keysight.com"] }' | sudo tee -a /etc/docker/daemon.json
     
-    sudo apt-get update
-    sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+    sudo apt-get update \
+    && sudo apt-get install -y docker-ce docker-ce-cli containerd.io || exit 1
     # partially undo hack
     sudo rm -rf "$conf"
     # remove docker.list from apt-get if hack is applied (otherwise apt-get update will fail)
@@ -118,7 +114,6 @@ get_docker() {
 
     sudo docker version
     cecho "Please logout, login and execute previously entered command again !"
-    exit 0
 }
 
 get_kind() {
@@ -133,10 +128,10 @@ get_kubectl() {
 get_kne() {
     cecho "Getting kne commit: $KNE_COMMIT ..."
     rm -rf kne
-    git clone https://github.com/google/kne
-    cd kne && git checkout $KNE_COMMIT && cd -
-    cd kne/kne_cli && go install && cd -
-    rm -rf kne
+    git clone https://github.com/google/kne \
+    && cd kne && git checkout $KNE_COMMIT && cd - \
+    && cd kne/kne_cli && go install && cd - \
+    && rm -rf kne
 }
 
 gcloud_auth() {
@@ -216,21 +211,21 @@ wait_for_pod_counts() {
 
 get_meshnet() {
     cecho "Getting meshnet-cni commit: $MESHNET_COMMIT ..."
-    rm -rf meshnet-cni && git clone https://github.com/networkop/meshnet-cni
-    cd meshnet-cni && git checkout $MESHNET_COMMIT
-    kubectl apply -k manifests/base
-    wait_for_pod_counts meshnet 1
-    wait_for_all_pods_to_be_ready -ns meshnet
-
-    cd -
-    rm -rf meshnet-cni
+    rm -rf meshnet-cni && git clone https://github.com/networkop/meshnet-cni \
+    && cd meshnet-cni \
+    && git checkout $MESHNET_COMMIT \
+    && kubectl apply -k manifests/base \
+    && wait_for_pod_counts meshnet 1 \
+    && wait_for_all_pods_to_be_ready -ns meshnet \
+    && cd - \
+    && rm -rf meshnet-cni
 }
 
 get_ixia_c_operator() {
     cecho "Getting ixia-c-operator ${OPERATOR_RELEASE} ..."
-    kubectl apply -f https://github.com/open-traffic-generator/ixia-c-operator/releases/download/v${OPERATOR_RELEASE}/ixiatg-operator.yaml
-    wait_for_pod_counts ixiatg-op-system 1
-    wait_for_all_pods_to_be_ready -ns ixiatg-op-system
+    kubectl apply -f https://github.com/open-traffic-generator/ixia-c-operator/releases/download/v${OPERATOR_RELEASE}/ixiatg-operator.yaml \
+    && wait_for_pod_counts ixiatg-op-system 1 \
+    && wait_for_all_pods_to_be_ready -ns ixiatg-op-system
 }
 
 rm_ixia_c_operator() {
@@ -240,20 +235,20 @@ rm_ixia_c_operator() {
 
 get_metallb() {
     cecho "Getting metallb ..."
-    kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/namespace.yaml
-    kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)" 
-    kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml
+    kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/namespace.yaml \
+    && kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)" \
+    && kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml \
     
-    wait_for_pod_counts metallb-system 1
-    wait_for_all_pods_to_be_ready -ns metallb-system
+    && wait_for_pod_counts metallb-system 1 \
+    && wait_for_all_pods_to_be_ready -ns metallb-system || exit 1
 
     prefix=$(docker network inspect -f '{{.IPAM.Config}}' kind | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" | tail -n 1)
 
     yml=resources/global/metallb-config
-    sed -e "s/\${prefix}/${prefix}/g" ${yml}.template.yaml > ${yml}.yaml
-    cecho "Applying metallb config map for exposing internal services via public IP addresses ..."
-    cat ${yml}.yaml
-    kubectl apply -f ${yml}.yaml
+    sed -e "s/\${prefix}/${prefix}/g" ${yml}.template.yaml > ${yml}.yaml \
+    && cecho "Applying metallb config map for exposing internal services via public IP addresses ..." \
+    && cat ${yml}.yaml \
+    && kubectl apply -f ${yml}.yaml
 }
 
 rm_kind_cluster() {
@@ -263,36 +258,36 @@ rm_kind_cluster() {
 }
 
 setup_kind_cluster() {
-    rm_kind_cluster
-    kind create cluster --config=resources/global/kind-config.yaml --wait 5m
-    get_kubectl
-    get_meshnet
-    get_metallb
-    get_ixia_c_operator
+    rm_kind_cluster \
+    && kind create cluster --config=resources/global/kind-config.yaml --wait 5m \
+    && get_kubectl \
+    && get_meshnet \
+    && get_metallb \
+    && get_ixia_c_operator
 }
 
 setup_cluster() {
-    get_cluster_deps
-    get_docker
-    get_go
-    get_kind
-    setup_kind_cluster
+    get_cluster_deps \
+    && get_docker \
+    && get_go \
+    && get_kind \
+    && setup_kind_cluster
 }
 
 build_ondatra() {
-    cd ondatra
-    go mod tidy -compat=1.17
-    go generate -v ./...
-    CGO_ENABLED=0 go build -v ./...
-    cd -
+    cd ondatra \
+    && go mod tidy -compat=1.17 \
+    && go generate -v ./... \
+    && CGO_ENABLED=0 go build -v ./... \
+    && cd -
 }
 
 setup_ondatra_tests() {
-    get_test_deps
-    get_go_test_deps
-    get_protoc
-    get_kne
-    build_ondatra
+    get_test_deps \
+    && get_go_test_deps \
+    && get_protoc \
+    && get_kne \
+    && build_ondatra
 }
 
 rm_test_client() {
@@ -307,8 +302,8 @@ setup_test_client() {
     # docker build -t ondatra-tests:client .
     # docker run -td --network host --name ondatra-tests ondatra-tests:client
     # docker cp $HOME/.kube/config ondatra-tests:/home/ondatra-tests/resources/kneconfig/
-    setup_ondatra_tests
-    cp $HOME/.kube/config resources/global/kubecfg
+    setup_ondatra_tests \
+    && cp $HOME/.kube/config resources/global/kubecfg
 }
 
 # TODO: this is currently not exercised anywhere in the script
@@ -411,10 +406,10 @@ setup_repo() {
     kubectl apply -f resources/global/${1}-ixia-configmap.yaml
 }
 
-setup_testbed() {
-    setup_cluster
-    setup_test_client
-    cecho "Please logout and login again !"
+setup() {
+    setup_cluster \
+    && setup_test_client \
+    && cecho "Please logout and login again !"
 }
 
 get_knebind_conf() {
