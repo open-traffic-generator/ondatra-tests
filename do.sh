@@ -119,6 +119,7 @@ use_docker_without_sudo() {
     sudo usermod -aG docker $USER
     newgrp docker
     docker version
+    exit 0
 }
 
 get_kind() {
