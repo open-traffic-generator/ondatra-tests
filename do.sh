@@ -116,8 +116,8 @@ use_docker_without_sudo() {
     cecho "Adding $USER to group docker"
     # use docker without sudo
     sudo groupadd docker 2> /dev/null || true
-    sudo usermod -aG docker $USER \
-    && newgrp docker
+    sudo usermod -aG docker $USER
+    newgrp docker
     docker version
 }
 
