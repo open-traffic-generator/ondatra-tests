@@ -25,10 +25,8 @@ This repository consists of Open Traffic Generator tests written in [gosnappi](h
 
    ```sh
    git clone --recurse-submodules https://github.com/open-traffic-generator/ondatra-tests.git
-   cd ondatra-tests && ./do.sh setup_testbed
+   cd ondatra-tests && ./do.sh setup
    ```
-
-   > You may be prompted to logout, login and re-execute the same command again.
 
 2. Load all Ixia-c images
    - Obtain images over GCP (requires a valid GCP account with access to project [kt-nts-athena-dev](https://console.cloud.google.com/home/dashboard?project=kt-nts-athena-dev))

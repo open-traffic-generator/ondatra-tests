@@ -110,10 +110,9 @@ get_docker() {
     cecho "Adding $USER to group docker"
     # use docker without sudo
     sudo groupadd docker || true
-    sudo usermod -aG docker $USER
-
-    sudo docker version
-    cecho "Please logout, login and execute previously entered command again !"
+    sudo usermod -aG docker $USER \
+    && newgrp docker \
+    && docker version
 }
 
 get_kind() {
@@ -238,7 +237,6 @@ get_metallb() {
     kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/namespace.yaml \
     && kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)" \
     && kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml \
-    
     && wait_for_pod_counts metallb-system 1 \
     && wait_for_all_pods_to_be_ready -ns metallb-system || exit 1
 
