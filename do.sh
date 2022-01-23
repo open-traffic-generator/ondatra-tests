@@ -83,7 +83,7 @@ get_protoc() {
 get_docker() {
     sudo docker version 2> /dev/null && return
     cecho "Installing docker ..."
-    sudo apt-get remove docker docker-engine docker.io containerd runc 2> /dev/null || true
+    sudo apt-get remove docker docker-engine docker.io containerd runc 2> /dev/null
 
     curl -kfsSL https://download.docker.com/linux/ubuntu/gpg \
         | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
@@ -115,7 +115,7 @@ use_docker_without_sudo() {
 
     cecho "Adding $USER to group docker"
     # use docker without sudo
-    sudo groupadd docker 2> /dev/null || true
+    sudo groupadd docker 2> /dev/null
     sudo usermod -aG docker $USER
     newgrp docker
     docker version
@@ -457,8 +457,7 @@ run() {
     cecho "Staring tests, output will be stored in logs/${prefix}.log"
     CGO_ENABLED=0 go test -v -timeout 60s -run ${name} tests/tests \
         -config ${KNEBIND_CONFIG} \
-        -testbed ${KTBD} | tee logs/${prefix}.log \
-    || true
+        -testbed ${KTBD} | tee logs/${prefix}.log
 }
 
 case $1 in
