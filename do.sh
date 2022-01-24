@@ -385,7 +385,7 @@ ghcr_login() {
 
 generate_topology_configs() {
     ixia_version=$(grep '"release":' resources/global/${1}-ixia-configmap.yaml | cut -d\" -f4)
-    dut_image=$(cat resources/global/${1}-${2}.yaml | cut -d\  -f2)
+    dut_image=$(cat resources/global/${1}-${2}.yaml | grep "image: " | cut -d\  -f2)
 
     for f in $(ls resources/topology/*.template.txt)
     do
