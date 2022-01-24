@@ -15,6 +15,6 @@
 # vendor/
 /resources/global/kubecfg
 /resources/global/metallb-config.yaml
-/resources/topology
+/resources/topology/*.txt
 !/resources/topology/*.template.txt
 /logs

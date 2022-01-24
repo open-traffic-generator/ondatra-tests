@@ -1,0 +1,75 @@
+name: "ixia-c"
+nodes: {
+    name: "ixia-c-port1"
+    type: IXIA_TG
+    version: "${ixia_version}"
+    services: {
+        key: 5555
+        value: {
+            inside: 5555
+            outside: 0
+        }
+    }
+    services: {
+        key: 50071
+        value: {
+            inside: 50071
+            outside: 0
+        }
+    }
+}
+nodes: {
+    name: "cisco1"
+    type: CISCO_CXR
+    config: {
+        config_path: "/mnt/flash"
+        config_file: "startup-config"
+        file: "../dutconfig/init_cisco.txt"
+    	image: "${dut_image}"
+    }
+    services:{
+        key: 22
+        value: {
+            name: "ssh"
+            inside: 22
+        }
+    }
+    services:{
+        key: 6030 
+        value: {
+            name: "gnmi"
+            inside: 6030
+        }
+    }
+}
+nodes: {
+    name: "ixia-c-port2"
+    type: IXIA_TG
+    version: "${ixia_version}"
+    services: {
+        key: 5555
+        value: {
+            inside: 5555
+            outside: 0
+        }
+    }
+    services: {
+        key: 50071
+        value: {
+            inside: 50071
+            outside: 0
+        }
+    }
+}
+links: {
+    a_node: "ixia-c-port1"
+    a_int: "eth1"
+    z_node: "cisco1"
+    z_int: "eth1"
+}
+links: {
+    a_node: "cisco1"
+    a_int: "eth2"
+    z_node: "ixia-c-port2"
+    z_int: "eth1"
+}
