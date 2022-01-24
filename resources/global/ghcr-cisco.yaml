@@ -1,0 +1,2 @@
+# TODO: replace existing image with an actual image of cisco DUT
+image: ghcr.io/open-traffic-generator/cxr:latest
