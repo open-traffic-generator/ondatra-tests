@@ -1,12 +1,14 @@
 # ONDATRA Tests for Open Traffic Generator
 
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![license](https://img.shields.io/badge/license-MIT-green.svg)](https://en.wikipedia.org/wiki/MIT_License)
+
 This repository consists of Open Traffic Generator tests written in [gosnappi](https://pkg.go.dev/github.com/open-traffic-generator/snappi/gosnappi) utilizing [ONDATRA](https://github.com/openconfig/ondatra).
 
 > NOTE: This repository is very much work in progress, hence:
 > - Sending configuration to and fetching stats from DUT in tests is not done using gNMI
 > - Template files (containing container image locations) for some DUTs are missing (e.g. cisco, juniper, nokia, frr, etc.)
 > - Tests themselves are subject to change
-
 
 ### Prerequisites
 
