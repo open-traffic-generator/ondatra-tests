@@ -454,7 +454,7 @@ run() {
     get_knebind_conf
 
     mkdir -p logs
-    cecho "Staring tests, output will be stored in logs/${prefix}.log"
+    cecho "Starting tests, output will be stored in logs/${prefix}.log"
     CGO_ENABLED=0 go test -v -timeout 60s -run ${name} tests/tests \
         -config ${KNEBIND_CONFIG} \
         -testbed ${KTBD} | tee logs/${prefix}.log
