@@ -16,13 +16,136 @@ import (
 
 	"github.com/open-traffic-generator/snappi/gosnappi"
 	"github.com/openconfig/ondatra"
+	"github.com/openconfig/ygot/ygot"
 
 	"tests/tests/helpers"
+
+	oc "github.com/openconfig/ondatra/telemetry"
 )
 
+const (
+	routerId = 3333
+	plenIPv4 = 24
+	plenIPv6 = 64
+)
+
+var (
+	dutSrc = helpers.Attributes{
+		Desc:    "DUT to ATE source",
+		IPv4:    "1.1.1.3",
+		IPv6:    "0:1:1:1::3",
+		IPv4Len: plenIPv4,
+		IPv6Len: plenIPv6,
+	}
+
+	ateSrc = helpers.Attributes{
+		IPv4:    "1.1.1.1",
+		IPv6:    "0:1:1:1::1",
+		IPv4Len: plenIPv4,
+		IPv6Len: plenIPv6,
+	}
+
+	dutDst = helpers.Attributes{
+		Desc:    "DUT to ATE destination",
+		IPv4:    "2.2.2.3",
+		IPv6:    "0:2:2:2::3",
+		IPv4Len: plenIPv4,
+		IPv6Len: plenIPv6,
+	}
+
+	ateDst = helpers.Attributes{
+		IPv4:    "2.2.2.2",
+		IPv6:    "0:2:2:2::2",
+		IPv4Len: plenIPv4,
+		IPv6Len: plenIPv6,
+	}
+)
+
+// configureDUT configures all the interfaces on the DUT.
+func configureDUT(t *testing.T, dut *ondatra.DUTDevice) {
+	dc := dut.Config()
+
+	i1 := dutSrc.NewInterface(dut.Port(t, "port1").Name())
+	dc.Interface(i1.GetName()).Replace(t, i1)
+
+	i2 := dutDst.NewInterface(dut.Port(t, "port2").Name())
+	dc.Interface(i2.GetName()).Replace(t, i2)
+}
+
+type bgpNeighbor struct {
+	as         uint32
+	neighborip string
+	isV4       bool
+}
+
+func buildNbrList() []*bgpNeighbor {
+	nbr1v4 := &bgpNeighbor{as: 1111, neighborip: ateSrc.IPv4, isV4: true}
+	nbr1v6 := &bgpNeighbor{as: 1111, neighborip: ateSrc.IPv6, isV4: false}
+	nbr2v4 := &bgpNeighbor{as: 2222, neighborip: ateDst.IPv4, isV4: true}
+	nbr2v6 := &bgpNeighbor{as: 2222, neighborip: ateDst.IPv6, isV4: false}
+	return []*bgpNeighbor{nbr1v4, nbr2v4, nbr1v6, nbr2v6}
+}
+
+func bgpAppendNbr(as uint32, nbrs []*bgpNeighbor) *oc.NetworkInstance_Protocol_Bgp {
+	bgp := &oc.NetworkInstance_Protocol_Bgp{}
+	g := bgp.GetOrCreateGlobal()
+	g.As = ygot.Uint32(as)
+
+	for _, nbr := range nbrs {
+		if nbr.isV4 {
+			nv4 := bgp.GetOrCreateNeighbor(nbr.neighborip)
+			nv4.PeerAs = ygot.Uint32(nbr.as)
+			nv4.Enabled = ygot.Bool(true)
+			nv4.GetOrCreateAfiSafi(oc.BgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST).Enabled = ygot.Bool(true)
+		} else {
+			nv6 := bgp.GetOrCreateNeighbor(nbr.neighborip)
+			nv6.PeerAs = ygot.Uint32(nbr.as)
+			nv6.Enabled = ygot.Bool(true)
+			nv6.GetOrCreateAfiSafi(oc.BgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST).Enabled = ygot.Bool(true)
+		}
+	}
+	return bgp
+
+}
+
+func bgpDeleteNbr(nbrs []*bgpNeighbor) *oc.NetworkInstance_Protocol_Bgp {
+	bgp := &oc.NetworkInstance_Protocol_Bgp{}
+	for _, nbr := range nbrs {
+		bgp.DeleteNeighbor(nbr.neighborip)
+	}
+	return bgp
+}
+
+func unsetDutConfig(t *testing.T, dut *ondatra.DUTDevice, nbrList []*bgpNeighbor) {
+	helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_install/unset_dut.txt"})
+
+	// De-Configure BGP+Neighbors on the DUT
+	t.Logf("Start De-configuring DUT BGP Config")
+	dutConfPath := dut.Config().NetworkInstance("default").Protocol(oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP, "BGP").Bgp()
+	helpers.LogYgot(t, "DUT BGP Config before", dutConfPath, dutConfPath.Get(t))
+	dutConfPath.Replace(t, nil)
+	dutConf := bgpDeleteNbr(nbrList)
+	dutConfPath.Replace(t, dutConf)
+}
+
 func TestBGPRouteInstall(t *testing.T) {
-	helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_install/set_dut.txt"})
-	defer helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_install/unset_dut.txt"})
+	// helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_install/set_dut.txt"})
+
+	dut := ondatra.DUT(t, "dut")
+	// Configure interface on the DUT
+	t.Logf("Start DUT interface Config")
+	configureDUT(t, dut)
+
+	// Configure BGP+Neighbors on the DUT
+	t.Logf("Start DUT BGP Config")
+	dutConfPath := dut.Config().NetworkInstance("default").Protocol(oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP, "BGP").Bgp()
+	helpers.LogYgot(t, "DUT BGP Config before", dutConfPath, dutConfPath.Get(t))
+	dutConfPath.Replace(t, nil)
+	nbrList := buildNbrList()
+	dutConf := bgpAppendNbr(routerId, nbrList)
+	dutConfPath.Replace(t, dutConf)
+
+	defer unsetDutConfig(t, dut, nbrList)
 
 	ate := ondatra.ATE(t, "ate1")
 	ondatra.ATE(t, "ate2")

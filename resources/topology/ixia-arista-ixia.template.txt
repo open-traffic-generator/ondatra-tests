@@ -22,6 +22,13 @@ nodes: {
     name: "arista1"
     type: ARISTA_CEOS
     config: {
+        cert: {
+            self_signed: {
+                cert_name: "gnmiCert.pem",
+                key_name: "gnmiCertKey.pem",
+                key_size: 4096,
+            }
+        }
         config_path: "/mnt/flash"
         config_file: "startup-config"
         file: "../dutconfig/init_arista.txt"
