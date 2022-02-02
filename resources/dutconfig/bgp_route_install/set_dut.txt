@@ -1,12 +1,10 @@
 interface Ethernet1
     no switchport
     ip address 1.1.1.3/24
-    ipv6 address 0:1:1:1::3/64
 !
 interface Ethernet2
     no switchport
     ip address 2.2.2.3/24
-    ipv6 address 0:2:2:2::3/64
 !
 ip routing
 !

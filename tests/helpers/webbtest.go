@@ -1,4 +1,3 @@
-// Package wbbtest instruments coverage for WBB vendor tests.
 package helpers
 
 import (
@@ -10,6 +9,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/openconfig/ondatra"
 	oc "github.com/openconfig/ondatra/telemetry"
 	"github.com/openconfig/ygot/ygot"
 )
@@ -25,6 +25,24 @@ type Attributes struct {
 	MTU     uint16
 }
 
+type BgpNeighbor struct {
+	As         uint32
+	NeighborIP string
+	IsV4       bool
+}
+
+var InterfaceMap = map[string]string{
+	"eth1": "Ethernet1",
+	"eth2": "Ethernet2",
+}
+
+// RemoveInterface returns a new *oc.Interface configured no sub-interface
+func RemoveInterface(name string) *oc.Interface {
+	intf := &oc.Interface{Name: ygot.String(name)}
+	intf.DeleteSubinterface(0)
+	return intf
+}
+
 // NewInterface returns a new *oc.Interface configured with these attributes
 func (a *Attributes) NewInterface(name string) *oc.Interface {
 	return a.ConfigInterface(&oc.Interface{Name: ygot.String(name)})
@@ -35,7 +53,7 @@ func (a *Attributes) ConfigInterface(intf *oc.Interface) *oc.Interface {
 	if a.Desc != "" {
 		intf.Description = ygot.String(a.Desc)
 	}
-	intf.Type = oc.IETFInterfaces_InterfaceType_other
+	intf.Type = oc.IETFInterfaces_InterfaceType_ethernetCsmacd
 
 	intf.Enabled = ygot.Bool(true)
 	e := intf.GetOrCreateEthernet()
@@ -45,27 +63,25 @@ func (a *Attributes) ConfigInterface(intf *oc.Interface) *oc.Interface {
 
 	s := intf.GetOrCreateSubinterface(0)
 
-	if a.IPv4 != "" {
-		s4 := s.GetOrCreateIpv4()
-		// s4.Enabled = ygot.Bool(true)
-		// if a.MTU > 0 {
-		// 	s4.Mtu = ygot.Uint16(a.MTU)
-		// }
-		a4 := s4.GetOrCreateAddress(a.IPv4)
-		if a.IPv4Len > 0 {
-			a4.PrefixLength = ygot.Uint8(a.IPv4Len)
-		}
+	// if a.IPv4 != "" {
+	// 	s4 := s.GetOrCreateIpv4()
+	// 	// if a.MTU > 0 {
+	// 	// 	s4.Mtu = ygot.Uint16(a.MTU)
+	// 	// }
+	// 	a4 := s4.GetOrCreateAddress(a.IPv4)
+	// 	if a.IPv4Len > 0 {
+	// 		a4.PrefixLength = ygot.Uint8(a.IPv4Len)
+	// 	}
 
-		// a4.AddrType = oc.AristaIntfAugments_AristaAddrType_PRIMARY
-	}
+	// 	// a4.AddrType = oc.AristaIntfAugments_AristaAddrType_PRIMARY
+	// }
 
 	if a.IPv6 != "" {
 		s6 := s.GetOrCreateIpv6()
-		// if a.MTU > 0 {
-		// 	s6.Mtu = ygot.Uint32(uint32(a.MTU))
-		// }
+		if a.MTU > 0 {
+			s6.Mtu = ygot.Uint32(uint32(a.MTU))
+		}
 
-		// s6.Enabled = ygot.Bool(true)
 		a6 := s6.GetOrCreateAddress(a.IPv6)
 		if a.IPv6Len > 0 {
 			a6.PrefixLength = ygot.Uint8(a.IPv6Len)
@@ -75,6 +91,49 @@ func (a *Attributes) ConfigInterface(intf *oc.Interface) *oc.Interface {
 
 	}
 	return intf
+}
+
+// BgpAppendNbr configure BGP Neighbors an OpenConfig BGP Protocol Neighbor with these attributes.
+func BgpAppendNbr(as uint32, nbrs []*BgpNeighbor) *oc.NetworkInstance_Protocol_Bgp {
+	bgp := &oc.NetworkInstance_Protocol_Bgp{}
+	g := bgp.GetOrCreateGlobal()
+	g.As = ygot.Uint32(as)
+
+	for _, nbr := range nbrs {
+		if nbr.IsV4 {
+			nv4 := bgp.GetOrCreateNeighbor(nbr.NeighborIP)
+			nv4.PeerAs = ygot.Uint32(nbr.As)
+			nv4.Enabled = ygot.Bool(true)
+			nv4.GetOrCreateAfiSafi(oc.BgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST).Enabled = ygot.Bool(true)
+		} else {
+			nv6 := bgp.GetOrCreateNeighbor(nbr.NeighborIP)
+			nv6.PeerAs = ygot.Uint32(nbr.As)
+			nv6.Enabled = ygot.Bool(true)
+			nv6.GetOrCreateAfiSafi(oc.BgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST).Enabled = ygot.Bool(true)
+		}
+	}
+	return bgp
+}
+
+// BgpDeleteNbr delete BGP Neighbors an OpenConfig BGP Protocol Neighbor with given IP.
+func BgpDeleteNbr(nbrs []*BgpNeighbor) *oc.NetworkInstance_Protocol_Bgp {
+	bgp := &oc.NetworkInstance_Protocol_Bgp{}
+	for _, nbr := range nbrs {
+		bgp.DeleteNeighbor(nbr.NeighborIP)
+	}
+	return bgp
+}
+
+func VerifyPortsUp(t *testing.T, dev *ondatra.Device) {
+	t.Helper()
+	for _, p := range dev.Ports() {
+		status := dev.Telemetry().Interface(InterfaceMap[p.Name()]).OperStatus().Get(t)
+		if want := oc.Interface_OperStatus_UP; status != want {
+			t.Errorf("%s Status: got %v, want %v", p, status, want)
+		} else {
+			t.Logf("%s Status: got %v, want %v", p, status, want)
+		}
+	}
 }
 
 // StripLen returns a cidr string with the prefix-length suffix removed.
