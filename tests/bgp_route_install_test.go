@@ -22,57 +22,83 @@ import (
 	oc "github.com/openconfig/ondatra/telemetry"
 )
 
-const (
-	routerId = 3333
+type bgpRouteInstallParam struct {
+	routerID int
+	srcAS    int
+	dstAS    int
+	dutSrc   helpers.Attributes
+	dutDst   helpers.Attributes
+	ateSrc   helpers.Attributes
+	ateDst   helpers.Attributes
+}
+
+var (
+	bgpRouteInstallParams = bgpRouteInstallParam{
+		routerID: 3333,
+		srcAS:    1111,
+		dstAS:    2222,
+		dutSrc: helpers.Attributes{
+			IPv4:    "1.1.1.3",
+			IPv6:    "0:1:1:1::3",
+			IPv4Len: 24,
+			IPv6Len: 64,
+		},
+		dutDst: helpers.Attributes{
+			IPv4:    "2.2.2.3",
+			IPv6:    "0:2:2:2::3",
+			IPv4Len: 24,
+			IPv6Len: 64,
+		},
+		ateSrc: helpers.Attributes{
+			IPv4:    "1.1.1.1",
+			IPv6:    "0:1:1:1::1",
+			IPv4Len: 24,
+			IPv6Len: 64,
+		},
+		ateDst: helpers.Attributes{
+			IPv4:    "2.2.2.2",
+			IPv6:    "0:2:2:2::2",
+			IPv4Len: 24,
+			IPv6Len: 64,
+		},
+	}
 )
 
-func routeInstallConfigureInterface(t *testing.T, dut *ondatra.DUTDevice, cfg gosnappi.Config) {
+func routeInstallConfigureInterface(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start DUT Interface Config")
 	dc := dut.Config()
 
-	dutSrc := helpers.Attributes{
-		IPv4:    cfg.Devices().Items()[0].Bgp().Ipv4Interfaces().Items()[0].Peers().Items()[0].PeerAddress(),
-		IPv6:    cfg.Devices().Items()[0].Bgp().Ipv6Interfaces().Items()[0].Peers().Items()[0].PeerAddress(),
-		IPv4Len: 24,
-		IPv6Len: 64,
-	}
-	i1 := dutSrc.NewInterface(helpers.InterfaceMap[dut.Port(t, "port1").Name()])
+	i1 := bgpRouteInstallParams.dutSrc.NewInterface(helpers.InterfaceMap[dut.Port(t, "port1").Name()])
 	dc.Interface(i1.GetName()).Replace(t, i1)
 
-	dutDst := helpers.Attributes{
-		IPv4:    cfg.Devices().Items()[1].Bgp().Ipv4Interfaces().Items()[0].Peers().Items()[0].PeerAddress(),
-		IPv6:    cfg.Devices().Items()[1].Bgp().Ipv6Interfaces().Items()[0].Peers().Items()[0].PeerAddress(),
-		IPv4Len: 24,
-		IPv6Len: 64,
-	}
-	i2 := dutDst.NewInterface(helpers.InterfaceMap[dut.Port(t, "port2").Name()])
+	i2 := bgpRouteInstallParams.dutDst.NewInterface(helpers.InterfaceMap[dut.Port(t, "port2").Name()])
 	dc.Interface(i2.GetName()).Replace(t, i2)
 }
 
-func routeInstallBuildNbrList(cfg gosnappi.Config) []*helpers.BgpNeighbor {
-	nbr1v4 := &helpers.BgpNeighbor{As: uint32(cfg.Devices().Items()[0].Bgp().Ipv4Interfaces().Items()[0].Peers().Items()[0].AsNumber()), NeighborIP: cfg.Devices().Items()[0].Ethernets().Items()[0].Ipv4Addresses().Items()[0].Address(), IsV4: true}
-	nbr1v6 := &helpers.BgpNeighbor{As: uint32(cfg.Devices().Items()[0].Bgp().Ipv6Interfaces().Items()[0].Peers().Items()[0].AsNumber()), NeighborIP: cfg.Devices().Items()[0].Ethernets().Items()[0].Ipv6Addresses().Items()[0].Address(), IsV4: false}
-	nbr2v4 := &helpers.BgpNeighbor{As: uint32(cfg.Devices().Items()[1].Bgp().Ipv4Interfaces().Items()[0].Peers().Items()[0].AsNumber()), NeighborIP: cfg.Devices().Items()[1].Ethernets().Items()[0].Ipv4Addresses().Items()[0].Address(), IsV4: true}
-	nbr2v6 := &helpers.BgpNeighbor{As: uint32(cfg.Devices().Items()[1].Bgp().Ipv6Interfaces().Items()[0].Peers().Items()[0].AsNumber()), NeighborIP: cfg.Devices().Items()[1].Ethernets().Items()[0].Ipv6Addresses().Items()[0].Address(), IsV4: false}
+func routeInstallBuildNbrList() []*helpers.BgpNeighbor {
+	nbr1v4 := &helpers.BgpNeighbor{As: uint32(bgpRouteInstallParams.srcAS), NeighborIP: bgpRouteInstallParams.ateSrc.IPv4, IsV4: true}
+	nbr1v6 := &helpers.BgpNeighbor{As: uint32(bgpRouteInstallParams.srcAS), NeighborIP: bgpRouteInstallParams.ateSrc.IPv6, IsV4: false}
+	nbr2v4 := &helpers.BgpNeighbor{As: uint32(bgpRouteInstallParams.dstAS), NeighborIP: bgpRouteInstallParams.ateDst.IPv4, IsV4: true}
+	nbr2v6 := &helpers.BgpNeighbor{As: uint32(bgpRouteInstallParams.dstAS), NeighborIP: bgpRouteInstallParams.ateDst.IPv6, IsV4: false}
 	return []*helpers.BgpNeighbor{nbr1v4, nbr2v4, nbr1v6, nbr2v6}
 }
 
-func routeInstallConfigureBGP(t *testing.T, dut *ondatra.DUTDevice, cfg gosnappi.Config) {
+func routeInstallConfigureBGP(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start DUT BGP Config")
 	dutConfPath := dut.Config().NetworkInstance("default").Protocol(oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP, "BGP").Bgp()
 	helpers.LogYgot(t, "DUT BGP Config before", dutConfPath, dutConfPath.Get(t))
 	dutConfPath.Replace(t, nil)
-	nbrList := routeInstallBuildNbrList(cfg)
-	dutConf := helpers.BgpAppendNbr(routerId, nbrList)
+	nbrList := routeInstallBuildNbrList()
+	dutConf := helpers.BgpAppendNbr(uint32(bgpRouteInstallParams.routerID), nbrList)
 	dutConfPath.Replace(t, dutConf)
 }
 
-func routeInstallConfigureDUT(t *testing.T, dut *ondatra.DUTDevice, cfg gosnappi.Config) {
+func routeInstallConfigureDUT(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start Setting DUT Config")
 
-	routeInstallConfigureInterface(t, dut, cfg)
+	routeInstallConfigureInterface(t, dut)
 	helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_install/set_dut.txt"})
-	routeInstallConfigureBGP(t, dut, cfg)
+	routeInstallConfigureBGP(t, dut)
 }
 
 func routeInstallUnsetInterface(t *testing.T, dut *ondatra.DUTDevice) {
@@ -86,101 +112,84 @@ func routeInstallUnsetInterface(t *testing.T, dut *ondatra.DUTDevice) {
 	dc.Interface(i2.GetName()).Replace(t, i2)
 }
 
-func routeInstallUnsetBGP(t *testing.T, dut *ondatra.DUTDevice, cfg gosnappi.Config) {
+func routeInstallUnsetBGP(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start Removing DUT BGP Neighbor")
 	dutConfPath := dut.Config().NetworkInstance("default").Protocol(oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP, "BGP").Bgp()
 	helpers.LogYgot(t, "DUT BGP Config before", dutConfPath, dutConfPath.Get(t))
 	dutConfPath.Replace(t, nil)
-	nbrList := routeInstallBuildNbrList(cfg)
+	nbrList := routeInstallBuildNbrList()
 	dutConf := helpers.BgpDeleteNbr(nbrList)
 	dutConfPath.Replace(t, dutConf)
 }
 
-func routeInstallUnsetDUT(t *testing.T, dut *ondatra.DUTDevice, cfg gosnappi.Config) {
+func routeInstallUnsetDUT(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start Un-Setting DUT Config")
 	// helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_install/unset_dut.txt"})
 
 	routeInstallUnsetInterface(t, dut)
-	routeInstallUnsetBGP(t, dut, cfg)
+	routeInstallUnsetBGP(t, dut)
 }
 
-func routeInstallCheckBgpParameters(t *testing.T, dut *ondatra.DUTDevice, cfg gosnappi.Config) {
-	ateSrc := helpers.Attributes{
-		IPv4:    cfg.Devices().Items()[0].Ethernets().Items()[0].Ipv4Addresses().Items()[0].Address(),
-		IPv6:    cfg.Devices().Items()[0].Ethernets().Items()[0].Ipv6Addresses().Items()[0].Address(),
-		IPv4Len: uint8(cfg.Devices().Items()[1].Ethernets().Items()[0].Ipv4Addresses().Items()[0].Prefix()),
-		IPv6Len: uint8(cfg.Devices().Items()[1].Ethernets().Items()[0].Ipv6Addresses().Items()[0].Prefix()),
-	}
-
-	ateDst := helpers.Attributes{
-		IPv4:    cfg.Devices().Items()[1].Ethernets().Items()[0].Ipv4Addresses().Items()[0].Address(),
-		IPv6:    cfg.Devices().Items()[1].Ethernets().Items()[0].Ipv6Addresses().Items()[0].Address(),
-		IPv4Len: uint8(cfg.Devices().Items()[1].Ethernets().Items()[0].Ipv4Addresses().Items()[0].Prefix()),
-		IPv6Len: uint8(cfg.Devices().Items()[1].Ethernets().Items()[0].Ipv6Addresses().Items()[0].Prefix()),
-	}
-
-	srcAS := uint32(cfg.Devices().Items()[0].Bgp().Ipv4Interfaces().Items()[0].Peers().Items()[0].AsNumber())
-	dstAS := uint32(cfg.Devices().Items()[1].Bgp().Ipv4Interfaces().Items()[0].Peers().Items()[0].AsNumber())
-
+func routeInstallCheckBgpParameters(t *testing.T, dut *ondatra.DUTDevice) {
 	statePath := dut.Telemetry().NetworkInstance("default").Protocol(oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP, "BGP").Bgp()
-	nbrPath_1 := statePath.Neighbor(ateSrc.IPv4)
-	nbrPathv6_1 := statePath.Neighbor(ateSrc.IPv6)
-	nbrPath_2 := statePath.Neighbor(ateDst.IPv4)
-	nbrPathv6_2 := statePath.Neighbor(ateDst.IPv6)
+	nbrPath_1 := statePath.Neighbor(bgpRouteInstallParams.ateSrc.IPv4)
+	nbrPathv6_1 := statePath.Neighbor(bgpRouteInstallParams.ateSrc.IPv6)
+	nbrPath_2 := statePath.Neighbor(bgpRouteInstallParams.ateDst.IPv4)
+	nbrPathv6_2 := statePath.Neighbor(bgpRouteInstallParams.ateDst.IPv6)
 
 	// Get BGP adjacency state
 	t.Logf("Verifying BGP Adjacency State")
 	status := nbrPath_1.SessionState().Get(t)
-	t.Logf("BGP adjacency for %s: %s", ateSrc.IPv4, status)
+	t.Logf("BGP adjacency for %s: %s", bgpRouteInstallParams.ateSrc.IPv4, status)
 	if want := oc.Bgp_Neighbor_SessionState_ESTABLISHED; status != want {
-		t.Errorf("Get(BGP peer %s status): got %d, want %d", ateSrc.IPv4, status, want)
+		t.Errorf("Get(BGP peer %s status): got %d, want %d", bgpRouteInstallParams.ateSrc.IPv4, status, want)
 	}
 
 	status = nbrPathv6_1.SessionState().Get(t)
-	t.Logf("BGP adjacency for %s: %s", ateSrc.IPv6, status)
+	t.Logf("BGP adjacency for %s: %s", bgpRouteInstallParams.ateSrc.IPv6, status)
 	if want := oc.Bgp_Neighbor_SessionState_ESTABLISHED; status != want {
-		t.Errorf("Get(BGP peer %s status): got %d, want %d", ateSrc.IPv6, status, want)
+		t.Errorf("Get(BGP peer %s status): got %d, want %d", bgpRouteInstallParams.ateSrc.IPv6, status, want)
 	}
 
 	status = nbrPath_2.SessionState().Get(t)
-	t.Logf("BGP adjacency for %s: %s", ateDst.IPv4, status)
+	t.Logf("BGP adjacency for %s: %s", bgpRouteInstallParams.ateDst.IPv4, status)
 	if want := oc.Bgp_Neighbor_SessionState_ESTABLISHED; status != want {
-		t.Errorf("Get(BGP peer %s status): got %d, want %d", ateDst.IPv4, status, want)
+		t.Errorf("Get(BGP peer %s status): got %d, want %d", bgpRouteInstallParams.ateDst.IPv4, status, want)
 	}
 
 	status = nbrPathv6_2.SessionState().Get(t)
-	t.Logf("BGP adjacency for %s: %s", ateDst.IPv6, status)
+	t.Logf("BGP adjacency for %s: %s", bgpRouteInstallParams.ateDst.IPv6, status)
 	if want := oc.Bgp_Neighbor_SessionState_ESTABLISHED; status != want {
-		t.Errorf("Get(BGP peer %s status): got %d, want %d", ateDst.IPv6, status, want)
+		t.Errorf("Get(BGP peer %s status): got %d, want %d", bgpRouteInstallParams.ateDst.IPv6, status, want)
 	}
 
-	nbr_1 := statePath.Get(t).GetNeighbor(ateSrc.IPv4)
-	nbrv6_1 := statePath.Get(t).GetNeighbor(ateSrc.IPv6)
-	nbr_2 := statePath.Get(t).GetNeighbor(ateDst.IPv4)
-	nbrv6_2 := statePath.Get(t).GetNeighbor(ateDst.IPv6)
+	nbr_1 := statePath.Get(t).GetNeighbor(bgpRouteInstallParams.ateSrc.IPv4)
+	nbrv6_1 := statePath.Get(t).GetNeighbor(bgpRouteInstallParams.ateSrc.IPv6)
+	nbr_2 := statePath.Get(t).GetNeighbor(bgpRouteInstallParams.ateDst.IPv4)
+	nbrv6_2 := statePath.Get(t).GetNeighbor(bgpRouteInstallParams.ateDst.IPv6)
 
 	// Check BGP Transitions
 	t.Logf("Verifying BGP Transitions")
 	estTrans := nbr_1.GetEstablishedTransitions()
-	t.Logf("Got established transitions for Neighbor %s : %d", ateSrc.IPv4, estTrans)
+	t.Logf("Got established transitions for Neighbor %s : %d", bgpRouteInstallParams.ateSrc.IPv4, estTrans)
 	if estTrans != 1 {
 		t.Errorf("Wrong established-transitions: got %v, want 1", estTrans)
 	}
 
 	estTrans = nbrv6_1.GetEstablishedTransitions()
-	t.Logf("Got established transitions for Neighbor %s : %d", ateSrc.IPv6, estTrans)
+	t.Logf("Got established transitions for Neighbor %s : %d", bgpRouteInstallParams.ateSrc.IPv6, estTrans)
 	if estTrans != 1 {
 		t.Errorf("Wrong established-transitions: got %v, want 1", estTrans)
 	}
 
 	estTrans = nbr_2.GetEstablishedTransitions()
-	t.Logf("Got established transitions for Neighbor %s : %d", ateDst.IPv4, estTrans)
+	t.Logf("Got established transitions for Neighbor %s : %d", bgpRouteInstallParams.ateDst.IPv4, estTrans)
 	if estTrans != 1 {
 		t.Errorf("Wrong established-transitions: got %v, want 1", estTrans)
 	}
 
 	estTrans = nbrv6_2.GetEstablishedTransitions()
-	t.Logf("Got established transitions for Neighbor %s : %d", ateDst.IPv6, estTrans)
+	t.Logf("Got established transitions for Neighbor %s : %d", bgpRouteInstallParams.ateDst.IPv6, estTrans)
 	if estTrans != 1 {
 		t.Errorf("Wrong established-transitions: got %v, want 1", estTrans)
 	}
@@ -193,20 +202,20 @@ func routeInstallCheckBgpParameters(t *testing.T, dut *ondatra.DUTDevice, cfg go
 	adddrv6_2 := nbrPathv6_2.Get(t).GetNeighborAddress()
 
 	t.Logf("Got neighbor address: %s", addr_1)
-	if addr_1 != ateSrc.IPv4 {
-		t.Errorf("Bgp neighbor address: got %v, want %v", addr_1, ateSrc.IPv4)
+	if addr_1 != bgpRouteInstallParams.ateSrc.IPv4 {
+		t.Errorf("Bgp neighbor address: got %v, want %v", addr_1, bgpRouteInstallParams.ateSrc.IPv4)
 	}
 	t.Logf("Got neighbor address: %s", addrv6_1)
-	if addrv6_1 != ateSrc.IPv6 {
-		t.Errorf("Bgp neighbor address: got %v, want %v", addrv6_1, ateSrc.IPv6)
+	if addrv6_1 != bgpRouteInstallParams.ateSrc.IPv6 {
+		t.Errorf("Bgp neighbor address: got %v, want %v", addrv6_1, bgpRouteInstallParams.ateSrc.IPv6)
 	}
 	t.Logf("Got neighbor address: %s", addr_2)
-	if addr_2 != ateDst.IPv4 {
-		t.Errorf("Bgp neighbor address: got %v, want %v", addr_2, ateDst.IPv4)
+	if addr_2 != bgpRouteInstallParams.ateDst.IPv4 {
+		t.Errorf("Bgp neighbor address: got %v, want %v", addr_2, bgpRouteInstallParams.ateDst.IPv4)
 	}
 	t.Logf("Got neighbor address: %s", adddrv6_2)
-	if adddrv6_2 != ateDst.IPv6 {
-		t.Errorf("Bgp neighbor address: got %v, want %v", ateDst, ateDst.IPv6)
+	if adddrv6_2 != bgpRouteInstallParams.ateDst.IPv6 {
+		t.Errorf("Bgp neighbor address: got %v, want %v", adddrv6_2, bgpRouteInstallParams.ateDst.IPv6)
 	}
 
 	// Check BGP neighbor address from telemetry
@@ -216,50 +225,50 @@ func routeInstallCheckBgpParameters(t *testing.T, dut *ondatra.DUTDevice, cfg go
 	peerv6AS_1 := nbrPathv6_1.Get(t).GetPeerAs()
 	peerv6AS_2 := nbrPathv6_2.Get(t).GetPeerAs()
 
-	t.Logf("Got neighbor %s AS: %d", ateSrc.IPv4, peerAS_1)
-	if peerAS_1 != srcAS {
-		t.Errorf("Bgp peerAs: got %v, want %v", peerAS_1, srcAS)
+	t.Logf("Got neighbor %s AS: %d", bgpRouteInstallParams.ateSrc.IPv4, peerAS_1)
+	if peerAS_1 != uint32(bgpRouteInstallParams.srcAS) {
+		t.Errorf("Bgp peerAs: got %v, want %v", peerAS_1, uint32(bgpRouteInstallParams.srcAS))
 	}
 
-	t.Logf("Got neighbor %s AS: %d", ateSrc.IPv6, peerv6AS_1)
-	if peerv6AS_1 != srcAS {
-		t.Errorf("Bgp peerAs: got %v, want %v", peerv6AS_1, srcAS)
+	t.Logf("Got neighbor %s AS: %d", bgpRouteInstallParams.ateSrc.IPv6, peerv6AS_1)
+	if peerv6AS_1 != uint32(bgpRouteInstallParams.srcAS) {
+		t.Errorf("Bgp peerAs: got %v, want %v", peerv6AS_1, uint32(bgpRouteInstallParams.srcAS))
 	}
 
-	t.Logf("Got neighbor %s AS: %d", ateDst.IPv4, peerAS_2)
-	if peerAS_2 != dstAS {
-		t.Errorf("Bgp peerAs: got %v, want %v", peerAS_2, dstAS)
+	t.Logf("Got neighbor %s AS: %d", bgpRouteInstallParams.ateDst.IPv4, peerAS_2)
+	if peerAS_2 != uint32(bgpRouteInstallParams.dstAS) {
+		t.Errorf("Bgp peerAs: got %v, want %v", peerAS_2, uint32(bgpRouteInstallParams.dstAS))
 	}
 
-	t.Logf("Got neighbor %s AS: %d", ateDst.IPv6, peerv6AS_2)
-	if peerv6AS_2 != dstAS {
-		t.Errorf("Bgp peerAs: got %v, want %v", peerv6AS_2, dstAS)
+	t.Logf("Got neighbor %s AS: %d", bgpRouteInstallParams.ateDst.IPv6, peerv6AS_2)
+	if peerv6AS_2 != uint32(bgpRouteInstallParams.dstAS) {
+		t.Errorf("Bgp peerAs: got %v, want %v", peerv6AS_2, uint32(bgpRouteInstallParams.dstAS))
 	}
 
 	// Check BGP neighbor is enabled
 	t.Logf("Verifying BGP Neighbors Are Enabled")
 	if !nbrPath_1.Get(t).GetEnabled() {
-		t.Errorf("Expected neighbor %v to be enabled", ateSrc.IPv4)
+		t.Errorf("Expected neighbor %v to be enabled", bgpRouteInstallParams.ateSrc.IPv4)
 	} else {
-		t.Logf("Neighbor %v is enabled", ateSrc.IPv4)
+		t.Logf("Neighbor %v is enabled", bgpRouteInstallParams.ateSrc.IPv4)
 	}
 
 	if !nbrPath_2.Get(t).GetEnabled() {
-		t.Errorf("Expected neighbor %v to be enabled", ateDst.IPv6)
+		t.Errorf("Expected neighbor %v to be enabled", bgpRouteInstallParams.ateDst.IPv6)
 	} else {
-		t.Logf("Neighbor %v is enabled", ateDst.IPv6)
+		t.Logf("Neighbor %v is enabled", bgpRouteInstallParams.ateDst.IPv6)
 	}
 
 	if !nbrPathv6_1.Get(t).GetEnabled() {
-		t.Errorf("Expected neighbor %v to be enabled", ateSrc.IPv6)
+		t.Errorf("Expected neighbor %v to be enabled", bgpRouteInstallParams.ateSrc.IPv6)
 	} else {
-		t.Logf("Neighbor %v is enabled", ateSrc.IPv6)
+		t.Logf("Neighbor %v is enabled", bgpRouteInstallParams.ateSrc.IPv6)
 	}
 
 	if !nbrPathv6_2.Get(t).GetEnabled() {
-		t.Errorf("Expected neighbor %v to be enabled", ateDst.IPv4)
+		t.Errorf("Expected neighbor %v to be enabled", bgpRouteInstallParams.ateDst.IPv4)
 	} else {
-		t.Logf("Neighbor %v is enabled", ateDst.IPv4)
+		t.Logf("Neighbor %v is enabled", bgpRouteInstallParams.ateDst.IPv4)
 	}
 }
 
@@ -275,10 +284,10 @@ func TestBGPRouteInstall(t *testing.T) {
 	dut := ondatra.DUT(t, "dut")
 
 	// Set DUT Config over gNMI
-	routeInstallConfigureDUT(t, dut, config)
+	routeInstallConfigureDUT(t, dut)
 
 	// Unset DUT Config over gNMI
-	defer routeInstallUnsetDUT(t, dut, config)
+	defer routeInstallUnsetDUT(t, dut)
 
 	otg.PushConfig(t, config)
 	otg.StartProtocols(t)
@@ -295,7 +304,7 @@ func TestBGPRouteInstall(t *testing.T) {
 	helpers.VerifyPortsUp(t, dut.Device)
 
 	t.Logf("Check BGP Parameters")
-	routeInstallCheckBgpParameters(t, dut, config)
+	routeInstallCheckBgpParameters(t, dut)
 
 	otg.StartTraffic(t)
 
@@ -315,14 +324,14 @@ func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, 
 		SetMac("00:00:01:01:01:01")
 	dutPort1Ipv4 := dutPort1Eth.Ipv4Addresses().Add().
 		SetName("dutPort1.ipv4").
-		SetAddress("1.1.1.1").
-		SetGateway("1.1.1.3").
-		SetPrefix(24)
+		SetAddress(bgpRouteInstallParams.ateSrc.IPv4).
+		SetGateway(bgpRouteInstallParams.dutSrc.IPv4).
+		SetPrefix(int32(bgpRouteInstallParams.ateSrc.IPv4Len))
 	dutPort1Ipv6 := dutPort1Eth.Ipv6Addresses().Add().
 		SetName("dutPort1.ipv6").
-		SetAddress("0:1:1:1::1").
-		SetGateway("0:1:1:1::3").
-		SetPrefix(64)
+		SetAddress(bgpRouteInstallParams.ateSrc.IPv6).
+		SetGateway(bgpRouteInstallParams.dutSrc.IPv6).
+		SetPrefix(int32(bgpRouteInstallParams.ateSrc.IPv6Len))
 	dutPort2 := config.Devices().Add().SetName("dutPort2")
 	dutPort2Eth := dutPort2.Ethernets().Add().
 		SetName("dutPort2.eth").
@@ -330,14 +339,14 @@ func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, 
 		SetMac("00:00:02:01:01:01")
 	dutPort2Ipv4 := dutPort2Eth.Ipv4Addresses().Add().
 		SetName("dutPort2.ipv4").
-		SetAddress("2.2.2.2").
-		SetGateway("2.2.2.3").
-		SetPrefix(24)
+		SetAddress(bgpRouteInstallParams.ateDst.IPv4).
+		SetGateway(bgpRouteInstallParams.dutDst.IPv4).
+		SetPrefix(int32(bgpRouteInstallParams.ateDst.IPv4Len))
 	dutPort2Ipv6 := dutPort2Eth.Ipv6Addresses().Add().
 		SetName("dutPort2.ipv6").
-		SetAddress("0:2:2:2::2").
-		SetGateway("0:2:2:2::3").
-		SetPrefix(64)
+		SetAddress(bgpRouteInstallParams.ateDst.IPv6).
+		SetGateway(bgpRouteInstallParams.dutDst.IPv6).
+		SetPrefix(int32(bgpRouteInstallParams.ateDst.IPv6Len))
 
 	dutPort1Bgp := dutPort1.Bgp().
 		SetRouterId(dutPort1Ipv4.Address())
@@ -346,14 +355,14 @@ func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, 
 		Peers().Add().
 		SetName("dutPort1.bgp4.peer").
 		SetPeerAddress(dutPort1Ipv4.Gateway()).
-		SetAsNumber(1111).
+		SetAsNumber(int32(bgpRouteInstallParams.srcAS)).
 		SetAsType(gosnappi.BgpV4PeerAsType.EBGP)
 	dutPort1Bgp6Peer := dutPort1Bgp.Ipv6Interfaces().Add().
 		SetIpv6Name(dutPort1Ipv6.Name()).
 		Peers().Add().
 		SetName("dutPort1.bgp6.peer").
 		SetPeerAddress(dutPort1Ipv6.Gateway()).
-		SetAsNumber(1111).
+		SetAsNumber(int32(bgpRouteInstallParams.srcAS)).
 		SetAsType(gosnappi.BgpV6PeerAsType.EBGP)
 
 	dutPort1Bgp4PeerRoutes := dutPort1Bgp4Peer.V4Routes().Add().
@@ -384,14 +393,14 @@ func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, 
 	dutPort2Bgp4Peer := dutPort2BgpIf4.Peers().Add().
 		SetName("dutPort2.bgp4.peer").
 		SetPeerAddress(dutPort2Ipv4.Gateway()).
-		SetAsNumber(2222).
+		SetAsNumber(int32(bgpRouteInstallParams.dstAS)).
 		SetAsType(gosnappi.BgpV4PeerAsType.EBGP)
 	dutPort2Bgp6Peer := dutPort2Bgp.Ipv6Interfaces().Add().
 		SetIpv6Name(dutPort2Ipv6.Name()).
 		Peers().Add().
 		SetName("dutPort2.bgp6.peer").
 		SetPeerAddress(dutPort2Ipv6.Gateway()).
-		SetAsNumber(2222).
+		SetAsNumber(int32(bgpRouteInstallParams.dstAS)).
 		SetAsType(gosnappi.BgpV6PeerAsType.EBGP)
 
 	dutPort2Bgp4PeerRoutes := dutPort2Bgp4Peer.V4Routes().Add().
