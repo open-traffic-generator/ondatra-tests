@@ -23,9 +23,9 @@ import (
 )
 
 type bgpRouteInstallParam struct {
-	routerID int
-	srcAS    int
-	dstAS    int
+	routerID uint32
+	srcAS    uint32
+	dstAS    uint32
 	dutSrc   helpers.Attributes
 	dutDst   helpers.Attributes
 	ateSrc   helpers.Attributes
@@ -76,10 +76,10 @@ func routeInstallConfigureInterface(t *testing.T, dut *ondatra.DUTDevice) {
 }
 
 func routeInstallBuildNbrList() []*helpers.BgpNeighbor {
-	nbr1v4 := &helpers.BgpNeighbor{As: uint32(bgpRouteInstallParams.srcAS), NeighborIP: bgpRouteInstallParams.ateSrc.IPv4, IsV4: true}
-	nbr1v6 := &helpers.BgpNeighbor{As: uint32(bgpRouteInstallParams.srcAS), NeighborIP: bgpRouteInstallParams.ateSrc.IPv6, IsV4: false}
-	nbr2v4 := &helpers.BgpNeighbor{As: uint32(bgpRouteInstallParams.dstAS), NeighborIP: bgpRouteInstallParams.ateDst.IPv4, IsV4: true}
-	nbr2v6 := &helpers.BgpNeighbor{As: uint32(bgpRouteInstallParams.dstAS), NeighborIP: bgpRouteInstallParams.ateDst.IPv6, IsV4: false}
+	nbr1v4 := &helpers.BgpNeighbor{As: bgpRouteInstallParams.srcAS, NeighborIP: bgpRouteInstallParams.ateSrc.IPv4, IsV4: true}
+	nbr1v6 := &helpers.BgpNeighbor{As: bgpRouteInstallParams.srcAS, NeighborIP: bgpRouteInstallParams.ateSrc.IPv6, IsV4: false}
+	nbr2v4 := &helpers.BgpNeighbor{As: bgpRouteInstallParams.dstAS, NeighborIP: bgpRouteInstallParams.ateDst.IPv4, IsV4: true}
+	nbr2v6 := &helpers.BgpNeighbor{As: bgpRouteInstallParams.dstAS, NeighborIP: bgpRouteInstallParams.ateDst.IPv6, IsV4: false}
 	return []*helpers.BgpNeighbor{nbr1v4, nbr2v4, nbr1v6, nbr2v6}
 }
 
@@ -89,7 +89,7 @@ func routeInstallConfigureBGP(t *testing.T, dut *ondatra.DUTDevice) {
 	helpers.LogYgot(t, "DUT BGP Config before", dutConfPath, dutConfPath.Get(t))
 	dutConfPath.Replace(t, nil)
 	nbrList := routeInstallBuildNbrList()
-	dutConf := helpers.BgpAppendNbr(uint32(bgpRouteInstallParams.routerID), nbrList)
+	dutConf := helpers.BgpAppendNbr(bgpRouteInstallParams.routerID, nbrList)
 	dutConfPath.Replace(t, dutConf)
 }
 
@@ -226,23 +226,23 @@ func routeInstallCheckBgpParameters(t *testing.T, dut *ondatra.DUTDevice) {
 	peerv6AS_2 := nbrPathv6_2.Get(t).GetPeerAs()
 
 	t.Logf("Got neighbor %s AS: %d", bgpRouteInstallParams.ateSrc.IPv4, peerAS_1)
-	if peerAS_1 != uint32(bgpRouteInstallParams.srcAS) {
-		t.Errorf("Bgp peerAs: got %v, want %v", peerAS_1, uint32(bgpRouteInstallParams.srcAS))
+	if peerAS_1 != bgpRouteInstallParams.srcAS {
+		t.Errorf("Bgp peerAs: got %v, want %v", peerAS_1, bgpRouteInstallParams.srcAS)
 	}
 
 	t.Logf("Got neighbor %s AS: %d", bgpRouteInstallParams.ateSrc.IPv6, peerv6AS_1)
-	if peerv6AS_1 != uint32(bgpRouteInstallParams.srcAS) {
-		t.Errorf("Bgp peerAs: got %v, want %v", peerv6AS_1, uint32(bgpRouteInstallParams.srcAS))
+	if peerv6AS_1 != bgpRouteInstallParams.srcAS {
+		t.Errorf("Bgp peerAs: got %v, want %v", peerv6AS_1, bgpRouteInstallParams.srcAS)
 	}
 
 	t.Logf("Got neighbor %s AS: %d", bgpRouteInstallParams.ateDst.IPv4, peerAS_2)
-	if peerAS_2 != uint32(bgpRouteInstallParams.dstAS) {
-		t.Errorf("Bgp peerAs: got %v, want %v", peerAS_2, uint32(bgpRouteInstallParams.dstAS))
+	if peerAS_2 != bgpRouteInstallParams.dstAS {
+		t.Errorf("Bgp peerAs: got %v, want %v", peerAS_2, bgpRouteInstallParams.dstAS)
 	}
 
 	t.Logf("Got neighbor %s AS: %d", bgpRouteInstallParams.ateDst.IPv6, peerv6AS_2)
-	if peerv6AS_2 != uint32(bgpRouteInstallParams.dstAS) {
-		t.Errorf("Bgp peerAs: got %v, want %v", peerv6AS_2, uint32(bgpRouteInstallParams.dstAS))
+	if peerv6AS_2 != bgpRouteInstallParams.dstAS {
+		t.Errorf("Bgp peerAs: got %v, want %v", peerv6AS_2, bgpRouteInstallParams.dstAS)
 	}
 
 	// Check BGP neighbor is enabled
