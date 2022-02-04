@@ -218,7 +218,7 @@ func routeInstallCheckBgpParameters(t *testing.T, dut *ondatra.DUTDevice) {
 		t.Errorf("Bgp neighbor address: got %v, want %v", adddrv6_2, bgpRouteInstallParams.ateDst.IPv6)
 	}
 
-	// Check BGP neighbor address from telemetry
+	// Check BGP neighbor AS number from telemetry
 	t.Logf("Verifying BGP Neighbor AS Number")
 	peerAS_1 := nbrPath_1.Get(t).GetPeerAs()
 	peerAS_2 := nbrPath_2.Get(t).GetPeerAs()
@@ -273,6 +273,13 @@ func routeInstallCheckBgpParameters(t *testing.T, dut *ondatra.DUTDevice) {
 }
 
 func TestBGPRouteInstall(t *testing.T) {
+	dut := ondatra.DUT(t, "dut")
+	// Set DUT Config over gNMI
+	routeInstallConfigureDUT(t, dut)
+
+	// Unset DUT Config over gNMI
+	defer routeInstallUnsetDUT(t, dut)
+
 	ate := ondatra.ATE(t, "ate1")
 	ondatra.ATE(t, "ate2")
 
@@ -280,14 +287,6 @@ func TestBGPRouteInstall(t *testing.T) {
 	defer helpers.CleanupTest(otg, t, true)
 
 	config, expected := bgpRouteInstallConfig(t, otg)
-
-	dut := ondatra.DUT(t, "dut")
-
-	// Set DUT Config over gNMI
-	routeInstallConfigureDUT(t, dut)
-
-	// Unset DUT Config over gNMI
-	defer routeInstallUnsetDUT(t, dut)
 
 	otg.PushConfig(t, config)
 	otg.StartProtocols(t)
