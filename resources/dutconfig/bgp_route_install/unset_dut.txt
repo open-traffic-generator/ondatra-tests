@@ -6,4 +6,3 @@ interface Ethernet2
    no ipv6 address
    no ip address
 !
-no router bgp
