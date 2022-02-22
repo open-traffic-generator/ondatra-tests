@@ -400,3 +400,22 @@ func CleanupTest(otg *ondatra.OTGAPI, t *testing.T, stopProtocols bool) {
 	}
 	otg.PushConfig(t, otg.NewConfig(t))
 }
+
+func (client *GnmiClient) WatchFlowMetrics(opts *WaitForOpts) error {
+	start := time.Now()
+	for {
+		fMetrics, err := client.GetFlowMetrics([]string{})
+		if err != nil {
+			return err
+		}
+		PrintMetricsTable(&MetricsTableOpts{
+			ClearPrevious: false,
+			FlowMetrics:   fMetrics,
+		})
+
+		if time.Since(start) > opts.Timeout {
+			return nil
+		}
+		time.Sleep(opts.Interval)
+	}
+}

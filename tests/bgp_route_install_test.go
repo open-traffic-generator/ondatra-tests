@@ -309,6 +309,7 @@ func TestBGPRouteInstall(t *testing.T) {
 	otg.StartTraffic(t)
 
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
+	t.Logf("Test Done")
 }
 
 func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {

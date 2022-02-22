@@ -1,0 +1,12 @@
+interface Ethernet1
+    no switchport
+    ip address 192.0.2.1/30
+!
+interface Ethernet2
+    no switchport
+    ip address 192.0.2.5/30
+!
+ip routing
+!
+ipv6 unicast-routing
+!
