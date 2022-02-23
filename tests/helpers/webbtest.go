@@ -63,18 +63,20 @@ func (a *Attributes) ConfigInterface(intf *oc.Interface) *oc.Interface {
 
 	s := intf.GetOrCreateSubinterface(0)
 
-	// if a.IPv4 != "" {
-	// 	s4 := s.GetOrCreateIpv4()
-	// 	// if a.MTU > 0 {
-	// 	// 	s4.Mtu = ygot.Uint16(a.MTU)
-	// 	// }
-	// 	a4 := s4.GetOrCreateAddress(a.IPv4)
-	// 	if a.IPv4Len > 0 {
-	// 		a4.PrefixLength = ygot.Uint8(a.IPv4Len)
-	// 	}
+	if a.IPv4 != "" {
+		s4 := s.GetOrCreateIpv4()
+		if a.MTU > 0 {
+			s4.Mtu = ygot.Uint16(a.MTU)
+		}
+		a4 := s4.GetOrCreateAddress(a.IPv4)
+		if a.IPv4Len > 0 {
+			a4.PrefixLength = ygot.Uint8(a.IPv4Len)
+		}
+		// a4.AddrType = oc.AristaIntfAugments_AristaAddrType_PRIMARY
+		// }
 
-	// 	// a4.AddrType = oc.AristaIntfAugments_AristaAddrType_PRIMARY
-	// }
+		// a4.AddrType = oc.AristaIntfAugments_AristaAddrType_PRIMARY
+	}
 
 	if a.IPv6 != "" {
 		s6 := s.GetOrCreateIpv6()
