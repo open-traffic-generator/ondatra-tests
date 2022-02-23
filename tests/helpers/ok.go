@@ -22,8 +22,11 @@ type ExpectedPortMetrics struct {
 }
 
 type ExpectedFlowMetrics struct {
+	Transmit     string
 	FramesRx     int64
 	FramesRxRate float32
+	FramesTx     int64
+	FramesTxRate float32
 }
 
 type ExpectedState struct {
@@ -64,8 +67,38 @@ func (client *GnmiClient) FlowMetricsOk(expectedState ExpectedState) (bool, erro
 	expected := true
 	for _, f := range fMetrics.Items() {
 		expectedMetrics := expectedState.Flow[f.Name()]
-		if f.FramesRx() != expectedMetrics.FramesRx || f.FramesRxRate() != expectedMetrics.FramesRxRate {
-			expected = false
+
+		if expectedMetrics.FramesTx != -1 {
+			if f.FramesTx() != expectedMetrics.FramesTx {
+				expected = false
+				break
+			}
+		}
+		if expectedMetrics.FramesTxRate != -1 {
+			if f.FramesTxRate() != expectedMetrics.FramesTxRate {
+				expected = false
+				break
+			}
+		}
+
+		if expectedMetrics.FramesRx != -1 {
+			if f.FramesRx() != expectedMetrics.FramesRx {
+				expected = false
+				break
+			}
+		}
+		if expectedMetrics.FramesRxRate != -1 {
+			if f.FramesRxRate() != expectedMetrics.FramesRxRate {
+				expected = false
+				break
+			}
+		}
+
+		if expectedMetrics.Transmit != "" {
+			if string(f.Transmit()) != expectedMetrics.Transmit {
+				expected = false
+				break
+			}
 		}
 	}
 
