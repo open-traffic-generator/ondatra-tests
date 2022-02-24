@@ -32,7 +32,7 @@ func TestIsisL2P2pAdj(t *testing.T) {
 	otg.PushConfig(t, config)
 	otg.StartProtocols(t)
 
-	gnmiClient, err := helpers.NewGnmiClient(otg.NewGnmiQuery(t), config)
+	gnmiClient, err := helpers.NewGnmiClient(helpers.NewGnmiQuery(ate), config)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,8 +44,8 @@ func TestIsisL2P2pAdj(t *testing.T) {
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
 }
 
-func isisL2P2pAdjConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig(t)
+func isisL2P2pAdjConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+	config := otg.NewConfig()
 	port1 := config.Ports().Add().SetName("ixia-c-port1")
 	port2 := config.Ports().Add().SetName("ixia-c-port2")
 	dutPort1 := config.Devices().Add().SetName("dutPort1")

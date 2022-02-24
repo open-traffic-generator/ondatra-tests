@@ -10,6 +10,7 @@ import (
 	"github.com/open-traffic-generator/snappi/gosnappi"
 	gnmiclient "github.com/openconfig/gnmi/client"
 	gnmiproto "github.com/openconfig/gnmi/proto/gnmi"
+	"github.com/openconfig/ondatra"
 
 	// DO NOT REMOVE
 	_ "github.com/openconfig/gnmi/client/gnmi"
@@ -20,6 +21,18 @@ type GnmiClient struct {
 	query  *gnmiclient.Query
 	ctx    context.Context
 	cfg    gosnappi.Config
+}
+
+func NewGnmiQuery(ate *ondatra.ATEDevice) *gnmiclient.Query {
+	addr := ate.ID()
+	log.Printf("New GNMI Query @%s", addr)
+	query := &gnmiclient.Query{
+		Addrs:   []string{addr},
+		Timeout: 10 * time.Second,
+		TLS:     nil,
+		Type:    gnmiclient.Once,
+	}
+	return query
 }
 
 func NewGnmiClient(query *gnmiclient.Query, cfg gosnappi.Config) (*GnmiClient, error) {

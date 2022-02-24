@@ -393,10 +393,10 @@ func GetCapturePorts(c gosnappi.Config) []string {
 	return capturePorts
 }
 
-func CleanupTest(otg *ondatra.OTGAPI, t *testing.T, stopProtocols bool) {
+func CleanupTest(otg *ondatra.OTG, t *testing.T, stopProtocols bool) {
 	otg.StopTraffic(t)
 	if stopProtocols {
 		otg.StopProtocols(t)
 	}
-	otg.PushConfig(t, otg.NewConfig(t))
+	otg.PushConfig(t, otg.NewConfig())
 }
