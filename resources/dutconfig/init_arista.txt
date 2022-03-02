@@ -26,4 +26,8 @@ management security
    ssl profile octa-ssl-profile
       certificate gnmiCert.pem key gnmiCertKey.pem
 !
+ip routing
+!
+ipv6 unicast-routing
+!
 end
