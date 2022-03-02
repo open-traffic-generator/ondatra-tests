@@ -95,7 +95,6 @@ func routeInstallConfigureBGP(t *testing.T, dut *ondatra.DUTDevice) {
 
 func routeInstallConfigureDUT(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start Setting DUT Config")
-
 	routeInstallConfigureInterface(t, dut)
 	helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_install/set_dut.txt"})
 	routeInstallConfigureBGP(t, dut)
@@ -124,8 +123,6 @@ func routeInstallUnsetBGP(t *testing.T, dut *ondatra.DUTDevice) {
 
 func routeInstallUnsetDUT(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start Un-Setting DUT Config")
-	// helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_install/unset_dut.txt"})
-
 	routeInstallUnsetInterface(t, dut)
 	routeInstallUnsetBGP(t, dut)
 }

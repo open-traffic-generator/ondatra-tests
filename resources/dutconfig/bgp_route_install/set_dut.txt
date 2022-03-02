@@ -4,7 +4,3 @@ interface Ethernet1
 interface Ethernet2
     no switchport
 !
-ip routing
-!
-ipv6 unicast-routing
-!
