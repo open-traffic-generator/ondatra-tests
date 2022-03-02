@@ -257,6 +257,7 @@ get_metallb() {
 }
 
 rm_kind_cluster() {
+    kind delete cluster 2> /dev/null
     rm -rf $HOME/.kube
     rm -rf $HOME/go/bin/kubectl
 }
