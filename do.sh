@@ -4,9 +4,9 @@ GO_VERSION=1.17.3
 PROTOC_VERSION=3.17.3
 
 KNE_COMMIT=2d0821b
-MESHNET_COMMIT=4bf3db7
+MESHNET_COMMIT=606d419
 
-OPERATOR_RELEASE=0.0.70
+OPERATOR_RELEASE=0.0.75
 
 KNEBIND_CONFIG="../resources/global/knebind-config.yaml"
 
@@ -257,7 +257,6 @@ get_metallb() {
 }
 
 rm_kind_cluster() {
-    kind delete cluster 2> /dev/null
     rm -rf $HOME/.kube
     rm -rf $HOME/go/bin/kubectl
 }
