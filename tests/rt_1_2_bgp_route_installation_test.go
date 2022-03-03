@@ -244,10 +244,12 @@ func checkBgpParameters(t *testing.T, dut *ondatra.DUTDevice) {
 	}
 }
 
-func configureATE(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
+func configureATE(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra.ATEDevice) (gosnappi.Config, helpers.ExpectedState) {
 
 	config := otg.NewConfig(t)
-	srcPort := config.Ports().Add().SetName("ixia-c-port1")
+	srcPort := config.Ports().Add().SetName(ateList[0].Name())
+	dstPort := config.Ports().Add().SetName(ateList[1].Name())
+
 	srcDev := config.Devices().Add().SetName(ateSrc.Name)
 	srcEth := srcDev.Ethernets().Add().
 		SetName(ateSrc.Name + ".eth").
@@ -264,7 +266,6 @@ func configureATE(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.E
 		SetGateway(dutSrc.IPv6).
 		SetPrefix(int32(ateSrc.IPv6Len))
 
-	dstPort := config.Ports().Add().SetName("ixia-c-port2")
 	dstDev := config.Devices().Add().SetName(ateDst.Name)
 	dstEth := dstDev.Ethernets().Add().
 		SetName(ateDst.Name + ".eth").
@@ -340,7 +341,6 @@ func configureATE(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.E
 		SetPrefix(int32(prefixInt6)).
 		SetCount(routeCount)
 
-	t.Logf("Pushing config to ATE and starting protocols...")
 	flowipv4 := config.Flows().Add().SetName("bgpv4RoutesFlow")
 	flowipv4.Metrics().SetEnable(true)
 	flowipv4.TxRx().Device().
@@ -404,7 +404,6 @@ func verifyNoPacketLoss(t *testing.T, gnmiClient *helpers.GnmiClient) {
 		FlowMetrics:   fMetrics,
 	})
 
-	// Once the Flow Tx Frames becomes available the next lines could be removed and the original condition could be restored
 	pMetrics, err := gnmiClient.GetPortMetrics([]string{})
 	if err != nil {
 		t.Fatal("Error while getting the port metrics")
@@ -415,15 +414,10 @@ func verifyNoPacketLoss(t *testing.T, gnmiClient *helpers.GnmiClient) {
 		PortMetrics:   pMetrics,
 	})
 
-	portFramesTx := pMetrics.Items()[0].FramesTx()
-	conditionalFrames := float32(portFramesTx/2) - 0.001*float32(portFramesTx)
 	for _, f := range fMetrics.Items() {
-		if float32(f.FramesRx()) < conditionalFrames && f.FramesRx() > 0 {
+		if f.FramesTx() != f.FramesRx() && f.FramesTx() > 0 {
 			t.Errorf("Packet Loss detected")
 		}
-		// if f.FramesTx() != f.FramesRx() && f.FramesTx() > 0 {
-		// 	t.Errorf("Packet Loss detected")
-		// }
 	}
 }
 
@@ -449,10 +443,9 @@ func verifyPacketLoss(t *testing.T, gnmiClient *helpers.GnmiClient) {
 		PortMetrics:   pMetrics,
 	})
 
-	portFramesTx := pMetrics.Items()[0].FramesTx()
 	for _, f := range fMetrics.Items() {
-		if f.FramesRx() > 0 && portFramesTx > 0 {
-			t.Errorf("Flow packets were unexpectedly received")
+		if f.FramesRx() > 0 && f.FramesTx() > 0 {
+			t.Errorf("Flow packets unexpectedly received")
 		}
 	}
 }
@@ -511,11 +504,17 @@ func Test_rt_1_2(t *testing.T) {
 	// ATE Configuration.
 	t.Logf("Start ATE Config")
 	ate1 := ondatra.ATE(t, "ate1")
-	_ = ondatra.ATE(t, "ate2")
-	otg := ate1.OTGAPI
+	ate2 := ondatra.ATE(t, "ate2")
+
+	ateList := []*ondatra.ATEDevice{
+		ate1,
+		ate2,
+	}
+
+	otg := ate1.OTG()
 	defer helpers.CleanupTest(otg, t, true)
 
-	config, expected := configureATE(t, otg)
+	config, expected := configureATE(t, otg, ateList)
 
 	otg.PushConfig(t, config)
 	t.Logf("Start ATE Protocols")
