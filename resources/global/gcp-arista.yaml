@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 image: us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ceos:4.28.0F-26265162
+=======
+image: us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ceos:4.28.0F
+>>>>>>> main
