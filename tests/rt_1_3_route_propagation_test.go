@@ -57,15 +57,13 @@ import (
 // 65537 (both port1 and port2).
 
 type otgPortDetails struct {
-	name, mac, routerId string
+	mac, routerId string
 }
 
 var otgPort1Details otgPortDetails = otgPortDetails{
-	name:     "ixia-c-port1",
 	mac:      "00:00:01:01:01:01",
 	routerId: "1.1.1.1"}
 var otgPort2Details otgPortDetails = otgPortDetails{
-	name:     "ixia-c-port2",
 	mac:      "00:00:02:01:01:01",
 	routerId: "2.2.2.2"}
 
@@ -107,14 +105,14 @@ type ateData struct {
 	prefixesCount uint32
 }
 
-func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI) gosnappi.Config {
+func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra.ATEDevice) gosnappi.Config {
 
 	config := otg.NewConfig(t)
 	bgp4ObjectMap := make(map[string]gosnappi.BgpV4Peer)
 	bgp6ObjectMap := make(map[string]gosnappi.BgpV6Peer)
 	ipv4ObjectMap := make(map[string]gosnappi.DeviceIpv4)
 	ipv6ObjectMap := make(map[string]gosnappi.DeviceIpv6)
-
+	ateIndex := 0
 	for _, v := range []struct {
 		iface    otgPortDetails
 		ip       ip
@@ -124,10 +122,13 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI) gosnappi.Config 
 		{otgPort1Details, ad.Port1, ad.Port1Neighbor, ateAS1},
 		{otgPort2Details, ad.Port2, ad.Port2Neighbor, ateAS2},
 	} {
-		port := config.Ports().Add().SetName(v.iface.name)
-		dev := config.Devices().Add().SetName(v.iface.name)
+		portName := ateList[ateIndex].Name()
+		devName := ateList[ateIndex].Name() + ".dev"
+		port := config.Ports().Add().SetName(portName)
+		dev := config.Devices().Add().SetName(devName)
+		ateIndex++
 		eth := dev.Ethernets().Add().
-			SetName(v.iface.name + ".eth").
+			SetName(devName + ".eth").
 			SetPortName(port.Name()).
 			SetMac(v.iface.mac)
 		bgp := dev.Bgp().
@@ -135,11 +136,11 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI) gosnappi.Config 
 		if v.ip.v4 != "" {
 			prefixInt4, _ := strconv.Atoi(strings.Split(v.ip.v4, "/")[1])
 			ipv4 := eth.Ipv4Addresses().Add().
-				SetName(v.iface.name + ".ipv4").
+				SetName(devName + ".ipv4").
 				SetAddress(strings.Split(v.ip.v4, "/")[0]).
 				SetGateway(v.neighbor).
 				SetPrefix(int32(prefixInt4))
-			bgp4Name := v.iface.name + ".bgp4.peer"
+			bgp4Name := devName + ".bgp4.peer"
 			bgp4Peer := bgp.Ipv4Interfaces().Add().
 				SetIpv4Name(ipv4.Name()).
 				Peers().Add().
@@ -148,16 +149,16 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI) gosnappi.Config 
 				SetAsNumber(int32(v.as)).
 				SetAsType(gosnappi.BgpV4PeerAsType.EBGP)
 			bgp4ObjectMap[bgp4Name] = bgp4Peer
-			ipv4ObjectMap[v.iface.name+".ipv4"] = ipv4
+			ipv4ObjectMap[devName+".ipv4"] = ipv4
 		}
 		if v.ip.v6 != "" {
 			prefixInt6, _ := strconv.Atoi(strings.Split(v.ip.v6, "/")[1])
 			ipv6 := eth.Ipv6Addresses().Add().
-				SetName(v.iface.name + ".ipv6").
+				SetName(devName + ".ipv6").
 				SetAddress(v.ip.v6).
 				SetGateway(v.neighbor).
 				SetPrefix(int32(prefixInt6))
-			bgp6Name := v.iface.name + ".bgp6.peer"
+			bgp6Name := devName + ".bgp6.peer"
 			bgp6Peer := bgp.Ipv6Interfaces().Add().
 				SetIpv6Name(ipv6.Name()).
 				Peers().Add().
@@ -166,14 +167,14 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI) gosnappi.Config 
 				SetAsNumber(int32(v.as)).
 				SetAsType(gosnappi.BgpV6PeerAsType.EBGP)
 			bgp6ObjectMap[bgp6Name] = bgp6Peer
-			ipv6ObjectMap[v.iface.name+".ip64"] = ipv6
+			ipv6ObjectMap[devName+".ip6"] = ipv6
 		}
 	}
 	if ad.prefixesStart.v4 != "" {
 		prefixInt4, _ := strconv.Atoi(strings.Split(ad.prefixesStart.v4, "/")[1])
-		bgp4Name := otgPort1Details.name + ".bgp4.peer"
+		bgp4Name := ateList[0].Name() + ".dev.bgp4.peer"
 		bgp4Peer := bgp4ObjectMap[bgp4Name]
-		ipv4 := ipv4ObjectMap[otgPort1Details.name+".ipv4"]
+		ipv4 := ipv4ObjectMap[ateList[0].Name()+".dev.ipv4"]
 
 		bgp4PeerRoutes := bgp4Peer.V4Routes().Add().
 			SetName(bgp4Name + ".rr4").
@@ -187,9 +188,9 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI) gosnappi.Config 
 	}
 	if ad.prefixesStart.v6 != "" {
 		prefixInt6, _ := strconv.Atoi(strings.Split(ad.prefixesStart.v6, "/")[1])
-		bgp6Name := otgPort1Details.name + ".bgp6.peer"
+		bgp6Name := ateList[0].Name() + ".dev.bgp6.peer"
 		bgp6Peer := bgp6ObjectMap[bgp6Name]
-		ipv6 := ipv6ObjectMap[otgPort1Details.name+".ipv6"]
+		ipv6 := ipv6ObjectMap[ateList[0].Name()+".dev.ipv6"]
 
 		dstBgp6PeerRoutes := bgp6Peer.V6Routes().Add().
 			SetName(bgp6Name + ".rr6").
@@ -401,15 +402,21 @@ func Test_rt_1_3(t *testing.T) {
 
 			t.Logf("Start DUT Config")
 			dut := ondatra.DUT(t, "dut")
+			defer rt_1_3_UnsetDUT(t, dut)
 			tc.dut.Configure(t, dut)
+			helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/rt_1_3_bgp_route_propagation/set_dut_interface.txt"})
 			t.Logf("DUT Configured")
 
-			ate := ondatra.ATE(t, "ate1")
-			_ = ondatra.ATE(t, "ate2")
-			otg := ate.OTGAPI
+			ate1 := ondatra.ATE(t, "ate1")
+			ate2 := ondatra.ATE(t, "ate2")
+			ateList := []*ondatra.ATEDevice{
+				ate1,
+				ate2,
+			}
+			otg := ate1.OTG()
 			defer helpers.CleanupTest(otg, t, true)
 			t.Logf("Start OTG Config")
-			config := tc.ate.Configure(t, otg)
+			config := tc.ate.Configure(t, otg, ateList)
 			otg.PushConfig(t, config)
 			otg.StartProtocols(t)
 			t.Logf("OTG Configured")
@@ -417,7 +424,7 @@ func Test_rt_1_3(t *testing.T) {
 			tc.dut.AwaitBGPEstablished(t, dut)
 
 			for _, prefix := range tc.wantPrefixes {
-				rib := ate.Telemetry().NetworkInstance("port2").
+				rib := ate2.Telemetry().NetworkInstance("port1").
 					Protocol(
 						oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP,
 						fmt.Sprintf("%d", ateAS2),

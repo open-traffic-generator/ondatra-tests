@@ -30,4 +30,6 @@ ip routing
 !
 ipv6 unicast-routing
 !
+switchport default mode routed
+!
 end

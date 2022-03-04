@@ -2,12 +2,12 @@ interface Ethernet1
    no description
    no ipv6 address
    no ip address
-   switchport
+   no switchport
 !
 interface Ethernet2
    no description
    no ipv6 address
    no ip address
-   switchport
+   no switchport
 !
 no router bgp
