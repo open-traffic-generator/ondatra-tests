@@ -363,14 +363,15 @@ func PrintMetricsTable(opts *MetricsTableOpts) {
 	if opts.FlowMetrics != nil {
 		border := strings.Repeat("-", 25*3+5)
 		out += "\nFlow Metrics\n" + border + "\n"
-		out += fmt.Sprintf("%-25s%-25s%-25s%-25s\n", "Name", "Frames Tx", "Frames Rx", "FPS Rx")
+		out += fmt.Sprintf("%-25s%-25s%-25s%-25s%-25s\n", "Name", "Frames Tx", "Frames Rx", "FPS Tx", "FPS Rx")
 		for _, m := range opts.FlowMetrics.Items() {
 			if m != nil {
 				name := m.Name()
 				tx := m.FramesTx()
 				rx := m.FramesRx()
+				txRate := m.FramesTxRate()
 				rxRate := m.FramesRxRate()
-				out += fmt.Sprintf("%-25v%-25v%-25v%-25v\n", name, tx, rx, rxRate)
+				out += fmt.Sprintf("%-25v%-25v%-25v%-25v%-25v\n", name, tx, rx, txRate, rxRate)
 			}
 		}
 		out += border + "\n\n"
