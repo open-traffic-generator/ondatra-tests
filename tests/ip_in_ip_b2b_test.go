@@ -22,8 +22,7 @@ import (
 
 func TestIpInIpB2b(t *testing.T) {
 
-	ate := ondatra.ATE(t, "ate1")
-	ondatra.ATE(t, "ate2")
+	ate := ondatra.ATE(t, "ate")
 
 	otg := ate.OTG()
 	defer helpers.CleanupTest(otg, t, false)
@@ -43,8 +42,8 @@ func TestIpInIpB2b(t *testing.T) {
 func ipInIpB2bConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
 	config := otg.NewConfig(t)
 
-	port1 := config.Ports().Add().SetName("ixia-c-port1")
-	port2 := config.Ports().Add().SetName("ixia-c-port2")
+	port1 := config.Ports().Add().SetName("port1")
+	port2 := config.Ports().Add().SetName("port2")
 
 	// OTG traffic configuration
 	f1 := config.Flows().Add().SetName("p1.v4.p2.permit")

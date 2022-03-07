@@ -277,18 +277,11 @@ func TestBGPRouteInstall(t *testing.T) {
 	// Unset DUT Config over gNMI
 	defer routeInstallUnsetDUT(t, dut)
 
-	ate1 := ondatra.ATE(t, "ate1")
-	ate2 := ondatra.ATE(t, "ate2")
-
-	ateList := []*ondatra.ATEDevice{
-		ate1,
-		ate2,
-	}
-
-	otg := ate1.OTG()
+	ate := ondatra.ATE(t, "ate")
+	otg := ate.OTG()
 	defer helpers.CleanupTest(otg, t, true)
 
-	config, expected := bgpRouteInstallConfig(t, otg, ateList)
+	config, expected := bgpRouteInstallConfig(t, otg)
 
 	otg.PushConfig(t, config)
 	otg.StartProtocols(t)
@@ -312,11 +305,11 @@ func TestBGPRouteInstall(t *testing.T) {
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
 }
 
-func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra.ATEDevice) (gosnappi.Config, helpers.ExpectedState) {
+func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
 	config := otg.NewConfig(t)
 
-	port1 := config.Ports().Add().SetName(ateList[0].Name())
-	port2 := config.Ports().Add().SetName(ateList[1].Name())
+	port1 := config.Ports().Add().SetName("port1")
+	port2 := config.Ports().Add().SetName("port2")
 
 	dutPort1 := config.Devices().Add().SetName("dutPort1")
 	dutPort1Eth := dutPort1.Ethernets().Add().

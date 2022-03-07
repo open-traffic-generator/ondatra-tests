@@ -6,12 +6,12 @@ metadata:
 data:
     versions: |
         {
-          "release": "0.0.1-2662-local",
+          "release": "0.0.1-2668-local",
           "images": [
                 {
                     "name": "controller",
-                    "path": "ghcr.io/open-traffic-generator/ixia-c-controller",
-                    "tag": "0.0.1-2662"
+                    "path": "ixia-c-controller",
+                    "tag": "0.0.1-2668"
                 },
                 {
                     "name": "gnmi-server",
@@ -30,8 +30,8 @@ data:
                 },
                 {
                     "name": "protocol-engine",
-                    "path": "ghcr.io/open-traffic-generator/ixia-c-protocol-engine",
-                    "tag": "1.00.0.144"
+                    "path": "ixia-c-protocol-engine",
+                    "tag": "1.00.0.146"
                 }
             ]
         }

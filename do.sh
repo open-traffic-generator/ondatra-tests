@@ -3,7 +3,7 @@
 GO_VERSION=1.17.3
 PROTOC_VERSION=3.17.3
 
-KNE_COMMIT=606d419
+KNE_COMMIT=e8e2a6a
 MESHNET_COMMIT=4bf3db7
 
 OPERATOR_RELEASE=0.0.75
@@ -134,8 +134,8 @@ get_kubectl() {
 get_kne() {
     cecho "Getting kne commit: $KNE_COMMIT ..."
     rm -rf kne
-    git clone https://github.com/google/kne \
-    && cd kne && git checkout $KNE_COMMIT && cd - \
+    git clone https://github.com/open-traffic-generator/kne.git \
+    && cd kne && git checkout otg-refactor && git checkout $KNE_COMMIT && cd - \
     && cd kne/kne_cli && go install && cd - \
     && rm -rf kne
 }

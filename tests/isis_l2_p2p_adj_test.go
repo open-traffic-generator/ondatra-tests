@@ -22,9 +22,7 @@ func TestIsisL2P2pAdj(t *testing.T) {
 	helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/isis_l2_p2p_adj/set_dut.txt"})
 	defer helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/isis_l2_p2p_adj/unset_dut.txt"})
 
-	ate := ondatra.ATE(t, "ate1")
-	ondatra.ATE(t, "ate2")
-
+	ate := ondatra.ATE(t, "ate")
 	otg := ate.OTG()
 	defer helpers.CleanupTest(otg, t, true)
 
@@ -46,8 +44,8 @@ func TestIsisL2P2pAdj(t *testing.T) {
 
 func isisL2P2pAdjConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
 	config := otg.NewConfig(t)
-	port1 := config.Ports().Add().SetName("ixia-c-port1")
-	port2 := config.Ports().Add().SetName("ixia-c-port2")
+	port1 := config.Ports().Add().SetName("port1")
+	port2 := config.Ports().Add().SetName("port2")
 	dutPort1 := config.Devices().Add().SetName("dutPort1")
 	dutPort1Eth := dutPort1.Ethernets().Add().
 		SetName("dutPort1.eth").
