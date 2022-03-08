@@ -6,12 +6,12 @@ metadata:
 data:
     versions: |
         {
-          "release": "0.0.1-2668-local",
+          "release": "0.0.1-2671-local",
           "images": [
                 {
                     "name": "controller",
                     "path": "ixia-c-controller",
-                    "tag": "0.0.1-2668"
+                    "tag": "0.0.1-2671"
                 },
                 {
                     "name": "gnmi-server",
@@ -31,7 +31,7 @@ data:
                 {
                     "name": "protocol-engine",
                     "path": "ixia-c-protocol-engine",
-                    "tag": "1.00.0.146"
+                    "tag": "1.00.0.145"
                 }
             ]
         }
