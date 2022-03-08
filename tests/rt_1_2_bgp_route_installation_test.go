@@ -416,8 +416,11 @@ func verifyNoPacketLoss(t *testing.T, gnmiClient *helpers.GnmiClient) {
 
 	for _, f := range fMetrics.Items() {
 		if f.FramesTx() != f.FramesRx() && f.FramesTx() > 0 {
-			t.Errorf("Packet Loss detected")
+			t.Errorf("Failed: Packet Loss detected")
+		} else {
+			t.Logf("Success: No packets loss on flow %s", f.Name())
 		}
+
 	}
 }
 
@@ -445,7 +448,9 @@ func verifyPacketLoss(t *testing.T, gnmiClient *helpers.GnmiClient) {
 
 	for _, f := range fMetrics.Items() {
 		if f.FramesRx() > 0 && f.FramesTx() > 0 {
-			t.Errorf("Flow packets unexpectedly received")
+			t.Errorf("Failed: Flow packets unexpectedly received")
+		} else {
+			t.Logf("Success: No flow packets received on flow %s", f.Name())
 		}
 	}
 }
