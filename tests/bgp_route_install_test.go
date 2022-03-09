@@ -286,7 +286,7 @@ func TestBGPRouteInstall(t *testing.T) {
 	}
 
 	otg := ate1.OTG()
-	defer helpers.CleanupTest(otg, t, true)
+	defer helpers.CleanupTest(otg, t, true, true)
 
 	config, expected := bgpRouteInstallConfig(t, otg, ateList)
 

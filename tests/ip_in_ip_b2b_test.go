@@ -26,7 +26,7 @@ func TestIpInIpB2b(t *testing.T) {
 	ondatra.ATE(t, "ate2")
 
 	otg := ate.OTG()
-	defer helpers.CleanupTest(otg, t, false)
+	defer helpers.CleanupTest(otg, t, false, true)
 
 	config, expected := ipInIpB2bConfig(t, otg)
 	otg.PushConfig(t, config)

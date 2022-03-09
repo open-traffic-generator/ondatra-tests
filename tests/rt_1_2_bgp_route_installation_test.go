@@ -473,13 +473,15 @@ func rt_1_2_UnsetDUT(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start Unsetting DUT Interface Config")
 	dc := dut.Config()
 
+	time.Sleep(1 * time.Second)
 	i1 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port1").Name()])
 	dc.Interface(i1.GetName()).Replace(t, i1)
 
+	time.Sleep(1 * time.Second)
 	i2 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port2").Name()])
 	dc.Interface(i2.GetName()).Replace(t, i2)
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(2 * time.Second)
 	t.Logf("Start Removing BGP config")
 	dutConfPath := dut.Config().NetworkInstance("default").Protocol(oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP, "BGP").Bgp()
 	helpers.LogYgot(t, "DUT BGP Config before", dutConfPath, dutConfPath.Get(t))
@@ -517,7 +519,7 @@ func Test_rt_1_2(t *testing.T) {
 	}
 
 	otg := ate1.OTG()
-	defer helpers.CleanupTest(otg, t, true)
+	defer helpers.CleanupTest(otg, t, true, false)
 
 	config, expected := configureATE(t, otg, ateList)
 

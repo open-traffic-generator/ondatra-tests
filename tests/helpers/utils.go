@@ -136,7 +136,8 @@ func WaitFor(t *testing.T, fn func() (bool, error), opts *WaitForOpts) error {
 		}
 
 		if time.Since(start) > opts.Timeout {
-			t.Fatal(fmt.Errorf("timeout occurred while waiting for %s", opts.Condition))
+			t.Errorf("Timeout occurred while waiting for %s", opts.Condition)
+			return nil
 		}
 		time.Sleep(opts.Interval)
 	}
@@ -163,7 +164,7 @@ func PrintMetricsTable(opts *MetricsTableOpts) {
 	if opts == nil {
 		return
 	}
-	opts.ClearPrevious = true
+	opts.ClearPrevious = false
 	out := "\n"
 
 	if opts.Bgpv4Metrics != nil {
@@ -395,8 +396,10 @@ func GetCapturePorts(c gosnappi.Config) []string {
 	return capturePorts
 }
 
-func CleanupTest(otg *ondatra.OTGAPI, t *testing.T, stopProtocols bool) {
-	otg.StopTraffic(t)
+func CleanupTest(otg *ondatra.OTGAPI, t *testing.T, stopProtocols bool, stopTraffic bool) {
+	if stopTraffic {
+		otg.StopTraffic(t)
+	}
 	if stopProtocols {
 		otg.StopProtocols(t)
 	}

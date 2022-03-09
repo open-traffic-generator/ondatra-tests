@@ -105,7 +105,7 @@ type ateData struct {
 	prefixesCount uint32
 }
 
-func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra.ATEDevice) gosnappi.Config {
+func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra.ATEDevice) (gosnappi.Config, helpers.ExpectedState) {
 
 	config := otg.NewConfig(t)
 	bgp4ObjectMap := make(map[string]gosnappi.BgpV4Peer)
@@ -113,6 +113,7 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondat
 	ipv4ObjectMap := make(map[string]gosnappi.DeviceIpv4)
 	ipv6ObjectMap := make(map[string]gosnappi.DeviceIpv6)
 	ateIndex := 0
+	var expected helpers.ExpectedState
 	for _, v := range []struct {
 		iface    otgPortDetails
 		ip       ip
@@ -155,7 +156,7 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondat
 			prefixInt6, _ := strconv.Atoi(strings.Split(v.ip.v6, "/")[1])
 			ipv6 := eth.Ipv6Addresses().Add().
 				SetName(devName + ".ipv6").
-				SetAddress(v.ip.v6).
+				SetAddress(strings.Split(v.ip.v6, "/")[0]).
 				SetGateway(v.neighbor).
 				SetPrefix(int32(prefixInt6))
 			bgp6Name := devName + ".bgp6.peer"
@@ -172,37 +173,71 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondat
 	}
 	if ad.prefixesStart.v4 != "" {
 		prefixInt4, _ := strconv.Atoi(strings.Split(ad.prefixesStart.v4, "/")[1])
-		bgp4Name := ateList[0].Name() + ".dev.bgp4.peer"
-		bgp4Peer := bgp4ObjectMap[bgp4Name]
-		ipv4 := ipv4ObjectMap[ateList[0].Name()+".dev.ipv4"]
-
-		bgp4PeerRoutes := bgp4Peer.V4Routes().Add().
-			SetName(bgp4Name + ".rr4").
-			SetNextHopIpv4Address(ipv4.Address()).
-			SetNextHopAddressType(gosnappi.BgpV4RouteRangeNextHopAddressType.IPV4).
-			SetNextHopMode(gosnappi.BgpV4RouteRangeNextHopMode.MANUAL)
-		bgp4PeerRoutes.Addresses().Add().
-			SetAddress(strings.Split(ad.prefixesStart.v4, "/")[0]).
-			SetPrefix(int32(prefixInt4)).
-			SetCount(int32(ad.prefixesCount))
+		if ad.Port1.v4 != "" {
+			bgpName := ateList[0].Name() + ".dev.bgp4.peer"
+			bgpPeer := bgp4ObjectMap[bgpName]
+			ip := ipv4ObjectMap[ateList[0].Name()+".dev.ipv4"]
+			bgp4PeerRoutes := bgpPeer.V4Routes().Add().
+				SetName(bgpName + ".rr4").
+				SetNextHopIpv4Address(ip.Address()).
+				SetNextHopAddressType(gosnappi.BgpV4RouteRangeNextHopAddressType.IPV4).
+				SetNextHopMode(gosnappi.BgpV4RouteRangeNextHopMode.MANUAL)
+			bgp4PeerRoutes.Addresses().Add().
+				SetAddress(strings.Split(ad.prefixesStart.v4, "/")[0]).
+				SetPrefix(int32(prefixInt4)).
+				SetCount(int32(ad.prefixesCount))
+			expected = helpers.ExpectedState{
+				Bgp4: map[string]helpers.ExpectedBgpMetrics{
+					bgpName:                              {Advertised: int32(ad.prefixesCount), Received: 0},
+					ateList[1].Name() + ".dev.bgp4.peer": {Advertised: 0, Received: int32(ad.prefixesCount)},
+				},
+			}
+		} else {
+			bgpName := ateList[0].Name() + ".dev.bgp6.peer"
+			bgpPeer := bgp6ObjectMap[bgpName]
+			ip := ipv6ObjectMap[ateList[0].Name()+".dev.ip6"]
+			bgp4PeerRoutes := bgpPeer.V4Routes().Add().
+				SetName(bgpName + ".rr4").
+				SetNextHopIpv6Address(ip.Address()).
+				SetNextHopAddressType(gosnappi.BgpV4RouteRangeNextHopAddressType.IPV6).
+				SetNextHopMode(gosnappi.BgpV4RouteRangeNextHopMode.MANUAL)
+			bgp4PeerRoutes.Addresses().Add().
+				SetAddress(strings.Split(ad.prefixesStart.v4, "/")[0]).
+				SetPrefix(int32(prefixInt4)).
+				SetCount(int32(ad.prefixesCount))
+			expected = helpers.ExpectedState{
+				Bgp6: map[string]helpers.ExpectedBgpMetrics{
+					bgpName: {Advertised: int32(ad.prefixesCount), Received: 0},
+				},
+				Bgp4: map[string]helpers.ExpectedBgpMetrics{
+					ateList[1].Name() + ".dev.bgp4.peer": {Advertised: 0, Received: int32(ad.prefixesCount)},
+				},
+			}
+		}
 	}
 	if ad.prefixesStart.v6 != "" {
 		prefixInt6, _ := strconv.Atoi(strings.Split(ad.prefixesStart.v6, "/")[1])
 		bgp6Name := ateList[0].Name() + ".dev.bgp6.peer"
 		bgp6Peer := bgp6ObjectMap[bgp6Name]
-		ipv6 := ipv6ObjectMap[ateList[0].Name()+".dev.ipv6"]
+		ipv6 := ipv6ObjectMap[ateList[0].Name()+".dev.ip6"]
 
-		dstBgp6PeerRoutes := bgp6Peer.V6Routes().Add().
+		bgp6PeerRoutes := bgp6Peer.V6Routes().Add().
 			SetName(bgp6Name + ".rr6").
 			SetNextHopIpv6Address(ipv6.Address()).
 			SetNextHopAddressType(gosnappi.BgpV6RouteRangeNextHopAddressType.IPV6).
 			SetNextHopMode(gosnappi.BgpV6RouteRangeNextHopMode.MANUAL)
-		dstBgp6PeerRoutes.Addresses().Add().
+		bgp6PeerRoutes.Addresses().Add().
 			SetAddress(strings.Split(ad.prefixesStart.v6, "/")[0]).
 			SetPrefix(int32(prefixInt6)).
 			SetCount(int32(ad.prefixesCount))
+		expected = helpers.ExpectedState{
+			Bgp6: map[string]helpers.ExpectedBgpMetrics{
+				bgp6Name:                             {Advertised: int32(ad.prefixesCount), Received: 0},
+				ateList[1].Name() + ".dev.bgp6.peer": {Advertised: 0, Received: int32(ad.prefixesCount)},
+			},
+		}
 	}
-	return config
+	return config, expected
 }
 
 type dutData struct {
@@ -231,21 +266,118 @@ func (d *dutData) AwaitBGPEstablished(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Log("BGP sessions established")
 }
 
+func (ad *ateData) CheckOtgBgp(t *testing.T, gnmiClient *helpers.GnmiClient, expectedState helpers.ExpectedState) (bool, error) {
+	d4Names := []string{}
+	d6Names := []string{}
+	expected := true
+	switch {
+	case ad.Port1.v4 != "" && ad.Port2.v4 != "":
+		for name := range expectedState.Bgp4 {
+			d4Names = append(d4Names, name)
+		}
+
+		dMetrics, err := gnmiClient.GetBgpv4Metrics(d4Names)
+		if err != nil {
+			return false, err
+		}
+
+		helpers.PrintMetricsTable(&helpers.MetricsTableOpts{
+			ClearPrevious: false,
+			Bgpv4Metrics:  dMetrics,
+		})
+
+		for _, d := range dMetrics.Items() {
+			expectedMetrics := expectedState.Bgp4[d.Name()]
+			if d.SessionState() != gosnappi.Bgpv4MetricSessionState.UP || d.RoutesAdvertised() != expectedMetrics.Advertised || d.RoutesReceived() != expectedMetrics.Received {
+				t.Logf("BGPv4 state, advertised or received routes conditions not met for %s", d.Name())
+				expected = false
+			}
+		}
+	case ad.Port1.v6 != "" && ad.Port2.v6 != "":
+		for name := range expectedState.Bgp4 {
+			d6Names = append(d6Names, name)
+		}
+
+		dMetrics, err := gnmiClient.GetBgpv6Metrics(d6Names)
+		if err != nil {
+			return false, err
+		}
+
+		helpers.PrintMetricsTable(&helpers.MetricsTableOpts{
+			ClearPrevious: false,
+			Bgpv6Metrics:  dMetrics,
+		})
+
+		for _, d := range dMetrics.Items() {
+			expectedMetrics := expectedState.Bgp6[d.Name()]
+			if d.SessionState() != gosnappi.Bgpv6MetricSessionState.UP || d.RoutesAdvertised() != expectedMetrics.Advertised || d.RoutesReceived() != expectedMetrics.Received {
+				t.Logf("BGPv6 state, advertised or received routes conditions not met for %s", d.Name())
+				expected = false
+			}
+		}
+	case ad.Port1.v6 != "" && ad.Port2.v4 != "":
+		for name := range expectedState.Bgp4 {
+			d4Names = append(d4Names, name)
+		}
+		for name := range expectedState.Bgp6 {
+			d6Names = append(d6Names, name)
+		}
+
+		d6Metrics, err := gnmiClient.GetBgpv6Metrics(d6Names)
+		if err != nil {
+			return false, err
+		}
+
+		d4Metrics, err := gnmiClient.GetBgpv4Metrics(d4Names)
+		if err != nil {
+			return false, err
+		}
+
+		helpers.PrintMetricsTable(&helpers.MetricsTableOpts{
+			ClearPrevious: true,
+			Bgpv4Metrics:  d4Metrics,
+		})
+		helpers.PrintMetricsTable(&helpers.MetricsTableOpts{
+			ClearPrevious: true,
+			Bgpv6Metrics:  d6Metrics,
+		})
+
+		for _, d := range d4Metrics.Items() {
+			expectedMetrics := expectedState.Bgp4[d.Name()]
+			if d.SessionState() != gosnappi.Bgpv4MetricSessionState.UP || d.RoutesAdvertised() != expectedMetrics.Advertised || d.RoutesReceived() != expectedMetrics.Received {
+				t.Logf("BGPv4 state, advertised or received routes conditions not met for %s", d.Name())
+				expected = false
+			}
+		}
+
+		for _, d := range d6Metrics.Items() {
+			expectedMetrics := expectedState.Bgp6[d.Name()]
+			if d.SessionState() != gosnappi.Bgpv6MetricSessionState.UP || d.RoutesAdvertised() != expectedMetrics.Advertised || d.RoutesReceived() != expectedMetrics.Received {
+				t.Logf("BGPv6 state, advertised or received routes conditions not met for %s", d.Name())
+				expected = false
+			}
+		}
+	}
+	return expected, nil
+}
+
 func rt_1_3_UnsetDUT(t *testing.T, dut *ondatra.DUTDevice) {
 	// t.Logf("Start Unsetting DUT Config")
 	// helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_install/unset_dut.txt"})
 
 	t.Logf("Start Unsetting DUT Interface Config")
 	dc := dut.Config()
-
+	time.Sleep(2 * time.Second)
 	i1 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port1").Name()])
 	dc.Interface(i1.GetName()).Replace(t, i1)
 
+	time.Sleep(2 * time.Second)
 	i2 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port2").Name()])
 	dc.Interface(i2.GetName()).Replace(t, i2)
 
 	t.Logf("Start Removing BGP config")
 	dutConfPath := dut.Config().NetworkInstance("default").Protocol(oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP, "BGP").Bgp()
+	time.Sleep(1 * time.Second)
 	helpers.LogYgot(t, "DUT BGP Config before", dutConfPath, dutConfPath.Get(t))
 	dutConfPath.Replace(t, nil)
 
@@ -348,7 +480,7 @@ func Test_rt_1_3(t *testing.T) {
 		},
 	}, {
 		desc:       "propagate IPv4 over IPv6",
-		skipReason: "TODO(b/203683090): Prefixes do not propagate as Arista currently requires RFC5549 to be enabled explicitly and OpenConfig does not currently provide a signal.",
+		skipReason: "",
 		fullDesc:   "IPv4 routes with an IPv6 next-hop when negotiating RFC5549 - validating that routes are accepted and advertised with the specified values.",
 		dut: dutData{&oc.NetworkInstance_Protocol_Bgp{
 			Global: &oc.NetworkInstance_Protocol_Bgp_Global{
@@ -414,37 +546,48 @@ func Test_rt_1_3(t *testing.T) {
 				ate2,
 			}
 			otg := ate1.OTG()
-			defer helpers.CleanupTest(otg, t, true)
+			defer helpers.CleanupTest(otg, t, true, false)
 			t.Logf("Start OTG Config")
-			config := tc.ate.Configure(t, otg, ateList)
+			config, expected := tc.ate.Configure(t, otg, ateList)
+
 			otg.PushConfig(t, config)
 			otg.StartProtocols(t)
 			t.Logf("OTG Configured")
 
 			tc.dut.AwaitBGPEstablished(t, dut)
 
-			for _, prefix := range tc.wantPrefixes {
-				rib := ate2.Telemetry().NetworkInstance("port1").
-					Protocol(
-						oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP,
-						fmt.Sprintf("%d", ateAS2),
-					).Bgp().
-					Rib()
-				// Don't care about the value, but I can only fetch leaves from ATE telemetry. This
-				// should fail in the Get(t) method if the Route is missing.
-				if prefix.v4 != "" {
-					_ = rib.AfiSafi(oc.BgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST).Ipv4Unicast().
-						Neighbor(tc.ate.Port2Neighbor).
-						AdjRibInPre().
-						Route(prefix.v4, 0).
-						AttrIndex().Get(t)
+			useOtgGnmi := true
+			if useOtgGnmi {
+				gnmiClient, err := helpers.NewGnmiClient(otg.NewGnmiQuery(t), config)
+				if err != nil {
+					t.Fatal(err)
 				}
-				if prefix.v6 != "" {
-					_ = rib.AfiSafi(oc.BgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST).Ipv6Unicast().
-						Neighbor(tc.ate.Port2Neighbor).
-						AdjRibInPre().
-						Route(prefix.v6, 0).
-						AttrIndex().Get(t)
+				defer gnmiClient.Close()
+				helpers.WaitFor(t, func() (bool, error) { return tc.ate.CheckOtgBgp(t, gnmiClient, expected) }, &helpers.WaitForOpts{Timeout: 20 * time.Second})
+			} else {
+				for _, prefix := range tc.wantPrefixes {
+					rib := ate2.Telemetry().NetworkInstance("port1").
+						Protocol(
+							oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP,
+							fmt.Sprintf("%d", ateAS2),
+						).Bgp().
+						Rib()
+					// Don't care about the value, but I can only fetch leaves from ATE telemetry. This
+					// should fail in the Get(t) method if the Route is missing.
+					if prefix.v4 != "" {
+						_ = rib.AfiSafi(oc.BgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST).Ipv4Unicast().
+							Neighbor(tc.ate.Port2Neighbor).
+							AdjRibInPre().
+							Route(prefix.v4, 0).
+							AttrIndex().Get(t)
+					}
+					if prefix.v6 != "" {
+						_ = rib.AfiSafi(oc.BgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST).Ipv6Unicast().
+							Neighbor(tc.ate.Port2Neighbor).
+							AdjRibInPre().
+							Route(prefix.v6, 0).
+							AttrIndex().Get(t)
+					}
 				}
 			}
 		})
