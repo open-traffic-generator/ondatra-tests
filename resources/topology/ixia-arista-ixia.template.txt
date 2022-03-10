@@ -4,19 +4,10 @@ nodes: {
     type: IXIA_TG
     version: "${ixia_version}"
     services: {
-        key: 443
-        value: {
-            name: "ixia-c"
-            inside: 443
-            outside: 0
-        }
-    }
-    services: {
         key: 40051
         value: {
             name: "grpc"
             inside: 40051
-            outside: 0
         }
     }
     services: {
@@ -24,14 +15,11 @@ nodes: {
         value: {
             name: "gnmi"
             inside: 50051
-            outside: 0
         }
     }
 }
-
-
 nodes: {
-    name: "arista1"
+    name: "arista"
     type: ARISTA_CEOS
     config: {
         cert: {
@@ -61,15 +49,14 @@ nodes: {
         }
     }
 }
-
 links: {
     a_node: "otg"
     a_int: "eth1"
-    z_node: "arista1"
+    z_node: "arista"
     z_int: "eth1"
 }
 links: {
-    a_node: "arista1"
+    a_node: "arista"
     a_int: "eth2"
     z_node: "otg"
     z_int: "eth2"

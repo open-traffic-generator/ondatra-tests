@@ -23,11 +23,11 @@ import (
 func TestBGPRoutePolicy(t *testing.T) {
 	ate := ondatra.ATE(t, "ate")
 	if ate.Port(t, "port1").Name() == "eth1" {
-		helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_policy/set_dut.txt"})
+		helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/bgp_route_policy/set_dut.txt"})
 	} else {
-		helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_policy/set_dut_alternative.txt"})
+		helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/bgp_route_policy/set_dut_alternative.txt"})
 	}
-	defer helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_policy/unset_dut.txt"})
+	defer helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/bgp_route_policy/unset_dut.txt"})
 
 	otg := ate.OTG()
 	defer helpers.CleanupTest(otg, t, true)
