@@ -471,6 +471,26 @@ run() {
         -testbed ${KTBD} | tee logs/${prefix}.log
 }
 
+details() {
+    cecho "\nPods:\n"
+    kubectl get pods -n ixia-c
+    cecho "\nServices:\n"
+    kubectl get services -n ixia-c
+    cecho "\nMeshnet Topologies:\n"
+    cecho "Short:"
+    kubectl get topologies -n ixia-c
+    cecho "Detailed:"
+    kubectl get topologies -n ixia-c -o yaml
+    cecho "\nIxia CRD:\n"
+    kubectl get ixiatgs -A -o yaml
+    cecho "\nPod Interfaces\n"
+    for p in $(kubectl get pods -n ixia-c -o 'jsonpath={.items[*].metadata.name}')
+    do
+        cecho "Pod: ${p}"
+        kubectl exec -it -n ixia-c ${p} -- ip link 2>/dev/null
+    done
+}
+
 case $1 in
     *   )
         # shift positional arguments so that arg 2 becomes arg 1, etc.
