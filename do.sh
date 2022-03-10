@@ -483,6 +483,8 @@ details() {
     kubectl get topologies -n ixia-c -o yaml
     cecho "\nIxia CRD:\n"
     kubectl get ixiatgs -A -o yaml
+    cecho "\nKNE Topology Service\n"
+    kne_cli topology service resources/topology/ixia-arista-ixia.txt
     cecho "\nPod Interfaces\n"
     for p in $(kubectl get pods -n ixia-c -o 'jsonpath={.items[*].metadata.name}')
     do
