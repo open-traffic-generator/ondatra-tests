@@ -241,9 +241,9 @@ rm_ixia_c_operator() {
 
 get_metallb() {
     cecho "Getting metallb ..."
-    kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/namespace.yaml \
+    kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12/manifests/namespace.yaml \
     && kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)" \
-    && kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml \
+    && kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12/manifests/metallb.yaml \
     && wait_for_pod_counts metallb-system 1 \
     && wait_for_all_pods_to_be_ready -ns metallb-system || exit 1
 
