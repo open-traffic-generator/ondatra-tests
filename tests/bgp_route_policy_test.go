@@ -13,7 +13,7 @@ package tests
 
 import (
 	"testing"
-	"fmt"
+
 	"github.com/open-traffic-generator/snappi/gosnappi"
 	"github.com/openconfig/ondatra"
 
@@ -22,8 +22,6 @@ import (
 
 func TestBGPRoutePolicy(t *testing.T) {
 	ate := ondatra.ATE(t, "ate")
-	fmt.Printf("ATE : %s\n", ate.String())
-	t.Logf("Log ATE: %s\n", ate.String())
 	if ate.Port(t, "port1").Name() == "eth1" {
 		helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_policy/set_dut.txt"})
 	} else {
