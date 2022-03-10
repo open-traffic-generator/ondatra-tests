@@ -448,14 +448,25 @@ rmtop() {
 }
 
 run() {
-    name=$(grep -Eo "Test[0-9a-zA-Z]+" ${1})
+    if [ $# -gt 1 ]
+    then
+        name=${2}
+        if [ $# -gt 2 ]
+        then
+            timeout=${3}
+        else
+            timeout=60s
+        fi
+    else
+        name=$(grep -Eo "Test[0-9a-zA-Z]+" ${1})
+        timeout=60s
+    fi
     prefix=$(basename ${1} | sed 's/_test.go//g')
-
     get_knebind_conf
 
     mkdir -p logs
     cecho "Starting tests, output will be stored in logs/${prefix}.log"
-    CGO_ENABLED=0 go test -v -timeout 60s -run ${name} tests/tests \
+    CGO_ENABLED=0 go test -v -timeout ${timeout} -run ${name} tests/tests \
         -config ${KNEBIND_CONFIG} \
         -testbed ${KTBD} | tee logs/${prefix}.log
 }

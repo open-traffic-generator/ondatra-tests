@@ -72,6 +72,7 @@ func (a *Attributes) ConfigInterface(intf *oc.Interface) *oc.Interface {
 		if a.IPv4Len > 0 {
 			a4.PrefixLength = ygot.Uint8(a.IPv4Len)
 		}
+		// a4.AddrType = oc.AristaIntfAugments_AristaAddrType_PRIMARY
 	}
 
 	if a.IPv6 != "" {

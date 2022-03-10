@@ -28,7 +28,7 @@ func TestBGPRoutePolicy(t *testing.T) {
 	ondatra.ATE(t, "ate2")
 
 	otg := ate.OTG()
-	defer helpers.CleanupTest(otg, t, true)
+	defer helpers.CleanupTest(otg, t, true, true)
 
 	config, expected := bgpRoutePolicyConfig(t, otg)
 	otg.PushConfig(t, config)

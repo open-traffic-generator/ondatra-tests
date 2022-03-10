@@ -1,0 +1,10 @@
+interface Ethernet1
+    no switchport
+!
+interface Ethernet2
+    no switchport
+!
+ip routing
+!
+ipv6 unicast-routing
+!

@@ -1,0 +1,5 @@
+router bgp 65537
+!
+address-family ipv4
+bgp next-hop address-family ipv6
+!

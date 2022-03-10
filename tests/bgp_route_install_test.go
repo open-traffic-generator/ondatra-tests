@@ -286,7 +286,7 @@ func TestBGPRouteInstall(t *testing.T) {
 	}
 
 	otg := ate1.OTG()
-	defer helpers.CleanupTest(otg, t, true)
+	defer helpers.CleanupTest(otg, t, true, true)
 
 	config, expected := bgpRouteInstallConfig(t, otg, ateList)
 
@@ -310,6 +310,7 @@ func TestBGPRouteInstall(t *testing.T) {
 	otg.StartTraffic(t)
 
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
+	t.Logf("Test Done")
 }
 
 func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra.ATEDevice) (gosnappi.Config, helpers.ExpectedState) {

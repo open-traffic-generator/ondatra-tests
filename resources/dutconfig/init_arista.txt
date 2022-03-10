@@ -1,6 +1,6 @@
 transceiver qsfp default-mode 4x10G
 !
-service routing protocols model ribd
+service routing protocols model multi-agent
 !
 agent Bfd shutdown
 agent PowerManager shutdown
@@ -29,5 +29,7 @@ management security
 ip routing
 !
 ipv6 unicast-routing
+!
+switchport default mode routed
 !
 end

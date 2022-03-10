@@ -136,7 +136,8 @@ func WaitFor(t *testing.T, fn func() (bool, error), opts *WaitForOpts) error {
 		}
 
 		if time.Since(start) > opts.Timeout {
-			t.Fatal(fmt.Errorf("timeout occurred while waiting for %s", opts.Condition))
+			t.Errorf("Timeout occurred while waiting for %s", opts.Condition)
+			return nil
 		}
 		time.Sleep(opts.Interval)
 	}
@@ -163,7 +164,7 @@ func PrintMetricsTable(opts *MetricsTableOpts) {
 	if opts == nil {
 		return
 	}
-	opts.ClearPrevious = true
+	opts.ClearPrevious = false
 	out := "\n"
 
 	if opts.Bgpv4Metrics != nil {
@@ -363,13 +364,15 @@ func PrintMetricsTable(opts *MetricsTableOpts) {
 	if opts.FlowMetrics != nil {
 		border := strings.Repeat("-", 25*3+5)
 		out += "\nFlow Metrics\n" + border + "\n"
-		out += fmt.Sprintf("%-25s%-25s%-25s\n", "Name", "Frames Rx", "FPS Rx")
+		out += fmt.Sprintf("%-25s%-25s%-25s%-25s%-25s\n", "Name", "Frames Tx", "Frames Rx", "FPS Tx", "FPS Rx")
 		for _, m := range opts.FlowMetrics.Items() {
 			if m != nil {
 				name := m.Name()
+				tx := m.FramesTx()
 				rx := m.FramesRx()
+				txRate := m.FramesTxRate()
 				rxRate := m.FramesRxRate()
-				out += fmt.Sprintf("%-25v%-25v%-25v\n", name, rx, rxRate)
+				out += fmt.Sprintf("%-25v%-25v%-25v%-25v%-25v\n", name, tx, rx, txRate, rxRate)
 			}
 		}
 		out += border + "\n\n"
@@ -393,10 +396,31 @@ func GetCapturePorts(c gosnappi.Config) []string {
 	return capturePorts
 }
 
-func CleanupTest(otg *ondatra.OTGAPI, t *testing.T, stopProtocols bool) {
-	otg.StopTraffic(t)
+func CleanupTest(otg *ondatra.OTGAPI, t *testing.T, stopProtocols bool, stopTraffic bool) {
+	if stopTraffic {
+		otg.StopTraffic(t)
+	}
 	if stopProtocols {
 		otg.StopProtocols(t)
 	}
 	otg.PushConfig(t, otg.NewConfig(t))
+}
+
+func (client *GnmiClient) WatchFlowMetrics(opts *WaitForOpts) error {
+	start := time.Now()
+	for {
+		fMetrics, err := client.GetFlowMetrics([]string{})
+		if err != nil {
+			return err
+		}
+		PrintMetricsTable(&MetricsTableOpts{
+			ClearPrevious: false,
+			FlowMetrics:   fMetrics,
+		})
+
+		if time.Since(start) > opts.Timeout {
+			return nil
+		}
+		time.Sleep(opts.Interval)
+	}
 }
