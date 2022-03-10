@@ -1,13 +1,11 @@
 {
     "git.autoRepositoryDetection": false,
     "go.testFlags": [
-        // "-v",
-        // "-timeout",
-        // "60s",
-        // "-config",
-        // "../resources/global/knebind-config.yaml",
-        // "-testbed",
-        // "../resources/testbed/ixia-arista-ixia.txt"
+        "-v",
+        "-config",
+        "../resources/kneconfig/kne-001.yaml",
+        "-testbed",
+        "../resources/testbed/testbed-001.txt"
     ],
     "editor.rulers": [
         80,
@@ -25,9 +23,6 @@
     },
     "go.toolsEnvVars": {
         "CGO_ENABLED": 0
-    },
-    "go.delveConfig": {
-        "debugAdapter": "legacy"
     },
     "files.insertFinalNewline": true,
     "files.eol": "\n",

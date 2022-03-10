@@ -244,11 +244,11 @@ func checkBgpParameters(t *testing.T, dut *ondatra.DUTDevice) {
 	}
 }
 
-func configureATE(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra.ATEDevice) (gosnappi.Config, helpers.ExpectedState) {
+func configureATE(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
 
 	config := otg.NewConfig(t)
-	srcPort := config.Ports().Add().SetName(ateList[0].Name())
-	dstPort := config.Ports().Add().SetName(ateList[1].Name())
+	srcPort := config.Ports().Add().SetName("port1")
+	dstPort := config.Ports().Add().SetName("port2")
 
 	srcDev := config.Devices().Add().SetName(ateSrc.Name)
 	srcEth := srcDev.Ethernets().Add().
@@ -496,7 +496,7 @@ func Test_rt_1_2(t *testing.T) {
 	// Configure interface on the DUT
 	t.Logf("Start DUT interface Config")
 	configureDUT(t, dut)
-	helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/rt_1_2_bgp_route_installation/set_dut_interface.txt"})
+	helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/rt_1_2_bgp_route_installation/set_dut_interface.txt"})
 
 	// Configure BGP+Neighbors on the DUT
 	t.Logf("Start DUT BGP Config")
@@ -510,18 +510,12 @@ func Test_rt_1_2(t *testing.T) {
 
 	// ATE Configuration.
 	t.Logf("Start ATE Config")
-	ate1 := ondatra.ATE(t, "ate1")
-	ate2 := ondatra.ATE(t, "ate2")
+	ate := ondatra.ATE(t, "ate")
 
-	ateList := []*ondatra.ATEDevice{
-		ate1,
-		ate2,
-	}
-
-	otg := ate1.OTG()
+	otg := ate.OTG()
 	defer helpers.CleanupTest(otg, t, true, false)
 
-	config, expected := configureATE(t, otg, ateList)
+	config, expected := configureATE(t, otg)
 
 	otg.PushConfig(t, config)
 	t.Logf("Start ATE Protocols")

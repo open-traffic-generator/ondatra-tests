@@ -3,7 +3,7 @@
 GO_VERSION=1.17.3
 PROTOC_VERSION=3.17.3
 
-KNE_COMMIT=606d419
+KNE_COMMIT=35e761a
 MESHNET_COMMIT=4bf3db7
 
 OPERATOR_RELEASE=0.0.75
@@ -134,8 +134,8 @@ get_kubectl() {
 get_kne() {
     cecho "Getting kne commit: $KNE_COMMIT ..."
     rm -rf kne
-    git clone https://github.com/google/kne \
-    && cd kne && git checkout $KNE_COMMIT && cd - \
+    git clone https://github.com/open-traffic-generator/kne.git \
+    && cd kne && git checkout otg-refactor && git checkout $KNE_COMMIT && cd - \
     && cd kne/kne_cli && go install && cd - \
     && rm -rf kne
 }
@@ -241,9 +241,9 @@ rm_ixia_c_operator() {
 
 get_metallb() {
     cecho "Getting metallb ..."
-    kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/namespace.yaml \
+    kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12/manifests/namespace.yaml \
     && kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)" \
-    && kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml \
+    && kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12/manifests/metallb.yaml \
     && wait_for_pod_counts metallb-system 1 \
     && wait_for_all_pods_to_be_ready -ns metallb-system || exit 1
 

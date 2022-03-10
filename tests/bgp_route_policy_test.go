@@ -21,11 +21,10 @@ import (
 )
 
 func TestBGPRoutePolicy(t *testing.T) {
-	helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_policy/set_dut.txt"})
-	defer helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_policy/unset_dut.txt"})
+	helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/bgp_route_policy/set_dut.txt"})
+	defer helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/bgp_route_policy/unset_dut.txt"})
 
-	ate := ondatra.ATE(t, "ate1")
-	ondatra.ATE(t, "ate2")
+	ate := ondatra.ATE(t, "ate")
 
 	otg := ate.OTG()
 	defer helpers.CleanupTest(otg, t, true, true)
@@ -50,8 +49,8 @@ func TestBGPRoutePolicy(t *testing.T) {
 func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
 	config := otg.NewConfig(t)
 
-	port1 := config.Ports().Add().SetName("ixia-c-port1")
-	port2 := config.Ports().Add().SetName("ixia-c-port2")
+	port1 := config.Ports().Add().SetName("port1")
+	port2 := config.Ports().Add().SetName("port2")
 
 	dutPort1 := config.Devices().Add().SetName("dutPort1")
 	dutPort1Eth := dutPort1.Ethernets().Add().
