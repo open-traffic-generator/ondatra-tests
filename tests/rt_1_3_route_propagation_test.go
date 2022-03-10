@@ -196,6 +196,7 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondat
 			bgpName := ateList[0].Name() + ".dev.bgp6.peer"
 			bgpPeer := bgp6ObjectMap[bgpName]
 			ip := ipv6ObjectMap[ateList[0].Name()+".dev.ip6"]
+			bgpPeer.Capability().SetExtendedNextHopEncoding(true)
 			bgp4PeerRoutes := bgpPeer.V4Routes().Add().
 				SetName(bgpName + ".rr4").
 				SetNextHopIpv6Address(ip.Address()).
@@ -495,6 +496,10 @@ func Test_rt_1_3(t *testing.T) {
 							AfiSafiName: oc.BgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST,
 							Enabled:     ygot.Bool(true),
 						},
+						oc.BgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST: {
+							AfiSafiName: oc.BgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST,
+							Enabled:     ygot.Bool(true),
+						},
 					},
 				},
 				"192.0.2.6": {
@@ -537,6 +542,9 @@ func Test_rt_1_3(t *testing.T) {
 			defer rt_1_3_UnsetDUT(t, dut)
 			tc.dut.Configure(t, dut)
 			helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/rt_1_3_bgp_route_propagation/set_dut_interface.txt"})
+			if tc.desc == "propagate IPv4 over IPv6" {
+				helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/rt_1_3_bgp_route_propagation/set_bgp_rfc5549.txt"})
+			}
 			t.Logf("DUT Configured")
 
 			ate1 := ondatra.ATE(t, "ate1")
