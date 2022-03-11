@@ -491,6 +491,8 @@ details() {
         cecho "Pod: ${p}"
         kubectl exec -it -n ixia-c ${p} -- ip link 2>/dev/null
     done
+    cecho "\nPort Location Map\n"
+    kubectl get configmaps -n ixia-c controller-config -o yaml
 }
 
 case $1 in
