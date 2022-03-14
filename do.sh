@@ -239,6 +239,28 @@ rm_ixia_c_operator() {
     kubectl delete -f https://github.com/open-traffic-generator/ixia-c-operator/releases/download/v${OPERATOR_RELEASE}/ixiatg-operator.yaml
 }
 
+get_private_ixia_c_operator() {
+    private_operator_version=0.0.77
+    cecho "Getting private ixia-c-operator v${private_operator_version} ..."
+    curl -kLO "https:/artifactorylbj.it.keysight.com/artifactory/generic-remote-athena-cos/external/operator/${private_operator_version}/ixia-c-operator.tar.gz" \
+    && docker load -i ixia-c-operator.tar.gz \
+    && rm -rf ixia-c-operator.tar.gz \
+    && kind load docker-image ixiacom/ixia-c-operator:${private_operator_version} \
+    && curl -kLO "https:/artifactorylbj.it.keysight.com/artifactory/generic-remote-athena-cos/external/operator/${private_operator_version}/ixiatg-operator.yaml" \
+    && kubectl apply -f ixiatg-operator.yaml \
+    && rm -rf ixiatg-operator.yaml \
+    && wait_for_pod_counts ixiatg-op-system 1 \
+    && wait_for_all_pods_to_be_ready -ns ixiatg-op-system \
+    && kubectl apply -f ./resources/global/gcp-ixia-configmap.yaml
+}
+
+rm_private_ixia_c_operator() {
+    private_operator_version=0.0.77
+    curl -kLO "https:/artifactorylbj.it.keysight.com/artifactory/generic-remote-athena-cos/external/operator/${private_operator_version}/ixiatg-operator.yaml" \
+    && kubectl delete -f ixiatg-operator.yaml \
+    && rm -rf ixiatg-operator.yaml
+}
+
 get_metallb() {
     cecho "Getting metallb ..."
     kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12/manifests/namespace.yaml \
