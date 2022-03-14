@@ -19,15 +19,20 @@ import (
 )
 
 func TestIsisL2P2pAdj(t *testing.T) {
-	helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/isis_l2_p2p_adj/set_dut.txt"})
+	ate := ondatra.ATE(t, "ate")
+
+	if ate.Port(t, "port1").Name() == "eth1" {
+		helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/isis_l2_p2p_adj/set_dut.txt"})
+	} else {
+		helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/isis_l2_p2p_adj/set_dut_alternative.txt"})
+	}
 	defer helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/isis_l2_p2p_adj/unset_dut.txt"})
 
-	ate := ondatra.ATE(t, "ate")
-	otg := ate.OTG()
-	defer helpers.CleanupTest(otg, t, true)
+	otg := ate.OTG(t)
+	defer helpers.CleanupTest(t, ate, otg, true)
 
 	config, expected := isisL2P2pAdjConfig(t, otg)
-	otg.PushConfig(t, config)
+	otg.PushConfig(t, ate, config)
 	otg.StartProtocols(t)
 
 	gnmiClient, err := helpers.NewGnmiClient(otg.NewGnmiQuery(t), config)
@@ -42,8 +47,8 @@ func TestIsisL2P2pAdj(t *testing.T) {
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
 }
 
-func isisL2P2pAdjConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig(t)
+func isisL2P2pAdjConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+	config := otg.NewConfig()
 	port1 := config.Ports().Add().SetName("port1")
 	port2 := config.Ports().Add().SetName("port2")
 	dutPort1 := config.Devices().Add().SetName("dutPort1")

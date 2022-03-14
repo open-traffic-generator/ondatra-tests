@@ -68,10 +68,10 @@ func routeInstallConfigureInterface(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start DUT Interface Config")
 	dc := dut.Config()
 
-	i1 := bgpRouteInstallParams.dutSrc.NewInterface(helpers.InterfaceMap[dut.Port(t, "port1").Name()])
+	i1 := bgpRouteInstallParams.dutSrc.NewInterface(dut.Port(t, "port1").Name())
 	dc.Interface(i1.GetName()).Replace(t, i1)
 
-	i2 := bgpRouteInstallParams.dutDst.NewInterface(helpers.InterfaceMap[dut.Port(t, "port2").Name()])
+	i2 := bgpRouteInstallParams.dutDst.NewInterface(dut.Port(t, "port2").Name())
 	dc.Interface(i2.GetName()).Replace(t, i2)
 }
 
@@ -104,10 +104,10 @@ func routeInstallUnsetInterface(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start Unsetting DUT Interface Config")
 	dc := dut.Config()
 
-	i1 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port1").Name()])
+	i1 := helpers.RemoveInterface(dut.Port(t, "port1").Name())
 	dc.Interface(i1.GetName()).Replace(t, i1)
 
-	i2 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port2").Name()])
+	i2 := helpers.RemoveInterface(dut.Port(t, "port2").Name())
 	dc.Interface(i2.GetName()).Replace(t, i2)
 }
 
@@ -278,12 +278,12 @@ func TestBGPRouteInstall(t *testing.T) {
 	defer routeInstallUnsetDUT(t, dut)
 
 	ate := ondatra.ATE(t, "ate")
-	otg := ate.OTG()
-	defer helpers.CleanupTest(otg, t, true)
+	otg := ate.OTG(t)
+	defer helpers.CleanupTest(t, ate, otg, true)
 
 	config, expected := bgpRouteInstallConfig(t, otg)
 
-	otg.PushConfig(t, config)
+	otg.PushConfig(t, ate, config)
 	otg.StartProtocols(t)
 
 	gnmiClient, err := helpers.NewGnmiClient(otg.NewGnmiQuery(t), config)
@@ -305,8 +305,8 @@ func TestBGPRouteInstall(t *testing.T) {
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
 }
 
-func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig(t)
+func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+	config := otg.NewConfig()
 
 	port1 := config.Ports().Add().SetName("port1")
 	port2 := config.Ports().Add().SetName("port2")

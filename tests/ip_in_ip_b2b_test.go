@@ -24,11 +24,11 @@ func TestIpInIpB2b(t *testing.T) {
 
 	ate := ondatra.ATE(t, "ate")
 
-	otg := ate.OTG()
-	defer helpers.CleanupTest(otg, t, false)
+	otg := ate.OTG(t)
+	defer helpers.CleanupTest(t, ate, otg, true)
 
 	config, expected := ipInIpB2bConfig(t, otg)
-	otg.PushConfig(t, config)
+	otg.PushConfig(t, ate, config)
 	gnmiClient, err := helpers.NewGnmiClient(otg.NewGnmiQuery(t), config)
 	if err != nil {
 		t.Fatal(err)
@@ -39,8 +39,8 @@ func TestIpInIpB2b(t *testing.T) {
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
 }
 
-func ipInIpB2bConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig(t)
+func ipInIpB2bConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+	config := otg.NewConfig()
 
 	port1 := config.Ports().Add().SetName("port1")
 	port2 := config.Ports().Add().SetName("port2")

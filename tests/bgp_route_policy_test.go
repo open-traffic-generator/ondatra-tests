@@ -12,6 +12,7 @@ Flows:
 package tests
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/open-traffic-generator/snappi/gosnappi"
@@ -22,6 +23,7 @@ import (
 
 func TestBGPRoutePolicy(t *testing.T) {
 	ate := ondatra.ATE(t, "ate")
+	fmt.Println(ate.String())
 	if ate.Port(t, "port1").Name() == "eth1" {
 		helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/bgp_route_policy/set_dut.txt"})
 	} else {
@@ -29,11 +31,11 @@ func TestBGPRoutePolicy(t *testing.T) {
 	}
 	defer helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/bgp_route_policy/unset_dut.txt"})
 
-	otg := ate.OTG()
-	defer helpers.CleanupTest(otg, t, true)
+	otg := ate.OTG(t)
+	defer helpers.CleanupTest(t, ate, otg, true)
 
 	config, expected := bgpRoutePolicyConfig(t, otg)
-	otg.PushConfig(t, config)
+	otg.PushConfig(t, ate, config)
 	otg.StartProtocols(t)
 
 	gnmiClient, err := helpers.NewGnmiClient(otg.NewGnmiQuery(t), config)
@@ -49,8 +51,8 @@ func TestBGPRoutePolicy(t *testing.T) {
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
 }
 
-func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig(t)
+func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+	config := otg.NewConfig()
 
 	port1 := config.Ports().Add().SetName("port1")
 	port2 := config.Ports().Add().SetName("port2")
