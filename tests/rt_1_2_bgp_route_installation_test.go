@@ -77,7 +77,6 @@ const (
 	trafficDuration        = 10 * time.Second
 	statsInterval          = 2 * time.Second
 	trafficRate            = 100
-	packetsToBeSent        = 2000
 	ipv4SrcTraffic         = "192.0.2.2"
 	ipv6SrcTraffic         = "2001:db8::192:0:2:2"
 	ipv4DstTrafficStart    = "203.0.113.1"
@@ -348,10 +347,7 @@ func configureATE(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra.ATEDevic
 		SetRxNames([]string{dstBgp4PeerRoutes.Name()})
 	flowipv4.Size().SetFixed(512)
 	flowipv4.Rate().SetPps(trafficRate)
-	// This should be used when Tx packets stat will become available
 	flowipv4.Duration().SetChoice("continuous")
-	// flowipv4.Duration().SetChoice("fixed_packets")
-	// flowipv4.Duration().FixedPackets().SetPackets(packetsToBeSent)
 	e1 := flowipv4.Packet().Add().Ethernet()
 	e1.Src().SetValue(srcEth.Mac())
 	v4 := flowipv4.Packet().Add().Ipv4()
@@ -365,10 +361,7 @@ func configureATE(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra.ATEDevic
 		SetRxNames([]string{dstBgp6PeerRoutes.Name()})
 	flowipv6.Size().SetFixed(512)
 	flowipv6.Rate().SetPps(trafficRate)
-	// This should be used when Tx packets stat will become available
 	flowipv6.Duration().SetChoice("continuous")
-	// flowipv6.Duration().SetChoice("fixed_packets")
-	// flowipv6.Duration().FixedPackets().SetPackets(packetsToBeSent)
 	e2 := flowipv6.Packet().Add().Ethernet()
 	e2.Src().SetValue(srcEth.Mac())
 	v6 := flowipv6.Packet().Add().Ipv6()
@@ -473,15 +466,12 @@ func rt_1_2_UnsetDUT(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start Unsetting DUT Interface Config")
 	dc := dut.Config()
 
-	time.Sleep(1 * time.Second)
 	i1 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port1").Name()])
 	dc.Interface(i1.GetName()).Replace(t, i1)
 
-	time.Sleep(1 * time.Second)
 	i2 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port2").Name()])
 	dc.Interface(i2.GetName()).Replace(t, i2)
 
-	time.Sleep(2 * time.Second)
 	t.Logf("Start Removing BGP config")
 	dutConfPath := dut.Config().NetworkInstance("default").Protocol(oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP, "BGP").Bgp()
 	helpers.LogYgot(t, "DUT BGP Config before", dutConfPath, dutConfPath.Get(t))
@@ -533,7 +523,6 @@ func Test_rt_1_2(t *testing.T) {
 	}
 	defer gnmiClient.Close()
 
-	time.Sleep(5 * time.Second)
 	// Verify Port Status
 	t.Logf("Verifying port status")
 	verifyPortsUp(t, dut.Device)
