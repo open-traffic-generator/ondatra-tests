@@ -221,7 +221,7 @@ get_meshnet() {
     rm -rf meshnet-cni && git clone https://github.com/networkop/meshnet-cni \
     && cd meshnet-cni \
     && git checkout $MESHNET_COMMIT \
-    && sed -i "s/^\s*image\:\ networkop\/meshnet\:latest.*/          image\:\ networkop\/\meshnet\:${MESHNET_VERSION}/g" ./manifests/base/daemonset.yaml
+    && sed -i "s/^\s*image\:\ networkop\/meshnet\:latest.*/          image\:\ networkop\/\meshnet\:${MESHNET_VERSION}/g" ./manifests/base/daemonset.yaml \
     && kubectl apply -k manifests/base \
     && wait_for_pod_counts meshnet 1 \
     && wait_for_all_pods_to_be_ready -ns meshnet \
