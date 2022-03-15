@@ -20,13 +20,13 @@ import (
 
 func TestIsisL2P2pAdj(t *testing.T) {
 	ate := ondatra.ATE(t, "ate")
-
+	dut := ondatra.DUT(t, "dut")
 	if ate.Port(t, "port1").Name() == "eth1" {
-		helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/isis_l2_p2p_adj/set_dut.txt"})
+		dut.Config().New().WithAristaFile("../resources/dutconfig/isis_l2_p2p_adj/set_dut.txt").Push(t)
 	} else {
-		helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/isis_l2_p2p_adj/set_dut_alternative.txt"})
+		dut.Config().New().WithAristaFile("../resources/dutconfig/isis_l2_p2p_adj/set_dut_alternative.txt").Push(t)
 	}
-	defer helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/isis_l2_p2p_adj/unset_dut.txt"})
+	defer dut.Config().New().WithAristaFile("../resources/dutconfig/isis_l2_p2p_adj/unset_dut.txt").Push(t)
 
 	otg := ate.OTG(t)
 	defer helpers.CleanupTest(t, ate, otg, true)

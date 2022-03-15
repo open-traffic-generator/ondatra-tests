@@ -12,7 +12,6 @@ Flows:
 package tests
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/open-traffic-generator/snappi/gosnappi"
@@ -23,13 +22,14 @@ import (
 
 func TestBGPRoutePolicy(t *testing.T) {
 	ate := ondatra.ATE(t, "ate")
-	fmt.Println(ate.String())
+	dut := ondatra.DUT(t, "dut")
 	if ate.Port(t, "port1").Name() == "eth1" {
-		helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/bgp_route_policy/set_dut.txt"})
+		dut.Config().New().WithAristaFile("../resources/dutconfig/bgp_route_policy/set_dut.txt").Push(t)
 	} else {
-		helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/bgp_route_policy/set_dut_alternative.txt"})
+		dut.Config().New().WithAristaFile("../resources/dutconfig/bgp_route_policy/set_dut_alternative.txt").Push(t)
 	}
-	defer helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/bgp_route_policy/unset_dut.txt"})
+
+	defer dut.Config().New().WithAristaFile("../resources/dutconfig/bgp_route_policy/unset_dut.txt").Push(t)
 
 	otg := ate.OTG(t)
 	defer helpers.CleanupTest(t, ate, otg, true)
