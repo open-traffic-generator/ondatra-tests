@@ -105,9 +105,9 @@ type ateData struct {
 	prefixesCount uint32
 }
 
-func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra.ATEDevice) (gosnappi.Config, helpers.ExpectedState) {
+func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTG, ateList []*ondatra.ATEDevice) (gosnappi.Config, helpers.ExpectedState) {
 
-	config := otg.NewConfig(t)
+	config := otg.NewConfig()
 	bgp4ObjectMap := make(map[string]gosnappi.BgpV4Peer)
 	bgp6ObjectMap := make(map[string]gosnappi.BgpV6Peer)
 	ipv4ObjectMap := make(map[string]gosnappi.DeviceIpv4)
@@ -247,7 +247,7 @@ type dutData struct {
 
 func (d *dutData) Configure(t *testing.T, dut *ondatra.DUTDevice) {
 	for _, a := range []helpers.Attributes{dutPort1, dutPort2} {
-		ocName := helpers.InterfaceMap[dut.Port(t, a.Name).Name()]
+		ocName := dut.Port(t, a.Name).Name()
 		dut.Config().Interface(ocName).Replace(t, a.NewInterface(ocName))
 	}
 	dutBGP := dut.Config().NetworkInstance("default").
@@ -369,11 +369,11 @@ func rt_1_3_UnsetDUT(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start Unsetting DUT Interface Config")
 	dc := dut.Config()
 	time.Sleep(2 * time.Second)
-	i1 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port1").Name()])
+	i1 := helpers.RemoveInterface(dut.Port(t, "port1").Name())
 	dc.Interface(i1.GetName()).Replace(t, i1)
 
 	time.Sleep(2 * time.Second)
-	i2 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port2").Name()])
+	i2 := helpers.RemoveInterface(dut.Port(t, "port1").Name())
 	dc.Interface(i2.GetName()).Replace(t, i2)
 
 	t.Logf("Start Removing BGP config")
@@ -547,18 +547,17 @@ func Test_rt_1_3(t *testing.T) {
 			}
 			t.Logf("DUT Configured")
 
-			ate1 := ondatra.ATE(t, "ate1")
-			ate2 := ondatra.ATE(t, "ate2")
+			ate := ondatra.ATE(t, "ate")
+			otg := ate.OTG(t)
+
+			defer helpers.CleanupTest(t, ate, otg, true, false)
 			ateList := []*ondatra.ATEDevice{
-				ate1,
-				ate2,
+				ate,
 			}
-			otg := ate1.OTG()
-			defer helpers.CleanupTest(otg, t, true, false)
 			t.Logf("Start OTG Config")
 			config, expected := tc.ate.Configure(t, otg, ateList)
 
-			otg.PushConfig(t, config)
+			otg.PushConfig(t, ate, config)
 			otg.StartProtocols(t)
 			t.Logf("OTG Configured")
 
@@ -574,7 +573,7 @@ func Test_rt_1_3(t *testing.T) {
 				helpers.WaitFor(t, func() (bool, error) { return tc.ate.CheckOtgBgp(t, gnmiClient, expected) }, &helpers.WaitForOpts{Timeout: 20 * time.Second})
 			} else {
 				for _, prefix := range tc.wantPrefixes {
-					rib := ate2.Telemetry().NetworkInstance("port1").
+					rib := ate.Telemetry().NetworkInstance("port1").
 						Protocol(
 							oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP,
 							fmt.Sprintf("%d", ateAS2),

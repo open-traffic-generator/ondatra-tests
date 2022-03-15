@@ -396,14 +396,14 @@ func GetCapturePorts(c gosnappi.Config) []string {
 	return capturePorts
 }
 
-func CleanupTest(otg *ondatra.OTGAPI, t *testing.T, stopProtocols bool, stopTraffic bool) {
+func CleanupTest(t *testing.T, ate *ondatra.ATEDevice, otg *ondatra.OTG, stopProtocols bool, stopTraffic bool) {
 	if stopTraffic {
 		otg.StopTraffic(t)
 	}
 	if stopProtocols {
 		otg.StopProtocols(t)
 	}
-	otg.PushConfig(t, otg.NewConfig(t))
+	otg.PushConfig(t, ate, otg.NewConfig())
 }
 
 func (client *GnmiClient) WatchFlowMetrics(opts *WaitForOpts) error {

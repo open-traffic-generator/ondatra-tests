@@ -31,11 +31,6 @@ type BgpNeighbor struct {
 	IsV4       bool
 }
 
-var InterfaceMap = map[string]string{
-	"eth1": "Ethernet1",
-	"eth2": "Ethernet2",
-}
-
 // RemoveInterface returns a new *oc.Interface configured no sub-interface
 func RemoveInterface(name string) *oc.Interface {
 	intf := &oc.Interface{Name: ygot.String(name)}
@@ -126,7 +121,7 @@ func BgpDeleteNbr(nbrs []*BgpNeighbor) *oc.NetworkInstance_Protocol_Bgp {
 func VerifyPortsUp(t *testing.T, dev *ondatra.Device) {
 	t.Helper()
 	for _, p := range dev.Ports() {
-		status := dev.Telemetry().Interface(InterfaceMap[p.Name()]).OperStatus().Get(t)
+		status := dev.Telemetry().Interface(p.Name()).OperStatus().Get(t)
 		if want := oc.Interface_OperStatus_UP; status != want {
 			t.Errorf("%s Status: got %v, want %v", p, status, want)
 		} else {

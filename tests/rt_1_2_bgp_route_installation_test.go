@@ -135,16 +135,16 @@ type bgpNeighbor struct {
 func configureDUT(t *testing.T, dut *ondatra.DUTDevice) {
 	// configureDUT configures all the interfaces on the DUT.
 	dc := dut.Config()
-	i1 := dutSrc.NewInterface(helpers.InterfaceMap[dut.Port(t, "port1").Name()])
+	i1 := dutSrc.NewInterface(dut.Port(t, "port1").Name())
 	dc.Interface(i1.GetName()).Replace(t, i1)
-	i2 := dutDst.NewInterface(helpers.InterfaceMap[dut.Port(t, "port2").Name()])
+	i2 := dutDst.NewInterface(dut.Port(t, "port2").Name())
 	dc.Interface(i2.GetName()).Replace(t, i2)
 }
 
 func verifyPortsUp(t *testing.T, dev *ondatra.Device) {
 	t.Helper()
 	for _, p := range dev.Ports() {
-		status := dev.Telemetry().Interface(helpers.InterfaceMap[p.Name()]).OperStatus().Get(t)
+		status := dev.Telemetry().Interface(p.Name()).OperStatus().Get(t)
 		if want := oc.Interface_OperStatus_UP; status != want {
 			t.Errorf("%s Status: got %v, want %v", p, status, want)
 		}
@@ -186,7 +186,7 @@ func buildNbrList(sameAs bool) []*bgpNeighbor {
 }
 
 func checkBgpParameters(t *testing.T, dut *ondatra.DUTDevice) {
-	ifName := helpers.InterfaceMap[dut.Port(t, "port1").Name()]
+	ifName := dut.Port(t, "port1").Name()
 	lastFlapTime := dut.Telemetry().Interface(ifName).LastChange().Get(t)
 	t.Logf("Verifying BGP state")
 	statePath := dut.Telemetry().NetworkInstance("default").Protocol(oc.PolicyTypes_INSTALL_PROTOCOL_TYPE_BGP, "BGP").Bgp()
@@ -243,11 +243,11 @@ func checkBgpParameters(t *testing.T, dut *ondatra.DUTDevice) {
 	}
 }
 
-func configureATE(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra.ATEDevice) (gosnappi.Config, helpers.ExpectedState) {
+func configureATE(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
 
-	config := otg.NewConfig(t)
-	srcPort := config.Ports().Add().SetName(ateList[0].Name())
-	dstPort := config.Ports().Add().SetName(ateList[1].Name())
+	config := otg.NewConfig()
+	srcPort := config.Ports().Add().SetName("port1")
+	dstPort := config.Ports().Add().SetName("port2")
 
 	srcDev := config.Devices().Add().SetName(ateSrc.Name)
 	srcEth := srcDev.Ethernets().Add().
@@ -448,7 +448,7 @@ func verifyPacketLoss(t *testing.T, gnmiClient *helpers.GnmiClient) {
 	}
 }
 
-func sendTraffic(t *testing.T, otg *ondatra.OTGAPI, gnmiClient *helpers.GnmiClient) {
+func sendTraffic(t *testing.T, otg *ondatra.OTG, gnmiClient *helpers.GnmiClient) {
 	t.Logf("Starting traffic")
 	otg.StartTraffic(t)
 	err := gnmiClient.WatchFlowMetrics(&helpers.WaitForOpts{Interval: statsInterval, Timeout: trafficDuration})
@@ -466,10 +466,10 @@ func rt_1_2_UnsetDUT(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start Unsetting DUT Interface Config")
 	dc := dut.Config()
 
-	i1 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port1").Name()])
+	i1 := helpers.RemoveInterface(dut.Port(t, "port1").Name())
 	dc.Interface(i1.GetName()).Replace(t, i1)
 
-	i2 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port2").Name()])
+	i2 := helpers.RemoveInterface(dut.Port(t, "port2").Name())
 	dc.Interface(i2.GetName()).Replace(t, i2)
 
 	t.Logf("Start Removing BGP config")
@@ -500,20 +500,14 @@ func Test_rt_1_2(t *testing.T) {
 
 	// ATE Configuration.
 	t.Logf("Start ATE Config")
-	ate1 := ondatra.ATE(t, "ate1")
-	ate2 := ondatra.ATE(t, "ate2")
+	ate := ondatra.ATE(t, "ate")
+	otg := ate.OTG(t)
 
-	ateList := []*ondatra.ATEDevice{
-		ate1,
-		ate2,
-	}
+	defer helpers.CleanupTest(t, ate, otg, true, false)
 
-	otg := ate1.OTG()
-	defer helpers.CleanupTest(otg, t, true, false)
+	config, expected := configureATE(t, otg)
 
-	config, expected := configureATE(t, otg, ateList)
-
-	otg.PushConfig(t, config)
+	otg.PushConfig(t, ate, config)
 	t.Logf("Start ATE Protocols")
 	otg.StartProtocols(t)
 

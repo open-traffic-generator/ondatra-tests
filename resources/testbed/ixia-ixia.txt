@@ -1,20 +1,15 @@
 ates {
-  id: "ate1"
+  id: "ate"
   vendor: IXIA
   ports {
     id: "port1"    
   }
-}
-
-ates {
-  id: "ate2"
-  vendor: IXIA
   ports {
-    id: "port1"    
+    id: "port2"    
   }
 }
 
 links {
-  a: "ate1:port1"
-  b: "ate2:port1"
+  a: "ate:port1"
+  b: "ate:port2"
 }

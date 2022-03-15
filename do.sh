@@ -4,7 +4,8 @@ GO_VERSION=1.17.3
 PROTOC_VERSION=3.17.3
 
 KNE_COMMIT=606d419
-MESHNET_COMMIT=4bf3db7
+MESHNET_COMMIT=de89b2e
+MESHNET_VERSION=v0.3.0
 
 OPERATOR_RELEASE=0.0.75
 
@@ -220,11 +221,22 @@ get_meshnet() {
     rm -rf meshnet-cni && git clone https://github.com/networkop/meshnet-cni \
     && cd meshnet-cni \
     && git checkout $MESHNET_COMMIT \
+    && sed -i "s/^\s*image\:\ networkop\/meshnet\:latest.*/          image\:\ networkop\/\meshnet\:${MESHNET_VERSION}/g" ./manifests/base/daemonset.yaml \
     && kubectl apply -k manifests/base \
     && wait_for_pod_counts meshnet 1 \
     && wait_for_all_pods_to_be_ready -ns meshnet \
     && cd - \
     && rm -rf meshnet-cni
+}
+
+rm_meshnet() {
+    cecho "Getting meshnet-cni commit: $MESHNET_COMMIT ..."
+    rm -rf meshnet-cni && git clone https://github.com/networkop/meshnet-cni
+    cd meshnet-cni && git checkout $MESHNET_COMMIT
+    sed -i "s/^\s*image\:\ networkop\/meshnet\:latest.*/          image\:\ networkop\/\meshnet\:${MESHNET_VERSION}/g" ./manifests/base/daemonset.yaml
+    kubectl delete -k manifests/base
+    cd -
+    rm -rf meshnet-cni
 }
 
 get_ixia_c_operator() {
@@ -239,11 +251,33 @@ rm_ixia_c_operator() {
     kubectl delete -f https://github.com/open-traffic-generator/ixia-c-operator/releases/download/v${OPERATOR_RELEASE}/ixiatg-operator.yaml
 }
 
+get_private_ixia_c_operator() {
+    private_operator_version=0.0.77
+    cecho "Getting private ixia-c-operator v${private_operator_version} ..."
+    curl -kLO "https:/artifactorylbj.it.keysight.com/artifactory/generic-remote-athena-cos/external/operator/${private_operator_version}/ixia-c-operator.tar.gz" \
+    && docker load -i ixia-c-operator.tar.gz \
+    && rm -rf ixia-c-operator.tar.gz \
+    && kind load docker-image ixiacom/ixia-c-operator:${private_operator_version} \
+    && curl -kLO "https:/artifactorylbj.it.keysight.com/artifactory/generic-remote-athena-cos/external/operator/${private_operator_version}/ixiatg-operator.yaml" \
+    && kubectl apply -f ixiatg-operator.yaml \
+    && rm -rf ixiatg-operator.yaml \
+    && wait_for_pod_counts ixiatg-op-system 1 \
+    && wait_for_all_pods_to_be_ready -ns ixiatg-op-system \
+    && kubectl apply -f ./resources/global/gcp-ixia-configmap.yaml
+}
+
+rm_private_ixia_c_operator() {
+    private_operator_version=0.0.77
+    curl -kLO "https:/artifactorylbj.it.keysight.com/artifactory/generic-remote-athena-cos/external/operator/${private_operator_version}/ixiatg-operator.yaml" \
+    && kubectl delete -f ixiatg-operator.yaml \
+    && rm -rf ixiatg-operator.yaml
+}
+
 get_metallb() {
     cecho "Getting metallb ..."
-    kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/namespace.yaml \
+    kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12/manifests/namespace.yaml \
     && kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)" \
-    && kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml \
+    && kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12/manifests/metallb.yaml \
     && wait_for_pod_counts metallb-system 1 \
     && wait_for_all_pods_to_be_ready -ns metallb-system || exit 1
 
@@ -448,25 +482,14 @@ rmtop() {
 }
 
 run() {
-    if [ $# -gt 1 ]
-    then
-        name=${2}
-        if [ $# -gt 2 ]
-        then
-            timeout=${3}
-        else
-            timeout=60s
-        fi
-    else
-        name=$(grep -Eo "Test[0-9a-zA-Z]+" ${1})
-        timeout=60s
-    fi
+    name=$(grep -Eo "Test[0-9a-zA-Z]+" ${1})
     prefix=$(basename ${1} | sed 's/_test.go//g')
+
     get_knebind_conf
 
     mkdir -p logs
     cecho "Starting tests, output will be stored in logs/${prefix}.log"
-    CGO_ENABLED=0 go test -v -timeout ${timeout} -run ${name} tests/tests \
+    CGO_ENABLED=0 go test -v -timeout 60s -run ${name} tests/tests \
         -config ${KNEBIND_CONFIG} \
         -testbed ${KTBD} | tee logs/${prefix}.log
 }
