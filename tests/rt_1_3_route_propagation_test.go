@@ -105,7 +105,7 @@ type ateData struct {
 	prefixesCount uint32
 }
 
-func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTG, ateList []*ondatra.ATEDevice) (gosnappi.Config, helpers.ExpectedState) {
+func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTG, ateList []string) (gosnappi.Config, helpers.ExpectedState) {
 
 	config := otg.NewConfig()
 	bgp4ObjectMap := make(map[string]gosnappi.BgpV4Peer)
@@ -123,8 +123,8 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTG, ateList []*ondatra.
 		{otgPort1Details, ad.Port1, ad.Port1Neighbor, ateAS1},
 		{otgPort2Details, ad.Port2, ad.Port2Neighbor, ateAS2},
 	} {
-		portName := ateList[ateIndex].Name()
-		devName := ateList[ateIndex].Name() + ".dev"
+		portName := ateList[ateIndex]
+		devName := ateList[ateIndex] + ".dev"
 		port := config.Ports().Add().SetName(portName)
 		dev := config.Devices().Add().SetName(devName)
 		ateIndex++
@@ -174,9 +174,9 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTG, ateList []*ondatra.
 	if ad.prefixesStart.v4 != "" {
 		prefixInt4, _ := strconv.Atoi(strings.Split(ad.prefixesStart.v4, "/")[1])
 		if ad.Port1.v4 != "" {
-			bgpName := ateList[0].Name() + ".dev.bgp4.peer"
+			bgpName := ateList[0] + ".dev.bgp4.peer"
 			bgpPeer := bgp4ObjectMap[bgpName]
-			ip := ipv4ObjectMap[ateList[0].Name()+".dev.ipv4"]
+			ip := ipv4ObjectMap[ateList[0]+".dev.ipv4"]
 			bgp4PeerRoutes := bgpPeer.V4Routes().Add().
 				SetName(bgpName + ".rr4").
 				SetNextHopIpv4Address(ip.Address()).
@@ -188,14 +188,14 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTG, ateList []*ondatra.
 				SetCount(int32(ad.prefixesCount))
 			expected = helpers.ExpectedState{
 				Bgp4: map[string]helpers.ExpectedBgpMetrics{
-					bgpName:                              {Advertised: int32(ad.prefixesCount), Received: 0},
-					ateList[1].Name() + ".dev.bgp4.peer": {Advertised: 0, Received: int32(ad.prefixesCount)},
+					bgpName:                       {Advertised: int32(ad.prefixesCount), Received: 0},
+					ateList[1] + ".dev.bgp4.peer": {Advertised: 0, Received: int32(ad.prefixesCount)},
 				},
 			}
 		} else {
-			bgpName := ateList[0].Name() + ".dev.bgp6.peer"
+			bgpName := ateList[0] + ".dev.bgp6.peer"
 			bgpPeer := bgp6ObjectMap[bgpName]
-			ip := ipv6ObjectMap[ateList[0].Name()+".dev.ip6"]
+			ip := ipv6ObjectMap[ateList[0]+".dev.ip6"]
 			bgpPeer.Capability().SetExtendedNextHopEncoding(true)
 			bgp4PeerRoutes := bgpPeer.V4Routes().Add().
 				SetName(bgpName + ".rr4").
@@ -211,16 +211,16 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTG, ateList []*ondatra.
 					bgpName: {Advertised: int32(ad.prefixesCount), Received: 0},
 				},
 				Bgp4: map[string]helpers.ExpectedBgpMetrics{
-					ateList[1].Name() + ".dev.bgp4.peer": {Advertised: 0, Received: int32(ad.prefixesCount)},
+					ateList[1] + ".dev.bgp4.peer": {Advertised: 0, Received: int32(ad.prefixesCount)},
 				},
 			}
 		}
 	}
 	if ad.prefixesStart.v6 != "" {
 		prefixInt6, _ := strconv.Atoi(strings.Split(ad.prefixesStart.v6, "/")[1])
-		bgp6Name := ateList[0].Name() + ".dev.bgp6.peer"
+		bgp6Name := ateList[0] + ".dev.bgp6.peer"
 		bgp6Peer := bgp6ObjectMap[bgp6Name]
-		ipv6 := ipv6ObjectMap[ateList[0].Name()+".dev.ip6"]
+		ipv6 := ipv6ObjectMap[ateList[0]+".dev.ip6"]
 
 		bgp6PeerRoutes := bgp6Peer.V6Routes().Add().
 			SetName(bgp6Name + ".rr6").
@@ -233,8 +233,8 @@ func (ad *ateData) Configure(t *testing.T, otg *ondatra.OTG, ateList []*ondatra.
 			SetCount(int32(ad.prefixesCount))
 		expected = helpers.ExpectedState{
 			Bgp6: map[string]helpers.ExpectedBgpMetrics{
-				bgp6Name:                             {Advertised: int32(ad.prefixesCount), Received: 0},
-				ateList[1].Name() + ".dev.bgp6.peer": {Advertised: 0, Received: int32(ad.prefixesCount)},
+				bgp6Name:                      {Advertised: int32(ad.prefixesCount), Received: 0},
+				ateList[1] + ".dev.bgp6.peer": {Advertised: 0, Received: int32(ad.prefixesCount)},
 			},
 		}
 	}
@@ -541,9 +541,9 @@ func Test_rt_1_3(t *testing.T) {
 			dut := ondatra.DUT(t, "dut")
 			defer rt_1_3_UnsetDUT(t, dut)
 			tc.dut.Configure(t, dut)
-			helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/rt_1_3_bgp_route_propagation/set_dut_interface.txt"})
+			helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/rt_1_3_bgp_route_propagation/set_dut_interface.txt"})
 			if tc.desc == "propagate IPv4 over IPv6" {
-				helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/rt_1_3_bgp_route_propagation/set_bgp_rfc5549.txt"})
+				helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/rt_1_3_bgp_route_propagation/set_bgp_rfc5549.txt"})
 			}
 			t.Logf("DUT Configured")
 
@@ -551,10 +551,8 @@ func Test_rt_1_3(t *testing.T) {
 			otg := ate.OTG(t)
 
 			defer helpers.CleanupTest(t, ate, otg, true, false)
-			ateList := []*ondatra.ATEDevice{
-				ate,
-			}
 			t.Logf("Start OTG Config")
+			ateList := []string{"port1", "port2"}
 			config, expected := tc.ate.Configure(t, otg, ateList)
 
 			otg.PushConfig(t, ate, config)

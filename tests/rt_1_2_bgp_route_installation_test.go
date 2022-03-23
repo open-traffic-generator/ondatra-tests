@@ -135,8 +135,10 @@ type bgpNeighbor struct {
 func configureDUT(t *testing.T, dut *ondatra.DUTDevice) {
 	// configureDUT configures all the interfaces on the DUT.
 	dc := dut.Config()
+
 	i1 := dutSrc.NewInterface(dut.Port(t, "port1").Name())
 	dc.Interface(i1.GetName()).Replace(t, i1)
+
 	i2 := dutDst.NewInterface(dut.Port(t, "port2").Name())
 	dc.Interface(i2.GetName()).Replace(t, i2)
 }
@@ -193,15 +195,16 @@ func checkBgpParameters(t *testing.T, dut *ondatra.DUTDevice) {
 	nbrPath := statePath.Neighbor(ateSrc.IPv4)
 	nbrPathv6 := statePath.Neighbor(ateSrc.IPv6)
 	nbr := statePath.Get(t).GetNeighbor(ateSrc.IPv4)
-	// Get BGP adjacency state ... Watch doesn't exist in ondatra
-	// t.Logf("Waiting for BGP neighbor to establish...")
-	// _, ok := nbrPath.SessionState().Watch(t, time.Minute, func(val *oc.QualifiedE_Bgp_Neighbor_SessionState) bool {
-	// 	return val.IsPresent() && val.Val(t) == oc.Bgp_Neighbor_SessionState_ESTABLISHED
-	// }).Await(t)
-	// if !ok {
-	// 	helpers.LogYgot(t, "BGP reported state", nbrPath, nbrPath.Get(t))
-	// 	t.Fatal("No BGP neighbor formed...")
-	// }
+
+	// Get BGP adjacency state
+	t.Logf("Waiting for BGP neighbor to establish...")
+	_, ok := nbrPath.SessionState().Watch(t, time.Minute, func(val *oc.QualifiedE_Bgp_Neighbor_SessionState) bool {
+		return val.IsPresent() && val.Val(t) == oc.Bgp_Neighbor_SessionState_ESTABLISHED
+	}).Await(t)
+	if !ok {
+		helpers.LogYgot(t, "BGP reported state", nbrPath, nbrPath.Get(t))
+		t.Fatal("No BGP neighbor formed...")
+	}
 
 	status := nbrPath.SessionState().Get(t)
 	t.Logf("BGP adjacency for %s: %s", ateSrc.IPv4, status)
@@ -486,7 +489,7 @@ func Test_rt_1_2(t *testing.T) {
 	// Configure interface on the DUT
 	t.Logf("Start DUT interface Config")
 	configureDUT(t, dut)
-	helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/rt_1_2_bgp_route_installation/set_dut_interface.txt"})
+	helpers.ConfigDUTs(map[string]string{"arista": "../resources/dutconfig/rt_1_2_bgp_route_installation/set_dut_interface.txt"})
 
 	// Configure BGP+Neighbors on the DUT
 	t.Logf("Start DUT BGP Config")
