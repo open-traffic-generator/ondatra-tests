@@ -1,0 +1,42 @@
+interface Ethernet1
+   no switchport
+!
+interface Ethernet1.1
+   encapsulation dot1q vlan 200
+   ip address 2.2.2.1/24
+   isis enable arista
+   isis circuit-type level-2
+   isis network point-to-point
+!
+interface Ethernet1.2
+   encapsulation dot1q vlan 400
+   ip address 4.4.4.1/24
+   isis enable arista
+   isis circuit-type level-2
+   isis network point-to-point
+!
+interface Ethernet2
+   no switchport
+!
+interface Ethernet2.1
+   encapsulation dot1q vlan 100
+   ip address 1.1.1.1/24
+   isis enable arista
+   isis circuit-type level-2
+   isis network point-to-point
+!
+interface Ethernet2.2
+   encapsulation dot1q vlan 300
+   ip address 3.3.3.1/24
+   isis enable arista
+   isis circuit-type level-2
+   isis network point-to-point
+!
+ip routing
+!
+router isis arista
+   net 49.0001.1010.1050.1040.00
+   is-type level-2
+   !
+   address-family ipv4 unicast
+!
