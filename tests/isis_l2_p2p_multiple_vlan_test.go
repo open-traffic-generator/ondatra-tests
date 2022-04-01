@@ -46,6 +46,8 @@ func TestIsisL2P2pMultiVLAN(t *testing.T) {
 	config.Flows().Items()[3].Packet().Items()[0].Ethernet().Dst().SetValue(dutMacs[dut.Port(t, "port2").Name()])
 	config.Flows().Items()[4].Packet().Items()[0].Ethernet().Dst().SetValue(dutMacs[dut.Port(t, "port1").Name()])
 	config.Flows().Items()[5].Packet().Items()[0].Ethernet().Dst().SetValue(dutMacs[dut.Port(t, "port2").Name()])
+	config.Flows().Items()[6].Packet().Items()[0].Ethernet().Dst().SetValue(dutMacs[dut.Port(t, "port1").Name()])
+	config.Flows().Items()[7].Packet().Items()[0].Ethernet().Dst().SetValue(dutMacs[dut.Port(t, "port2").Name()])
 
 	if ate.Port(t, "port1").Name() == "eth1" {
 		dut.Config().New().WithAristaFile("../resources/dutconfig/isis_l2_p2p_multi_vlan/set_dut.txt").Push(t)
@@ -281,6 +283,75 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 		SetCount(2).
 		SetStep(1)
 
+	// port 1 device 4
+	p1d4 := config.Devices().Add().SetName("p1d4")
+	// port 1 device 4 ethernet
+	p1d4Eth := p1d4.Ethernets().Add().
+		SetName("p1d4Eth").
+		SetMac("00:00:07:07:07:07").
+		SetMtu(1500).
+		SetPortName(port1.Name())
+
+	// port 1 device 4 ipv4
+	p1d4Ipv4 := p1d4Eth.Ipv4Addresses().
+		Add().
+		SetAddress("7.7.7.2").
+		SetGateway("7.7.7.1").
+		SetName("p1d4Ipv4").
+		SetPrefix(24)
+
+	// port 1 device 4 vlan
+	p1d4Vlan := p1d4Eth.Vlans().Add().
+		SetId(700).
+		SetName("p1d4vlan")
+
+	// port 1 device 4 isis
+	p1d4Isis := p1d4.Isis().SetName("p1d4Isis").SetSystemId("700000000001")
+
+	// port 1 device 4 isis basic
+	p1d4Isis.Basic().SetIpv4TeRouterId(p1d4Ipv4.Address())
+	p1d4Isis.Basic().SetHostname("ixia-c-port1")
+	p1d4Isis.Basic().SetEnableWideMetric(true)
+
+	// port 1 device 4 isis advance
+	p1d4Isis.Advanced().SetAreaAddresses([]string{"490001"})
+	p1d4Isis.Advanced().SetCsnpInterval(10000)
+	p1d4Isis.Advanced().SetEnableHelloPadding(true)
+	p1d4Isis.Advanced().SetLspLifetime(1200)
+	p1d4Isis.Advanced().SetLspMgroupMinTransInterval(5000)
+	p1d4Isis.Advanced().SetLspRefreshRate(900)
+	p1d4Isis.Advanced().SetMaxAreaAddresses(3)
+	p1d4Isis.Advanced().SetMaxLspSize(1492)
+	p1d4Isis.Advanced().SetPsnpInterval(2000)
+	p1d4Isis.Advanced().SetEnableAttachedBit(false)
+
+	// port 1 device 4 isis interface
+	p1d4IsisIntf := p1d4Isis.Interfaces().Add().
+		SetEthName(p1d4Eth.Name()).
+		SetNetworkType("point_to_point").
+		SetLevelType("level_2").
+		SetMetric(10).
+		SetName("p1d4IsisIntf")
+	p1d4IsisIntf.L2Settings().
+		SetDeadInterval(30).
+		SetHelloInterval(10).
+		SetPriority(0)
+	p1d4IsisIntf.
+		Advanced().SetAutoAdjustSupportedProtocols(true)
+
+	// port 1 device 4 isis v4 routes
+	p1d4Isisv4routes := p1d4Isis.
+		V4Routes().
+		Add().
+		SetName("p1d4IsisIpv4").
+		SetLinkMetric(10).
+		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
+	p1d4Isisv4routes.Addresses().Add().
+		SetAddress("70.70.70.1").
+		SetPrefix(32).
+		SetCount(2).
+		SetStep(1)
+
 	// port 2 device 1
 	p2d1 := config.Devices().Add().SetName("p2d1")
 	// port 2 device 1 ethernet
@@ -488,6 +559,75 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 		SetCount(2).
 		SetStep(1)
 
+	// port 2 device 4
+	p2d4 := config.Devices().Add().SetName("p2d4")
+	// port 2 device 4 ethernet
+	p2d4Eth := p2d4.Ethernets().Add().
+		SetName("p2d4Eth").
+		SetMac("00:00:08:08:08:08").
+		SetMtu(1500).
+		SetPortName(port2.Name())
+
+	// port 2 device 4 ipv4
+	p2d4Ipv4 := p2d4Eth.Ipv4Addresses().
+		Add().
+		SetAddress("8.8.8.2").
+		SetGateway("8.8.8.1").
+		SetName("p2d4Ipv4").
+		SetPrefix(24)
+
+	// port 2 device 4 vlan
+	p2d4Vlan := p2d4Eth.Vlans().Add().
+		SetId(800).
+		SetName("p2d4vlan")
+
+	// port 2 device 4 isis
+	p2d4Isis := p2d4.Isis().SetName("p2d4Isis").SetSystemId("710000000001")
+
+	// port 2 device 4 isis basic
+	p2d4Isis.Basic().SetIpv4TeRouterId(p2d4Ipv4.Address())
+	p2d4Isis.Basic().SetHostname("ixia-c-port2")
+	p2d4Isis.Basic().SetEnableWideMetric(true)
+
+	// port 2 device 3 isis advance
+	p2d4Isis.Advanced().SetAreaAddresses([]string{"490001"})
+	p2d4Isis.Advanced().SetCsnpInterval(10000)
+	p2d4Isis.Advanced().SetEnableHelloPadding(true)
+	p2d4Isis.Advanced().SetLspLifetime(1200)
+	p2d4Isis.Advanced().SetLspMgroupMinTransInterval(5000)
+	p2d4Isis.Advanced().SetLspRefreshRate(900)
+	p2d4Isis.Advanced().SetMaxAreaAddresses(3)
+	p2d4Isis.Advanced().SetMaxLspSize(1492)
+	p2d4Isis.Advanced().SetPsnpInterval(2000)
+	p2d4Isis.Advanced().SetEnableAttachedBit(false)
+
+	// port 2 device 4 isis interface
+	p2d4IsisIntf := p2d4Isis.Interfaces().Add().
+		SetEthName(p2d4Eth.Name()).
+		SetNetworkType("point_to_point").
+		SetLevelType("level_2").
+		SetMetric(10).
+		SetName("p2d4IsisIntf")
+	p2d4IsisIntf.L2Settings().
+		SetDeadInterval(30).
+		SetHelloInterval(10).
+		SetPriority(0)
+	p2d4IsisIntf.
+		Advanced().SetAutoAdjustSupportedProtocols(true)
+
+	// port 2 device 4 isis v4 routes
+	p2d4Isisv4routes := p2d4Isis.
+		V4Routes().
+		Add().
+		SetName("p2d4IsisIpv4").
+		SetLinkMetric(10).
+		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
+	p2d4Isisv4routes.Addresses().Add().
+		SetAddress("80.80.80.1").
+		SetPrefix(32).
+		SetCount(2).
+		SetStep(1)
+
 	// OTG traffic configuration
 	f1 := config.Flows().Add().SetName("p1.v4.p2.vlan.100")
 	f1.Metrics().SetEnable(true)
@@ -603,10 +743,48 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	v4.Src().SetValue("60.60.60.1")
 	v4.Dst().SetValue("50.50.50.1")
 
+	f7 := config.Flows().Add().SetName("p1.v4.p2.vlan.700")
+	f7.Metrics().SetEnable(true)
+	f7.TxRx().Device().
+		SetTxNames([]string{p1d4Isisv4routes.Name()}).
+		SetRxNames([]string{p2d4Isisv4routes.Name()})
+	f7.Size().SetFixed(512)
+	f7.Rate().SetPps(500)
+	f7.Duration().FixedPackets().SetPackets(1000)
+	e7 := f7.Packet().Add().Ethernet()
+	e7.Src().SetValue(p1d4Eth.Mac())
+
+	vlan7 := f7.Packet().Add().Vlan()
+	vlan7.Id().SetValue(p1d4Vlan.Id())
+	vlan7.Tpid().SetValue(33024)
+
+	v4 = f7.Packet().Add().Ipv4()
+	v4.Src().SetValue("70.70.70.1")
+	v4.Dst().SetValue("80.80.80.1")
+
+	f8 := config.Flows().Add().SetName("p2.v4.p1.vlan.800")
+	f8.Metrics().SetEnable(true)
+	f8.TxRx().Device().
+		SetTxNames([]string{p2d4Isisv4routes.Name()}).
+		SetRxNames([]string{p1d4Isisv4routes.Name()})
+	f8.Size().SetFixed(512)
+	f8.Rate().SetPps(500)
+	f8.Duration().FixedPackets().SetPackets(1000)
+	e8 := f8.Packet().Add().Ethernet()
+	e8.Src().SetValue(p2d4Eth.Mac())
+
+	vlan8 := f8.Packet().Add().Vlan()
+	vlan8.Id().SetValue(p2d4Vlan.Id())
+	vlan8.Tpid().SetValue(33024)
+
+	v4 = f8.Packet().Add().Ipv4()
+	v4.Src().SetValue("80.80.80.1")
+	v4.Dst().SetValue("70.70.70.1")
+
 	expected := helpers.ExpectedState{
 		Isis: map[string]helpers.ExpectedIsisMetrics{
-			p1d1Isis.Name(): {L1SessionsUp: 0, L2SessionsUp: 1, L1DatabaseSize: 0, L2DatabaseSize: 7},
-			p2d1Isis.Name(): {L1SessionsUp: 0, L2SessionsUp: 1, L1DatabaseSize: 0, L2DatabaseSize: 7},
+			p1d1Isis.Name(): {L1SessionsUp: 0, L2SessionsUp: 1, L1DatabaseSize: 0, L2DatabaseSize: 9},
+			p2d1Isis.Name(): {L1SessionsUp: 0, L2SessionsUp: 1, L1DatabaseSize: 0, L2DatabaseSize: 9},
 		},
 		Flow: map[string]helpers.ExpectedFlowMetrics{
 			f1.Name(): {FramesRx: 1000, FramesRxRate: 0},
@@ -615,6 +793,8 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 			f4.Name(): {FramesRx: 1000, FramesRxRate: 0},
 			f5.Name(): {FramesRx: 1000, FramesRxRate: 0},
 			f6.Name(): {FramesRx: 1000, FramesRxRate: 0},
+			f7.Name(): {FramesRx: 1000, FramesRxRate: 0},
+			f8.Name(): {FramesRx: 1000, FramesRxRate: 0},
 		},
 	}
 	return config, expected

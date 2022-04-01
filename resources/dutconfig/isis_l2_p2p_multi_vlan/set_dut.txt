@@ -22,6 +22,13 @@ interface Ethernet1.3
    isis circuit-type level-2
    isis network point-to-point
 !
+interface Ethernet1.4
+   encapsulation dot1q vlan 700
+   ip address 7.7.7.1/24
+   isis enable arista
+   isis circuit-type level-2
+   isis network point-to-point
+!
 interface Ethernet2
    no switchport
 !
@@ -42,6 +49,13 @@ interface Ethernet2.2
 interface Ethernet2.3
    encapsulation dot1q vlan 600
    ip address 6.6.6.1/24
+   isis enable arista
+   isis circuit-type level-2
+   isis network point-to-point
+!
+interface Ethernet2.4
+   encapsulation dot1q vlan 800
+   ip address 8.8.8.1/24
    isis enable arista
    isis circuit-type level-2
    isis network point-to-point
