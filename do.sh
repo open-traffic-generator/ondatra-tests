@@ -6,7 +6,7 @@ PROTOC_VERSION=3.17.3
 KNE_COMMIT=9a8d6e9
 MESHNET_COMMIT=de89b2e
 MESHNET_VERSION=v0.3.0
-OPERATOR_RELEASE=0.0.75
+OPERATOR_RELEASE=0.1.77
 
 KNEBIND_CONFIG="../resources/global/knebind-config.yaml"
 
@@ -300,7 +300,7 @@ setup_kind_cluster() {
     && get_kubectl \
     && get_meshnet \
     && get_metallb \
-    && get_private_ixia_c_operator
+    && get_ixia_c_operator
 }
 
 setup_cluster() {
