@@ -1,23 +1,23 @@
 /* Test ISIS L2 P2P Multiple VLAN
 Topology:
 IXIA  ---------------------> ARISTA ---------------------> IXIA
-(10.10.10.1/24, VLAN: 100)                                 (20.20.20.1/24, VLAN: 200)
-(30.30.30.1/24, VLAN: 300)                                 (40.40.40.1/24, VLAN: 400)
-(50.50.50.1/24, VLAN: 500)                                 (60.60.60.1/24, VLAN: 600)
-(70.70.70.1/24, VLAN: 700)                                 (80.80.80.1/24, VLAN: 800)
-(90.90.90.1/24, VLAN: 900)                                 (100.100.100.1/24, VLAN: 1000)
+(1.1.1.1/24, VLAN: 100)                                 (2.2.1.1/24, VLAN: 200)
+(1.1.2.1/24, VLAN: 101)                                 (2.2.2.1/24, VLAN: 201)
+(1.1.3.1/24, VLAN: 102)                                 (2.2.3.1/24, VLAN: 202)
+(1.1.4.1/24, VLAN: 103)                                 (2.2.4.1/24, VLAN: 203)
+(1.1.5.1/24, VLAN: 104)                                 (2.2.5.1/24, VLAN: 205)
 
 Flows:
-- f1: 10.10.10.1 -> 20.20.20.1+, vlan: 100
-- f2: 20.20.20.1 -> 10.10.10.1+, vlan: 200
-- f3: 30.30.30.1 -> 40.40.40.1+, vlan: 300
-- f4: 40.40.40.1 -> 30.30.30.1+, vlan: 400
-- f5: 50.50.50.1 -> 60.60.60.1+, vlan: 500
-- f6: 60.60.60.1 -> 50.50.50.1+, vlan: 600
-- f7: 70.70.70.1 -> 80.80.80.1+, vlan: 700
-- f8: 80.80.80.1 -> 70.70.70.1+, vlan: 800
-- f9: 90.90.90.1 -> 100.100.100.1+, vlan: 900
-- f10: 100.100.100.1 -> 90.90.90.1+, vlan: 1000
+- f1: 10.10.1.1 -> 20.20.1.1+, vlan: 100
+- f2: 20.20.1.1 -> 10.10.1.1+, vlan: 200
+- f3: 10.11.1.1 -> 20.21.1.1+, vlan: 101
+- f4: 20.21.1.1 -> 10.11.1.1+, vlan: 201
+- f5: 10.12.1.1 -> 20.22.1.1+, vlan: 102
+- f6: 20.22.1.1 -> 10.12.1.1+, vlan: 202
+- f7: 10.13.1.1 -> 20.23.1.1+, vlan: 103
+- f8: 20.23.1.1 -> 10.13.1.1+, vlan: 203
+- f9: 10.14.1.1 -> 20.24.1.1+, vlan: 104
+- f10: 20.24.1.1 -> 10.14.1.1+, vlan: 204
 */
 package tests
 
@@ -148,7 +148,7 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 		SetLinkMetric(10).
 		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
 	p1d1Isisv4routes.Addresses().Add().
-		SetAddress("10.10.10.1").
+		SetAddress("10.10.1.1").
 		SetPrefix(32).
 		SetCount(2).
 		SetStep(1)
@@ -165,14 +165,14 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	// port 1 device 2 ipv4
 	p1d2Ipv4 := p1d2Eth.Ipv4Addresses().
 		Add().
-		SetAddress("3.3.3.2").
-		SetGateway("3.3.3.1").
+		SetAddress("1.1.2.2").
+		SetGateway("1.1.2.1").
 		SetName("p1d2Ipv4").
 		SetPrefix(24)
 
 	// port 1 device 2 vlan
 	p1d2Vlan := p1d2Eth.Vlans().Add().
-		SetId(300).
+		SetId(101).
 		SetName("p1d2vlan")
 
 	// port 1 device 2 isis
@@ -217,7 +217,7 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 		SetLinkMetric(10).
 		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
 	p1d2Isisv4routes.Addresses().Add().
-		SetAddress("30.30.30.1").
+		SetAddress("10.11.1.1").
 		SetPrefix(32).
 		SetCount(2).
 		SetStep(1)
@@ -234,14 +234,14 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	// port 1 device 3 ipv4
 	p1d3Ipv4 := p1d3Eth.Ipv4Addresses().
 		Add().
-		SetAddress("5.5.5.2").
-		SetGateway("5.5.5.1").
+		SetAddress("1.1.3.2").
+		SetGateway("1.1.3.1").
 		SetName("p1d3Ipv4").
 		SetPrefix(24)
 
 	// port 1 device 3 vlan
 	p1d3Vlan := p1d3Eth.Vlans().Add().
-		SetId(500).
+		SetId(102).
 		SetName("p1d3vlan")
 
 	// port 1 device 3 isis
@@ -286,7 +286,7 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 		SetLinkMetric(10).
 		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
 	p1d3Isisv4routes.Addresses().Add().
-		SetAddress("50.50.50.1").
+		SetAddress("10.12.1.1").
 		SetPrefix(32).
 		SetCount(2).
 		SetStep(1)
@@ -303,14 +303,14 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	// port 1 device 4 ipv4
 	p1d4Ipv4 := p1d4Eth.Ipv4Addresses().
 		Add().
-		SetAddress("7.7.7.2").
-		SetGateway("7.7.7.1").
+		SetAddress("1.1.4.2").
+		SetGateway("1.1.4.1").
 		SetName("p1d4Ipv4").
 		SetPrefix(24)
 
 	// port 1 device 4 vlan
 	p1d4Vlan := p1d4Eth.Vlans().Add().
-		SetId(700).
+		SetId(103).
 		SetName("p1d4vlan")
 
 	// port 1 device 4 isis
@@ -355,7 +355,7 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 		SetLinkMetric(10).
 		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
 	p1d4Isisv4routes.Addresses().Add().
-		SetAddress("70.70.70.1").
+		SetAddress("10.13.1.1").
 		SetPrefix(32).
 		SetCount(2).
 		SetStep(1)
@@ -372,14 +372,14 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	// port 1 device 5 ipv4
 	p1d5Ipv4 := p1d5Eth.Ipv4Addresses().
 		Add().
-		SetAddress("9.9.9.2").
-		SetGateway("9.9.9.1").
+		SetAddress("1.1.5.2").
+		SetGateway("1.1.5.1").
 		SetName("p1d5Ipv4").
 		SetPrefix(24)
 
 	// port 1 device 5 vlan
 	p1d5Vlan := p1d5Eth.Vlans().Add().
-		SetId(900).
+		SetId(104).
 		SetName("p1d5vlan")
 
 	// port 1 device 5 isis
@@ -424,7 +424,7 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 		SetLinkMetric(10).
 		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
 	p1d5Isisv4routes.Addresses().Add().
-		SetAddress("90.90.90.1").
+		SetAddress("10.14.1.1").
 		SetPrefix(32).
 		SetCount(2).
 		SetStep(1)
@@ -441,8 +441,8 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	// port 2 device 1 ipv4
 	p2d1Ipv4 := p2d1Eth.Ipv4Addresses().
 		Add().
-		SetAddress("2.2.2.2").
-		SetGateway("2.2.2.1").
+		SetAddress("2.2.1.2").
+		SetGateway("2.2.1.1").
 		SetName("p2d1Ipv4").
 		SetPrefix(24)
 
@@ -493,7 +493,7 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 		SetLinkMetric(10).
 		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
 	p2d1Isisv4routes.Addresses().Add().
-		SetAddress("20.20.20.1").
+		SetAddress("20.20.1.1").
 		SetPrefix(32).
 		SetCount(2).
 		SetStep(1)
@@ -510,14 +510,14 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	// port 2 device 2 ipv4
 	p2d2Ipv4 := p2d2Eth.Ipv4Addresses().
 		Add().
-		SetAddress("4.4.4.2").
-		SetGateway("4.4.4.1").
+		SetAddress("2.2.2.2").
+		SetGateway("2.2.2.1").
 		SetName("p2d2Ipv4").
 		SetPrefix(24)
 
 	// port 2 device 2 vlan
 	p2d2Vlan := p2d2Eth.Vlans().Add().
-		SetId(400).
+		SetId(201).
 		SetName("p2d2vlan")
 
 	// port 2 device 2 isis
@@ -562,7 +562,7 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 		SetLinkMetric(10).
 		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
 	p2d2Isisv4routes.Addresses().Add().
-		SetAddress("40.40.40.1").
+		SetAddress("20.21.1.1").
 		SetPrefix(32).
 		SetCount(2).
 		SetStep(1)
@@ -579,14 +579,14 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	// port 2 device 3 ipv4
 	p2d3Ipv4 := p2d3Eth.Ipv4Addresses().
 		Add().
-		SetAddress("6.6.6.2").
-		SetGateway("6.6.6.1").
+		SetAddress("2.2.3.2").
+		SetGateway("2.2.3.1").
 		SetName("p2d3Ipv4").
 		SetPrefix(24)
 
 	// port 2 device 3 vlan
 	p2d3Vlan := p2d3Eth.Vlans().Add().
-		SetId(600).
+		SetId(202).
 		SetName("p2d3vlan")
 
 	// port 2 device 3 isis
@@ -631,7 +631,7 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 		SetLinkMetric(10).
 		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
 	p2d3Isisv4routes.Addresses().Add().
-		SetAddress("60.60.60.1").
+		SetAddress("20.22.1.1").
 		SetPrefix(32).
 		SetCount(2).
 		SetStep(1)
@@ -648,14 +648,14 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	// port 2 device 4 ipv4
 	p2d4Ipv4 := p2d4Eth.Ipv4Addresses().
 		Add().
-		SetAddress("8.8.8.2").
-		SetGateway("8.8.8.1").
+		SetAddress("2.2.4.2").
+		SetGateway("2.2.4.1").
 		SetName("p2d4Ipv4").
 		SetPrefix(24)
 
 	// port 2 device 4 vlan
 	p2d4Vlan := p2d4Eth.Vlans().Add().
-		SetId(800).
+		SetId(203).
 		SetName("p2d4vlan")
 
 	// port 2 device 4 isis
@@ -700,7 +700,7 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 		SetLinkMetric(10).
 		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
 	p2d4Isisv4routes.Addresses().Add().
-		SetAddress("80.80.80.1").
+		SetAddress("20.23.1.1").
 		SetPrefix(32).
 		SetCount(2).
 		SetStep(1)
@@ -717,14 +717,14 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	// port 2 device 5 ipv4
 	p2d5Ipv4 := p2d5Eth.Ipv4Addresses().
 		Add().
-		SetAddress("11.11.11.2").
-		SetGateway("11.11.11.1").
+		SetAddress("2.2.5.2").
+		SetGateway("2.2.5.1").
 		SetName("p2d5Ipv4").
 		SetPrefix(24)
 
 	// port 2 device 5 vlan
 	p2d5Vlan := p2d5Eth.Vlans().Add().
-		SetId(1000).
+		SetId(204).
 		SetName("p2d5vlan")
 
 	// port 2 device 5 isis
@@ -769,7 +769,7 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 		SetLinkMetric(10).
 		SetOriginType(gosnappi.IsisV4RouteRangeOriginType.INTERNAL)
 	p2d5Isisv4routes.Addresses().Add().
-		SetAddress("100.100.100.1").
+		SetAddress("20.24.1.1").
 		SetPrefix(32).
 		SetCount(2).
 		SetStep(1)
@@ -791,8 +791,8 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	vlan1.Tpid().SetValue(33024)
 
 	v4 := f1.Packet().Add().Ipv4()
-	v4.Src().SetValue("10.10.10.1")
-	v4.Dst().SetValue("20.20.20.1")
+	v4.Src().SetValue("10.10.1.1")
+	v4.Dst().SetValue("20.20.1.1")
 
 	f2 := config.Flows().Add().SetName("p2.v4.p1.vlan.200")
 	f2.Metrics().SetEnable(true)
@@ -810,10 +810,10 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	vlan2.Tpid().SetValue(33024)
 
 	v4 = f2.Packet().Add().Ipv4()
-	v4.Src().SetValue("20.20.20.1")
-	v4.Dst().SetValue("10.10.10.1")
+	v4.Src().SetValue("20.20.1.1")
+	v4.Dst().SetValue("10.10.1.1")
 
-	f3 := config.Flows().Add().SetName("p1.v4.p2.vlan.300")
+	f3 := config.Flows().Add().SetName("p1.v4.p2.vlan.101")
 	f3.Metrics().SetEnable(true)
 	f3.TxRx().Device().
 		SetTxNames([]string{p1d2Isisv4routes.Name()}).
@@ -829,10 +829,10 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	vlan3.Tpid().SetValue(33024)
 
 	v4 = f3.Packet().Add().Ipv4()
-	v4.Src().SetValue("30.30.30.1")
-	v4.Dst().SetValue("40.40.40.1")
+	v4.Src().SetValue("10.11.1.1")
+	v4.Dst().SetValue("20.21.1.1")
 
-	f4 := config.Flows().Add().SetName("p2.v4.p1.vlan.400")
+	f4 := config.Flows().Add().SetName("p2.v4.p1.vlan.201")
 	f4.Metrics().SetEnable(true)
 	f4.TxRx().Device().
 		SetTxNames([]string{p2d2Isisv4routes.Name()}).
@@ -848,10 +848,10 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	vlan4.Tpid().SetValue(33024)
 
 	v4 = f4.Packet().Add().Ipv4()
-	v4.Src().SetValue("40.40.40.1")
-	v4.Dst().SetValue("30.30.30.1")
+	v4.Src().SetValue("20.21.1.1")
+	v4.Dst().SetValue("10.11.1.1")
 
-	f5 := config.Flows().Add().SetName("p1.v4.p2.vlan.500")
+	f5 := config.Flows().Add().SetName("p1.v4.p2.vlan.102")
 	f5.Metrics().SetEnable(true)
 	f5.TxRx().Device().
 		SetTxNames([]string{p1d3Isisv4routes.Name()}).
@@ -867,10 +867,10 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	vlan5.Tpid().SetValue(33024)
 
 	v4 = f5.Packet().Add().Ipv4()
-	v4.Src().SetValue("50.50.50.1")
-	v4.Dst().SetValue("60.60.60.1")
+	v4.Src().SetValue("10.12.1.1")
+	v4.Dst().SetValue("20.22.1.1")
 
-	f6 := config.Flows().Add().SetName("p2.v4.p1.vlan.600")
+	f6 := config.Flows().Add().SetName("p2.v4.p1.vlan.202")
 	f6.Metrics().SetEnable(true)
 	f6.TxRx().Device().
 		SetTxNames([]string{p2d3Isisv4routes.Name()}).
@@ -886,10 +886,10 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	vlan6.Tpid().SetValue(33024)
 
 	v4 = f6.Packet().Add().Ipv4()
-	v4.Src().SetValue("60.60.60.1")
-	v4.Dst().SetValue("50.50.50.1")
+	v4.Src().SetValue("20.22.1.1")
+	v4.Dst().SetValue("10.12.1.1")
 
-	f7 := config.Flows().Add().SetName("p1.v4.p2.vlan.700")
+	f7 := config.Flows().Add().SetName("p1.v4.p2.vlan.103")
 	f7.Metrics().SetEnable(true)
 	f7.TxRx().Device().
 		SetTxNames([]string{p1d4Isisv4routes.Name()}).
@@ -905,10 +905,10 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	vlan7.Tpid().SetValue(33024)
 
 	v4 = f7.Packet().Add().Ipv4()
-	v4.Src().SetValue("70.70.70.1")
-	v4.Dst().SetValue("80.80.80.1")
+	v4.Src().SetValue("10.13.1.1")
+	v4.Dst().SetValue("20.23.1.1")
 
-	f8 := config.Flows().Add().SetName("p2.v4.p1.vlan.800")
+	f8 := config.Flows().Add().SetName("p2.v4.p1.vlan.203")
 	f8.Metrics().SetEnable(true)
 	f8.TxRx().Device().
 		SetTxNames([]string{p2d4Isisv4routes.Name()}).
@@ -924,10 +924,10 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	vlan8.Tpid().SetValue(33024)
 
 	v4 = f8.Packet().Add().Ipv4()
-	v4.Src().SetValue("80.80.80.1")
-	v4.Dst().SetValue("70.70.70.1")
+	v4.Src().SetValue("20.23.1.1")
+	v4.Dst().SetValue("10.13.1.1")
 
-	f9 := config.Flows().Add().SetName("p1.v4.p2.vlan.900")
+	f9 := config.Flows().Add().SetName("p1.v4.p2.vlan.104")
 	f9.Metrics().SetEnable(true)
 	f9.TxRx().Device().
 		SetTxNames([]string{p1d5Isisv4routes.Name()}).
@@ -943,10 +943,10 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	vlan9.Tpid().SetValue(33024)
 
 	v4 = f9.Packet().Add().Ipv4()
-	v4.Src().SetValue("90.90.90.1")
-	v4.Dst().SetValue("100.100.100.1")
+	v4.Src().SetValue("10.14.1.1")
+	v4.Dst().SetValue("20.24.1.1")
 
-	f10 := config.Flows().Add().SetName("p2.v4.p1.vlan.1000")
+	f10 := config.Flows().Add().SetName("p2.v4.p1.vlan.204")
 	f10.Metrics().SetEnable(true)
 	f10.TxRx().Device().
 		SetTxNames([]string{p2d5Isisv4routes.Name()}).
@@ -962,8 +962,8 @@ func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, 
 	vlan10.Tpid().SetValue(33024)
 
 	v4 = f10.Packet().Add().Ipv4()
-	v4.Src().SetValue("100.100.100.1")
-	v4.Dst().SetValue("90.90.90.1")
+	v4.Src().SetValue("20.24.1.1")
+	v4.Dst().SetValue("10.14.1.1")
 
 	expected := helpers.ExpectedState{
 		Isis: map[string]helpers.ExpectedIsisMetrics{
