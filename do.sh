@@ -4,9 +4,11 @@ GO_VERSION=1.17.3
 PROTOC_VERSION=3.17.3
 
 KNE_COMMIT=35e761a
-MESHNET_COMMIT=4bf3db7
 
-OPERATOR_RELEASE=0.0.75
+MESHNET_COMMIT=de89b2e
+MESHNET_VERSION=v0.3.0
+
+OPERATOR_RELEASE=0.1.77
 
 KNEBIND_CONFIG="../resources/global/knebind-config.yaml"
 
@@ -220,11 +222,22 @@ get_meshnet() {
     rm -rf meshnet-cni && git clone https://github.com/networkop/meshnet-cni \
     && cd meshnet-cni \
     && git checkout $MESHNET_COMMIT \
+    && sed -i "s/^\s*image\:\ networkop\/meshnet\:latest.*/          image\:\ networkop\/\meshnet\:${MESHNET_VERSION}/g" ./manifests/base/daemonset.yaml \
     && kubectl apply -k manifests/base \
     && wait_for_pod_counts meshnet 1 \
     && wait_for_all_pods_to_be_ready -ns meshnet \
     && cd - \
     && rm -rf meshnet-cni
+}
+
+rm_meshnet() {
+    cecho "Getting meshnet-cni commit: $MESHNET_COMMIT ..."
+    rm -rf meshnet-cni && git clone https://github.com/networkop/meshnet-cni
+    cd meshnet-cni && git checkout $MESHNET_COMMIT
+    sed -i "s/^\s*image\:\ networkop\/meshnet\:latest.*/          image\:\ networkop\/\meshnet\:${MESHNET_VERSION}/g" ./manifests/base/daemonset.yaml
+    kubectl delete -k manifests/base
+    cd -
+    rm -rf meshnet-cni
 }
 
 get_ixia_c_operator() {
