@@ -303,6 +303,18 @@ func TestBGPRouteInstall(t *testing.T) {
 	otg.StartTraffic(t)
 
 	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
+
+	// t.Logf("######### Port Metrices for port 1 ###########")
+	// t.Logf("Frames Tx: %v", ate.OTGTelemetry().Port("port1").Counters().OutFrames().Get(t))
+	// t.Logf("Frames Rx: %v", ate.OTGTelemetry().Port("port1").Counters().InFrames().Get(t))
+	// t.Logf("##############################################")
+
+	// t.Logf("######### Port Metrices for port 2 ###########")
+	// t.Logf("Frames Tx: %v", ate.OTGTelemetry().Port("port2").Counters().OutFrames().Get(t))
+	// t.Logf("Frames Rx: %v", ate.OTGTelemetry().Port("port2").Counters().InFrames().Get(t))
+	// t.Logf("##############################################")
+
+	// ate.OTGTelemetry().Port("port2").Counters().Get(t)
 }
 
 func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
