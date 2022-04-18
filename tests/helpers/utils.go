@@ -119,7 +119,7 @@ func WaitFor(t *testing.T, fn func() (bool, error), opts *WaitForOpts) error {
 		opts.Interval = 500 * time.Millisecond
 	}
 	if opts.Timeout == 0 {
-		opts.Timeout = 30 * time.Second
+		opts.Timeout = 60 * time.Second
 	}
 
 	start := time.Now()
