@@ -29,14 +29,10 @@ func TestIpInIpB2b(t *testing.T) {
 
 	config, expected := ipInIpB2bConfig(t, otg)
 	otg.PushConfig(t, ate, config)
-	gnmiClient, err := helpers.NewGnmiClient(otg.NewGnmiQuery(t), config)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	otg.StartTraffic(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, ate, config, expected) }, nil)
 }
 
 func ipInIpB2bConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {

@@ -15,8 +15,8 @@ data:
                 },
                 {
                     "name": "gnmi-server",
-                    "path": "us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ixia-c-gnmi-server",
-                    "tag": "0.7.8"
+                    "path": "ixiacom/ixia-c-gnmi-server",
+                    "tag": "1.7.11"
                 },
                 {
                     "name": "grpc-server",

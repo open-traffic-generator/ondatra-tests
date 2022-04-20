@@ -35,16 +35,11 @@ func TestIsisL2P2pAdj(t *testing.T) {
 	otg.PushConfig(t, ate, config)
 	otg.StartProtocols(t)
 
-	gnmiClient, err := helpers.NewGnmiClient(otg.NewGnmiQuery(t), config)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllIsisSessionUp(expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllIsisSessionUp(t, ate, config, expected) }, nil)
 
 	otg.StartTraffic(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, ate, config, expected) }, nil)
 }
 
 func isisL2P2pAdjConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {

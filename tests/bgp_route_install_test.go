@@ -286,13 +286,8 @@ func TestBGPRouteInstall(t *testing.T) {
 	otg.PushConfig(t, ate, config)
 	otg.StartProtocols(t)
 
-	gnmiClient, err := helpers.NewGnmiClient(otg.NewGnmiQuery(t), config)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllBgp4SessionUp(expected) }, nil)
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllBgp6SessionUp(expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp4SessionUp(t, ate, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp6SessionUp(t, ate, config, expected) }, nil)
 
 	t.Logf("Verifying Port Status")
 	helpers.VerifyPortsUp(t, dut.Device)
@@ -302,19 +297,7 @@ func TestBGPRouteInstall(t *testing.T) {
 
 	otg.StartTraffic(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
-
-	// t.Logf("######### Port Metrices for port 1 ###########")
-	// t.Logf("Frames Tx: %v", ate.OTGTelemetry().Port("port1").Counters().OutFrames().Get(t))
-	// t.Logf("Frames Rx: %v", ate.OTGTelemetry().Port("port1").Counters().InFrames().Get(t))
-	// t.Logf("##############################################")
-
-	// t.Logf("######### Port Metrices for port 2 ###########")
-	// t.Logf("Frames Tx: %v", ate.OTGTelemetry().Port("port2").Counters().OutFrames().Get(t))
-	// t.Logf("Frames Rx: %v", ate.OTGTelemetry().Port("port2").Counters().InFrames().Get(t))
-	// t.Logf("##############################################")
-
-	// ate.OTGTelemetry().Port("port2").Counters().Get(t)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, ate, config, expected) }, nil)
 }
 
 func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
