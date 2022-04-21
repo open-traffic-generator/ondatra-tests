@@ -26,7 +26,7 @@ data:
                 {
                     "name": "traffic-engine",
                     "path": "us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ixia-c-traffic-engine",
-                    "tag": "1.0.0.275"
+                    "tag": "1.0.0.277"
                 },
                 {
                     "name": "protocol-engine",
