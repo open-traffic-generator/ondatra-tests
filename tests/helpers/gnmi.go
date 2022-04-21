@@ -18,8 +18,7 @@ func GetFlowMetrics(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config) (go
 		fMetric := metrics.Add()
 		fMetric.SetName(ate.OTGTelemetry().Flow(f.Name()).Name().Get(t))
 		fMetric.SetFramesRx(int64(ate.OTGTelemetry().Flow(f.Name()).Counters().InPkts().Get(t)))
-		// fMetric.SetFramesRxRate(ate.OTGTelemetry().Flow(f.Name()).InFrameRate().Get(t))
-		fMetric.SetFramesRxRate(0)
+		fMetric.SetFramesRxRate(ate.OTGTelemetry().Flow(f.Name()).InFrameRate().Get(t))
 	}
 	return metrics, nil
 }

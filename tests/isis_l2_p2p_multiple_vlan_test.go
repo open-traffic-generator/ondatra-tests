@@ -48,14 +48,15 @@ func TestIsisL2P2pMultiVLAN(t *testing.T) {
 	defer helpers.CleanupTest(t, ate, otg, true)
 
 	config, expected := isisL2P2pMultiVlanConfig(t, otg)
-	dutMacs := GetInterfaceMacs(t, dut.Device)
-	for i := range config.Flows().Items() {
-		mac := dutMacs[dut.Port(t, "port2").Name()]
-		if i%2 == 0 {
-			mac = dutMacs[dut.Port(t, "port1").Name()]
-		}
-		config.Flows().Items()[i].Packet().Items()[0].Ethernet().Dst().SetValue(mac)
-	}
+	// dutMacs := GetInterfaceMacs(t, dut.Device)
+	// for i := range config.Flows().Items() {
+	// 	mac := dutMacs[dut.Port(t, "port2").Name()]
+	// 	if i%2 == 0 {
+	// 		mac = dutMacs[dut.Port(t, "port1").Name()]
+	// 	}
+	// 	fmt.Pr
+	// 	// config.Flows().Items()[i].Packet().Items()[0].Ethernet().Dst().SetValue(mac)
+	// }
 
 	if ate.Port(t, "port1").Name() == "eth1" {
 		dut.Config().New().WithAristaFile("../resources/dutconfig/isis_l2_p2p_multi_vlan/set_dut.txt").Push(t)
