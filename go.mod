@@ -1,6 +1,6 @@
 module tests
 
-go 1.16
+go 1.18
 
 replace github.com/openconfig/ondatra => ./ondatra
 
