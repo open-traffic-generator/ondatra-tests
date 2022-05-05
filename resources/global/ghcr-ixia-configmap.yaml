@@ -6,7 +6,7 @@ metadata:
 data:
     versions: |
         {
-          "release": "0.0.1-2770-local",
+          "release": "0.0.1-2790-local",
           "images": [
                 {
                     "name": "ghcr.io/open-traffic-generator/licensed/controller",
