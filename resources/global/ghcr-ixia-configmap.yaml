@@ -11,12 +11,12 @@ data:
                 {
                     "name": "ghcr.io/open-traffic-generator/licensed/controller",
                     "path": "ixia-c-controller",
-                    "tag": "0.0.1-2770"
+                    "tag": "0.0.1-2790"
                 },
                 {
                     "name": "gnmi-server",
                     "path": "ixiacom/ixia-c-gnmi-server",
-                    "tag": "1.7.13"
+                    "tag": "1.7.15"
                 },
                 {
                     "name": "grpc-server",
@@ -26,12 +26,12 @@ data:
                 {
                     "name": "traffic-engine",
                     "path": "ixiacom/ixia-c-traffic-engine",
-                    "tag": "1.4.1.23"
+                    "tag": "1.4.1.26"
                 },
                 {
                     "name": "ghcr.io/open-traffic-generator/licensed/protocol-engine",
                     "path": "ixia-c-protocol-engine",
-                    "tag": "1.00.0.154"
+                    "tag": "1.00.0.158"
                 }
             ]
         }

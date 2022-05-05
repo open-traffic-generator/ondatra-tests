@@ -3,10 +3,10 @@
 GO_VERSION=1.18.1
 PROTOC_VERSION=3.17.3
 
-KNE_COMMIT=9a8d6e9
+KNE_COMMIT=6d09037
 MESHNET_COMMIT=de89b2e
 MESHNET_VERSION=v0.3.0
-OPERATOR_RELEASE=0.1.78
+OPERATOR_RELEASE=0.1.89
 
 KNEBIND_CONFIG="../resources/global/knebind-config.yaml"
 
@@ -134,8 +134,8 @@ get_kubectl() {
 get_kne() {
     cecho "Getting kne commit: $KNE_COMMIT ..."
     rm -rf kne
-    git clone https://github.com/open-traffic-generator/kne.git \
-    && cd kne && git checkout otg-refactor && git checkout $KNE_COMMIT && cd - \
+    git clone https://github.com/google/kne.git \
+    && cd kne && git checkout $KNE_COMMIT && cd - \
     && cd kne/kne_cli && go install && cd - \
     && rm -rf kne
 }
@@ -247,28 +247,6 @@ get_ixia_c_operator() {
 rm_ixia_c_operator() {
     cecho "Removing ixia-c-operator ${OPERATOR_RELEASE} ..."
     kubectl delete -f https://github.com/open-traffic-generator/ixia-c-operator/releases/download/v${OPERATOR_RELEASE}/ixiatg-operator.yaml
-}
-
-get_private_ixia_c_operator() {
-    private_operator_version=0.0.77
-    cecho "Getting private ixia-c-operator v${private_operator_version} ..."
-    curl -kLO "https:/artifactorylbj.it.keysight.com/artifactory/generic-remote-athena-cos/external/operator/${private_operator_version}/ixia-c-operator.tar.gz" \
-    && docker load -i ixia-c-operator.tar.gz \
-    && rm -rf ixia-c-operator.tar.gz \
-    && kind load docker-image ixiacom/ixia-c-operator:${private_operator_version} \
-    && curl -kLO "https:/artifactorylbj.it.keysight.com/artifactory/generic-remote-athena-cos/external/operator/${private_operator_version}/ixiatg-operator.yaml" \
-    && kubectl apply -f ixiatg-operator.yaml \
-    && rm -rf ixiatg-operator.yaml \
-    && wait_for_pod_counts ixiatg-op-system 1 \
-    && wait_for_all_pods_to_be_ready -ns ixiatg-op-system \
-    && kubectl apply -f ./resources/global/gcp-ixia-configmap.yaml
-}
-
-rm_private_ixia_c_operator() {
-    private_operator_version=0.0.77
-    curl -kLO "https:/artifactorylbj.it.keysight.com/artifactory/generic-remote-athena-cos/external/operator/${private_operator_version}/ixiatg-operator.yaml" \
-    && kubectl delete -f ixiatg-operator.yaml \
-    && rm -rf ixiatg-operator.yaml
 }
 
 get_metallb() {
