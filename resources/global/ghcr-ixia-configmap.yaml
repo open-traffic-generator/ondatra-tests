@@ -6,12 +6,12 @@ metadata:
 data:
     versions: |
         {
-          "release": "0.0.1-2770-local",
+          "release": "0.0.1-2801-local",
           "images": [
                 {
                     "name": "ghcr.io/open-traffic-generator/licensed/controller",
                     "path": "ixia-c-controller",
-                    "tag": "0.0.1-2790"
+                    "tag": "0.0.1-2801"
                 },
                 {
                     "name": "gnmi-server",

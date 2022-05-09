@@ -6,12 +6,12 @@ metadata:
 data:
     versions: |
         {
-          "release": "0.0.1-2790-local",
+          "release": "0.0.1-2801-local",
           "images": [
                 {
                     "name": "controller",
                     "path": "us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ixia-c-controller",
-                    "tag": "0.0.1-2790"
+                    "tag": "0.0.1-2801"
                 },
                 {
                     "name": "gnmi-server",
