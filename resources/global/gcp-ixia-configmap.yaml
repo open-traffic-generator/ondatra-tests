@@ -6,17 +6,17 @@ metadata:
 data:
     versions: |
         {
-          "release": "0.0.1-2770-local",
+          "release": "0.0.1-2801-local",
           "images": [
                 {
                     "name": "controller",
                     "path": "us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ixia-c-controller",
-                    "tag": "0.0.1-2770"
+                    "tag": "0.0.1-2801"
                 },
                 {
                     "name": "gnmi-server",
                     "path": "us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ixia-c-gnmi-server",
-                    "tag": "1.7.13"
+                    "tag": "1.7.15"
                 },
                 {
                     "name": "grpc-server",
@@ -26,12 +26,12 @@ data:
                 {
                     "name": "traffic-engine",
                     "path": "us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ixia-c-traffic-engine",
-                    "tag": "1.0.0.275"
+                    "tag": "1.4.1.26"
                 },
                 {
                     "name": "protocol-engine",
                     "path": "us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ixia-c-protocol-engine",
-                    "tag": "1.00.0.154"
+                    "tag": "1.00.0.158"
                 }
             ]
         }

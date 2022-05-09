@@ -21,37 +21,36 @@ import (
 )
 
 func TestBGPRoutePolicy(t *testing.T) {
-	helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_policy/set_dut.txt"})
-	defer helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_policy/unset_dut.txt"})
-
-	ate := ondatra.ATE(t, "ate1")
-	ondatra.ATE(t, "ate2")
-
-	otg := ate.OTG()
-	defer helpers.CleanupTest(otg, t, true)
-
-	config, expected := bgpRoutePolicyConfig(t, otg)
-	otg.PushConfig(t, config)
-	otg.StartProtocols(t)
-
-	gnmiClient, err := helpers.NewGnmiClient(otg.NewGnmiQuery(t), config)
-	if err != nil {
-		t.Fatal(err)
+	ate := ondatra.ATE(t, "ate")
+	dut := ondatra.DUT(t, "dut")
+	if ate.Port(t, "port1").Name() == "eth1" {
+		dut.Config().New().WithAristaFile("../resources/dutconfig/bgp_route_policy/set_dut.txt").Push(t)
+	} else {
+		dut.Config().New().WithAristaFile("../resources/dutconfig/bgp_route_policy/set_dut_alternative.txt").Push(t)
 	}
 
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllBgp4SessionUp(expected) }, nil)
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllBgp6SessionUp(expected) }, nil)
+	defer dut.Config().New().WithAristaFile("../resources/dutconfig/bgp_route_policy/unset_dut.txt").Push(t)
+
+	otg := ate.OTG(t)
+	defer helpers.CleanupTest(t, ate, otg, true)
+
+	config, expected := bgpRoutePolicyConfig(t, otg)
+	otg.PushConfig(t, ate, config)
+	otg.StartProtocols(t)
+
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp4SessionUp(t, ate, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp6SessionUp(t, ate, config, expected) }, nil)
 
 	otg.StartTraffic(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, ate, config, expected) }, nil)
 }
 
-func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig(t)
+func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+	config := otg.NewConfig()
 
-	port1 := config.Ports().Add().SetName("ixia-c-port1")
-	port2 := config.Ports().Add().SetName("ixia-c-port2")
+	port1 := config.Ports().Add().SetName("port1")
+	port2 := config.Ports().Add().SetName("port2")
 
 	dutPort1 := config.Devices().Add().SetName("dutPort1")
 	dutPort1Eth := dutPort1.Ethernets().Add().
@@ -187,7 +186,6 @@ func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, h
 	f1.Duration().FixedPackets().SetPackets(1000)
 	e1 := f1.Packet().Add().Ethernet()
 	e1.Src().SetValue(dutPort1Eth.Mac())
-	e1.Dst().SetValue("00:00:00:00:00:00")
 	v4 := f1.Packet().Add().Ipv4()
 	v4.Src().SetValue("40.40.40.1")
 	v4.Dst().Increment().SetStart("50.50.50.1").SetStep("0.0.0.1").SetCount(5)
@@ -202,7 +200,6 @@ func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, h
 	f1d.Duration().FixedPackets().SetPackets(1000)
 	e1d := f1d.Packet().Add().Ethernet()
 	e1d.Src().SetValue(dutPort1Eth.Mac())
-	e1d.Dst().SetValue("00:00:00:00:00:00")
 	v4d := f1d.Packet().Add().Ipv4()
 	v4d.Src().SetValue("40.40.40.1")
 	v4d.Dst().Increment().SetStart("60.60.60.1").SetStep("0.0.0.1").SetCount(5)
@@ -217,7 +214,6 @@ func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, h
 	f2.Duration().FixedPackets().SetPackets(1000)
 	e2 := f2.Packet().Add().Ethernet()
 	e2.Src().SetValue(dutPort1Eth.Mac())
-	e2.Dst().SetValue("00:00:00:00:00:00")
 	v6 := f2.Packet().Add().Ipv6()
 	v6.Src().SetValue("0:40:40:40::1")
 	v6.Dst().Increment().SetStart("0:50:50:50::1").SetStep("::1").SetCount(5)
@@ -232,7 +228,6 @@ func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, h
 	f2d.Duration().FixedPackets().SetPackets(1000)
 	e2d := f2d.Packet().Add().Ethernet()
 	e2d.Src().SetValue(dutPort1Eth.Mac())
-	e2d.Dst().SetValue("00:00:00:00:00:00")
 	v6d := f2d.Packet().Add().Ipv6()
 	v6d.Src().SetValue("0:40:40:40::1")
 	v6d.Dst().Increment().SetStart("0:60:60:60::1").SetStep("::1").SetCount(5)

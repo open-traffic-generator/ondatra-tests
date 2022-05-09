@@ -22,29 +22,24 @@ import (
 
 func TestIpInIpB2b(t *testing.T) {
 
-	ate := ondatra.ATE(t, "ate1")
-	ondatra.ATE(t, "ate2")
+	ate := ondatra.ATE(t, "ate")
 
-	otg := ate.OTG()
-	defer helpers.CleanupTest(otg, t, false)
+	otg := ate.OTG(t)
+	defer helpers.CleanupTest(t, ate, otg, true)
 
 	config, expected := ipInIpB2bConfig(t, otg)
-	otg.PushConfig(t, config)
-	gnmiClient, err := helpers.NewGnmiClient(otg.NewGnmiQuery(t), config)
-	if err != nil {
-		t.Fatal(err)
-	}
+	otg.PushConfig(t, ate, config)
 
 	otg.StartTraffic(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, ate, config, expected) }, nil)
 }
 
-func ipInIpB2bConfig(t *testing.T, otg *ondatra.OTGAPI) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig(t)
+func ipInIpB2bConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+	config := otg.NewConfig()
 
-	port1 := config.Ports().Add().SetName("ixia-c-port1")
-	port2 := config.Ports().Add().SetName("ixia-c-port2")
+	port1 := config.Ports().Add().SetName("port1")
+	port2 := config.Ports().Add().SetName("port2")
 
 	// OTG traffic configuration
 	f1 := config.Flows().Add().SetName("p1.v4.p2.permit")

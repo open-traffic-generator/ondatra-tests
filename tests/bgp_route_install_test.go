@@ -68,10 +68,10 @@ func routeInstallConfigureInterface(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start DUT Interface Config")
 	dc := dut.Config()
 
-	i1 := bgpRouteInstallParams.dutSrc.NewInterface(helpers.InterfaceMap[dut.Port(t, "port1").Name()])
+	i1 := bgpRouteInstallParams.dutSrc.NewInterface(dut.Port(t, "port1").Name())
 	dc.Interface(i1.GetName()).Replace(t, i1)
 
-	i2 := bgpRouteInstallParams.dutDst.NewInterface(helpers.InterfaceMap[dut.Port(t, "port2").Name()])
+	i2 := bgpRouteInstallParams.dutDst.NewInterface(dut.Port(t, "port2").Name())
 	dc.Interface(i2.GetName()).Replace(t, i2)
 }
 
@@ -96,7 +96,7 @@ func routeInstallConfigureBGP(t *testing.T, dut *ondatra.DUTDevice) {
 func routeInstallConfigureDUT(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start Setting DUT Config")
 	routeInstallConfigureInterface(t, dut)
-	helpers.ConfigDUTs(map[string]string{"arista1": "../resources/dutconfig/bgp_route_install/set_dut.txt"})
+	dut.Config().New().WithAristaFile("../resources/dutconfig/bgp_route_install/set_dut.txt").Append(t)
 	routeInstallConfigureBGP(t, dut)
 }
 
@@ -104,10 +104,10 @@ func routeInstallUnsetInterface(t *testing.T, dut *ondatra.DUTDevice) {
 	t.Logf("Start Unsetting DUT Interface Config")
 	dc := dut.Config()
 
-	i1 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port1").Name()])
+	i1 := helpers.RemoveInterface(dut.Port(t, "port1").Name())
 	dc.Interface(i1.GetName()).Replace(t, i1)
 
-	i2 := helpers.RemoveInterface(helpers.InterfaceMap[dut.Port(t, "port2").Name()])
+	i2 := helpers.RemoveInterface(dut.Port(t, "port2").Name())
 	dc.Interface(i2.GetName()).Replace(t, i2)
 }
 
@@ -277,29 +277,17 @@ func TestBGPRouteInstall(t *testing.T) {
 	// Unset DUT Config over gNMI
 	defer routeInstallUnsetDUT(t, dut)
 
-	ate1 := ondatra.ATE(t, "ate1")
-	ate2 := ondatra.ATE(t, "ate2")
+	ate := ondatra.ATE(t, "ate")
+	otg := ate.OTG(t)
+	defer helpers.CleanupTest(t, ate, otg, true)
 
-	ateList := []*ondatra.ATEDevice{
-		ate1,
-		ate2,
-	}
+	config, expected := bgpRouteInstallConfig(t, otg)
 
-	otg := ate1.OTG()
-	defer helpers.CleanupTest(otg, t, true)
-
-	config, expected := bgpRouteInstallConfig(t, otg, ateList)
-
-	otg.PushConfig(t, config)
+	otg.PushConfig(t, ate, config)
 	otg.StartProtocols(t)
 
-	gnmiClient, err := helpers.NewGnmiClient(otg.NewGnmiQuery(t), config)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllBgp4SessionUp(expected) }, nil)
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.AllBgp6SessionUp(expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp4SessionUp(t, ate, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp6SessionUp(t, ate, config, expected) }, nil)
 
 	t.Logf("Verifying Port Status")
 	helpers.VerifyPortsUp(t, dut.Device)
@@ -309,14 +297,14 @@ func TestBGPRouteInstall(t *testing.T) {
 
 	otg.StartTraffic(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return gnmiClient.FlowMetricsOk(expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, ate, config, expected) }, nil)
 }
 
-func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra.ATEDevice) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig(t)
+func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+	config := otg.NewConfig()
 
-	port1 := config.Ports().Add().SetName(ateList[0].Name())
-	port2 := config.Ports().Add().SetName(ateList[1].Name())
+	port1 := config.Ports().Add().SetName("port1")
+	port2 := config.Ports().Add().SetName("port2")
 
 	dutPort1 := config.Devices().Add().SetName("dutPort1")
 	dutPort1Eth := dutPort1.Ethernets().Add().
@@ -436,7 +424,6 @@ func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra
 	f1.Duration().FixedPackets().SetPackets(1000)
 	e1 := f1.Packet().Add().Ethernet()
 	e1.Src().SetValue(dutPort1Eth.Mac())
-	e1.Dst().SetValue("00:00:00:00:00:00")
 	v4 := f1.Packet().Add().Ipv4()
 	v4.Src().SetValue("40.40.40.1")
 	v4.Dst().Increment().SetStart("50.50.50.1").SetStep("0.0.0.1").SetCount(5)
@@ -451,7 +438,6 @@ func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra
 	f1d.Duration().FixedPackets().SetPackets(1000)
 	e1d := f1d.Packet().Add().Ethernet()
 	e1d.Src().SetValue(dutPort1Eth.Mac())
-	e1d.Dst().SetValue("00:00:00:00:00:00")
 	v4d := f1d.Packet().Add().Ipv4()
 	v4d.Src().SetValue("40.40.40.1")
 	v4d.Dst().Increment().SetStart("60.60.60.1").SetStep("0.0.0.1").SetCount(5)
@@ -466,7 +452,6 @@ func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra
 	f2.Duration().FixedPackets().SetPackets(1000)
 	e2 := f2.Packet().Add().Ethernet()
 	e2.Src().SetValue(dutPort1Eth.Mac())
-	e2.Dst().SetValue("00:00:00:00:00:00")
 	v6 := f2.Packet().Add().Ipv6()
 	v6.Src().SetValue("0:40:40:40::1")
 	v6.Dst().Increment().SetStart("0:50:50:50::1").SetStep("::1").SetCount(5)
@@ -481,7 +466,7 @@ func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTGAPI, ateList []*ondatra
 	f2d.Duration().FixedPackets().SetPackets(1000)
 	e2d := f2d.Packet().Add().Ethernet()
 	e2d.Src().SetValue(dutPort1Eth.Mac())
-	e2d.Dst().SetValue("00:00:00:00:00:00")
+	// e2d.Dst().SetValue("00:00:00:00:00:00")
 	v6d := f2d.Packet().Add().Ipv6()
 	v6d.Src().SetValue("0:40:40:40::1")
 	v6d.Dst().Increment().SetStart("0:60:60:60::1").SetStep("::1").SetCount(5)
