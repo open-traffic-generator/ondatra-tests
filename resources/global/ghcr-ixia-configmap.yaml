@@ -10,7 +10,7 @@ data:
           "images": [
                 {
                     "name": "ixia-c-controller",
-                    "path": "ghcr.io/open-traffic-generator/licensed/controller",
+                    "path": "ghcr.io/open-traffic-generator/licensed/ixia-c-controller",
                     "tag": "0.0.1-2801"
                 },
                 {
@@ -30,7 +30,7 @@ data:
                 },
                 {
                     "name": "ixia-c-protocol-engine",
-                    "path": "ghcr.io/open-traffic-generator/licensed/protocol-engine",
+                    "path": "ghcr.io/open-traffic-generator/licensed/ixia-c-protocol-engine",
                     "tag": "1.00.0.158"
                 }
             ]
