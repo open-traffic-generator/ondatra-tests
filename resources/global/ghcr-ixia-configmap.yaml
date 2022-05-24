@@ -9,7 +9,7 @@ data:
           "release": "0.0.1-2801-local",
           "images": [
                 {
-                    "name": "ixia-c-controller",
+                    "name": "controller",
                     "path": "ghcr.io/open-traffic-generator/licensed/ixia-c-controller",
                     "tag": "0.0.1-2801"
                 },
@@ -29,7 +29,7 @@ data:
                     "tag": "1.4.1.26"
                 },
                 {
-                    "name": "ixia-c-protocol-engine",
+                    "name": "protocol-engine",
                     "path": "ghcr.io/open-traffic-generator/licensed/ixia-c-protocol-engine",
                     "tag": "1.00.0.158"
                 }
