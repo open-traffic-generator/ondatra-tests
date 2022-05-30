@@ -28,22 +28,22 @@ func TestIsisL2P2pAdj(t *testing.T) {
 	}
 	defer dut.Config().New().WithAristaFile("../resources/dutconfig/isis_l2_p2p_adj/unset_dut.txt").Push(t)
 
-	otg := ate.OTG(t)
+	otg := ate.OTG()
 	defer helpers.CleanupTest(t, ate, otg, true)
 
 	config, expected := isisL2P2pAdjConfig(t, otg)
-	otg.PushConfig(t, ate, config)
+	otg.PushConfig(t, config)
 	otg.StartProtocols(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return helpers.AllIsisSessionUp(t, ate, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllIsisSessionUp(t, otg, config, expected) }, nil)
 
 	otg.StartTraffic(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, ate, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, otg, config, expected) }, nil)
 }
 
 func isisL2P2pAdjConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig()
+	config := otg.NewConfig(t)
 	port1 := config.Ports().Add().SetName("port1")
 	port2 := config.Ports().Add().SetName("port2")
 	dutPort1 := config.Devices().Add().SetName("dutPort1")

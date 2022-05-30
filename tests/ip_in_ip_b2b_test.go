@@ -24,19 +24,19 @@ func TestIpInIpB2b(t *testing.T) {
 
 	ate := ondatra.ATE(t, "ate")
 
-	otg := ate.OTG(t)
+	otg := ate.OTG()
 	defer helpers.CleanupTest(t, ate, otg, true)
 
 	config, expected := ipInIpB2bConfig(t, otg)
-	otg.PushConfig(t, ate, config)
+	otg.PushConfig(t, config)
 
 	otg.StartTraffic(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, ate, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, otg, config, expected) }, nil)
 }
 
 func ipInIpB2bConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig()
+	config := otg.NewConfig(t)
 
 	port1 := config.Ports().Add().SetName("port1")
 	port2 := config.Ports().Add().SetName("port2")

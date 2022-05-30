@@ -7,37 +7,42 @@ import (
 
 	"github.com/open-traffic-generator/snappi/gosnappi"
 	"github.com/openconfig/ondatra"
-	"github.com/openconfig/ondatra/otgtelemetry"
+	otgtelemetry "github.com/openconfig/ondatra/telemetry/otg"
+	"github.com/openconfig/ygot/ygot"
 )
 
-func GetFlowMetrics(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config) (gosnappi.MetricsResponseFlowMetricIter, error) {
+func GetFlowMetrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.MetricsResponseFlowMetricIter, error) {
 	defer Timer(time.Now(), "GetFlowMetrics GNMI")
 	metrics := gosnappi.NewApi().NewGetMetricsResponse().StatusCode200().FlowMetrics()
 	for _, f := range c.Flows().Items() {
 		log.Printf("Getting flow metrics for flow %s\n", f.Name())
 		fMetric := metrics.Add()
-		fMetric.SetName(ate.OTGTelemetry().Flow(f.Name()).Name().Get(t))
-		fMetric.SetFramesRx(int64(ate.OTGTelemetry().Flow(f.Name()).Counters().InPkts().Get(t)))
-		fMetric.SetFramesRxRate(ate.OTGTelemetry().Flow(f.Name()).InFrameRate().Get(t))
+		recvMetric := otg.Telemetry().Flow(f.Name()).Get(t)
+		fMetric.SetName(recvMetric.GetName())
+		fMetric.SetFramesRx(int64(recvMetric.GetCounters().GetInPkts()))
+		fMetric.SetFramesTx(int64(recvMetric.GetCounters().GetOutPkts()))
+		fMetric.SetFramesTxRate(ygot.BinaryToFloat32(recvMetric.GetOutFrameRate()))
+		fMetric.SetFramesRxRate(ygot.BinaryToFloat32(recvMetric.GetInFrameRate()))
 	}
 	return metrics, nil
 }
 
-func GetPortMetrics(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config) (gosnappi.MetricsResponsePortMetricIter, error) {
+func GetPortMetrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.MetricsResponsePortMetricIter, error) {
 	defer Timer(time.Now(), "GetPortMetrics GNMI")
 	metrics := gosnappi.NewApi().NewGetMetricsResponse().StatusCode200().PortMetrics()
 	for _, p := range c.Ports().Items() {
 		log.Printf("Getting port metrics for port %s\n", p.Name())
 		pMetric := metrics.Add()
-		pMetric.SetName(ate.OTGTelemetry().Port(p.Name()).Name().Get(t))
-		pMetric.SetFramesTx(int64(ate.OTGTelemetry().Port(p.Name()).Counters().OutFrames().Get(t)))
-		pMetric.SetFramesRx(int64(ate.OTGTelemetry().Port(p.Name()).Counters().InFrames().Get(t)))
-		pMetric.SetFramesTxRate(ate.OTGTelemetry().Port(p.Name()).OutRate().Get(t))
+		recvMetric := otg.Telemetry().Port(p.Name()).Get(t)
+		pMetric.SetName(recvMetric.GetName())
+		pMetric.SetFramesTx(int64(recvMetric.GetCounters().GetOutFrames()))
+		pMetric.SetFramesRx(int64(recvMetric.GetCounters().GetInFrames()))
+		pMetric.SetFramesTxRate(ygot.BinaryToFloat32(recvMetric.GetOutRate()))
 	}
 	return metrics, nil
 }
 
-func GetBgpv4Metrics(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config) (gosnappi.MetricsResponseBgpv4MetricIter, error) {
+func GetBgpv4Metrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.MetricsResponseBgpv4MetricIter, error) {
 	defer Timer(time.Now(), "GetBgpv4Metrics GNMI")
 	metrics := gosnappi.NewApi().NewGetMetricsResponse().StatusCode200().Bgpv4Metrics()
 	for _, d := range c.Devices().Items() {
@@ -46,15 +51,16 @@ func GetBgpv4Metrics(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config) (g
 			for _, peer := range ip.Peers().Items() {
 				log.Printf("Getting bgpv4 metrics for peer %s\n", peer.Name())
 				bgpv4Metric := metrics.Add()
-				bgpv4Metric.SetName(ate.OTGTelemetry().BgpPeer(peer.Name()).Name().Get(t))
-				bgpv4Metric.SetSessionFlapCount(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().Flaps().Get(t)))
-				bgpv4Metric.SetRoutesAdvertised(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().OutRoutes().Get(t)))
-				bgpv4Metric.SetRoutesReceived(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().InRoutes().Get(t)))
-				bgpv4Metric.SetRouteWithdrawsSent(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().OutRouteWithdraw().Get(t)))
-				bgpv4Metric.SetRouteWithdrawsReceived(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().InRouteWithdraw().Get(t)))
-				bgpv4Metric.SetKeepalivesSent(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().OutKeepalives().Get(t)))
-				bgpv4Metric.SetKeepalivesReceived(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().InKeepalives().Get(t)))
-				sessionState := ate.OTGTelemetry().BgpPeer(peer.Name()).SessionState().Get(t)
+				recvMetric := otg.Telemetry().BgpPeer(peer.Name()).Get(t)
+				bgpv4Metric.SetName(recvMetric.GetName())
+				bgpv4Metric.SetSessionFlapCount(int32(recvMetric.GetCounters().GetFlaps()))
+				bgpv4Metric.SetRoutesAdvertised(int32(recvMetric.GetCounters().GetOutRoutes()))
+				bgpv4Metric.SetRoutesReceived(int32(recvMetric.GetCounters().GetInRoutes()))
+				bgpv4Metric.SetRouteWithdrawsSent(int32(recvMetric.GetCounters().GetOutRouteWithdraw()))
+				bgpv4Metric.SetRouteWithdrawsReceived(int32(recvMetric.GetCounters().GetInRouteWithdraw()))
+				bgpv4Metric.SetKeepalivesSent(int32(recvMetric.GetCounters().GetOutKeepalives()))
+				bgpv4Metric.SetKeepalivesReceived(int32(recvMetric.GetCounters().GetInKeepalives()))
+				sessionState := recvMetric.GetSessionState()
 				if sessionState == otgtelemetry.BgpPeer_SessionState_ESTABLISHED {
 					bgpv4Metric.SetSessionState("up")
 				} else {
@@ -66,7 +72,7 @@ func GetBgpv4Metrics(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config) (g
 	return metrics, nil
 }
 
-func GetBgpv6Metrics(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config) (gosnappi.MetricsResponseBgpv6MetricIter, error) {
+func GetBgpv6Metrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.MetricsResponseBgpv6MetricIter, error) {
 	defer Timer(time.Now(), "GetBgpv6Metrics GNMI")
 	metrics := gosnappi.NewApi().NewGetMetricsResponse().StatusCode200().Bgpv6Metrics()
 	for _, d := range c.Devices().Items() {
@@ -75,15 +81,16 @@ func GetBgpv6Metrics(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config) (g
 			for _, peer := range ipv6.Peers().Items() {
 				log.Printf("Getting bgpv6 metrics for peer %s\n", peer.Name())
 				bgpv6Metric := metrics.Add()
-				bgpv6Metric.SetName(ate.OTGTelemetry().BgpPeer(peer.Name()).Name().Get(t))
-				bgpv6Metric.SetSessionFlapCount(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().Flaps().Get(t)))
-				bgpv6Metric.SetRoutesAdvertised(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().OutRoutes().Get(t)))
-				bgpv6Metric.SetRoutesReceived(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().InRoutes().Get(t)))
-				bgpv6Metric.SetRouteWithdrawsSent(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().OutRouteWithdraw().Get(t)))
-				bgpv6Metric.SetRouteWithdrawsReceived(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().InRouteWithdraw().Get(t)))
-				bgpv6Metric.SetKeepalivesSent(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().OutKeepalives().Get(t)))
-				bgpv6Metric.SetKeepalivesReceived(int32(ate.OTGTelemetry().BgpPeer(peer.Name()).Counters().InKeepalives().Get(t)))
-				sessionState := ate.OTGTelemetry().BgpPeer(peer.Name()).SessionState().Get(t)
+				recvMetric := otg.Telemetry().BgpPeer(peer.Name()).Get(t)
+				bgpv6Metric.SetName(recvMetric.GetName())
+				bgpv6Metric.SetSessionFlapCount(int32(recvMetric.GetCounters().GetFlaps()))
+				bgpv6Metric.SetRoutesAdvertised(int32(recvMetric.GetCounters().GetOutRoutes()))
+				bgpv6Metric.SetRoutesReceived(int32(recvMetric.GetCounters().GetInRoutes()))
+				bgpv6Metric.SetRouteWithdrawsSent(int32(recvMetric.GetCounters().GetOutRouteWithdraw()))
+				bgpv6Metric.SetRouteWithdrawsReceived(int32(recvMetric.GetCounters().GetInRouteWithdraw()))
+				bgpv6Metric.SetKeepalivesSent(int32(recvMetric.GetCounters().GetOutKeepalives()))
+				bgpv6Metric.SetKeepalivesReceived(int32(recvMetric.GetCounters().GetInKeepalives()))
+				sessionState := recvMetric.GetSessionState()
 				if sessionState == otgtelemetry.BgpPeer_SessionState_ESTABLISHED {
 					bgpv6Metric.SetSessionState("up")
 				} else {
@@ -95,32 +102,103 @@ func GetBgpv6Metrics(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config) (g
 	return metrics, nil
 }
 
-func GetIsisMetrics(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config) (gosnappi.MetricsResponseIsisMetricIter, error) {
+func GetIsisMetrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.MetricsResponseIsisMetricIter, error) {
 	defer Timer(time.Now(), "GetIsisMetrics GNMI")
 	metrics := gosnappi.NewApi().NewGetMetricsResponse().StatusCode200().IsisMetrics()
 	for _, d := range c.Devices().Items() {
 		isis := d.Isis()
 		log.Printf("Getting isis metrics for router %s\n", isis.Name())
 		isisMetric := metrics.Add()
-		isisMetric.SetName(ate.OTGTelemetry().IsisRouter(isis.Name()).Name().Get(t))
-		isisMetric.SetL1SessionsUp(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level1().SessionsUp().Get(t)))
-		isisMetric.SetL1SessionFlap(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level1().SessionsFlap().Get(t)))
-		isisMetric.SetL1BroadcastHellosSent(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level1().OutBcastHellos().Get(t)))
-		isisMetric.SetL1BroadcastHellosReceived(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level1().InBcastHellos().Get(t)))
-		isisMetric.SetL1PointToPointHellosSent(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level1().OutP2PHellos().Get(t)))
-		isisMetric.SetL1PointToPointHellosReceived(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level1().InP2PHellos().Get(t)))
-		isisMetric.SetL1LspSent(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level1().OutLsp().Get(t)))
-		isisMetric.SetL1LspReceived(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level1().InLsp().Get(t)))
-		isisMetric.SetL1DatabaseSize(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level1().DatabaseSize().Get(t)))
-		isisMetric.SetL2SessionsUp(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level2().SessionsUp().Get(t)))
-		isisMetric.SetL2SessionFlap(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level2().SessionsFlap().Get(t)))
-		isisMetric.SetL2BroadcastHellosSent(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level2().OutBcastHellos().Get(t)))
-		isisMetric.SetL2BroadcastHellosReceived(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level2().InBcastHellos().Get(t)))
-		isisMetric.SetL2PointToPointHellosSent(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level2().OutP2PHellos().Get(t)))
-		isisMetric.SetL2PointToPointHellosReceived(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level2().InP2PHellos().Get(t)))
-		isisMetric.SetL2LspSent(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level2().OutLsp().Get(t)))
-		isisMetric.SetL2LspReceived(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level2().InLsp().Get(t)))
-		isisMetric.SetL2DatabaseSize(int32(ate.OTGTelemetry().IsisRouter(isis.Name()).Counters().Level2().DatabaseSize().Get(t)))
+		recvMetric := otg.Telemetry().IsisRouter(isis.Name()).Get(t)
+		isisMetric.SetName(recvMetric.GetName())
+		isisMetric.SetL1SessionsUp(int32(recvMetric.GetCounters().GetLevel1().GetSessionsUp()))
+		isisMetric.SetL1SessionFlap(int32(recvMetric.GetCounters().GetLevel1().GetSessionsFlap()))
+		isisMetric.SetL1BroadcastHellosSent(int32(recvMetric.GetCounters().GetLevel1().GetOutBcastHellos()))
+		isisMetric.SetL1BroadcastHellosReceived(int32(recvMetric.GetCounters().GetLevel1().GetInBcastHellos()))
+		isisMetric.SetL1PointToPointHellosSent(int32(recvMetric.GetCounters().GetLevel1().GetOutP2PHellos()))
+		isisMetric.SetL1PointToPointHellosReceived(int32(recvMetric.GetCounters().GetLevel1().GetInP2PHellos()))
+		isisMetric.SetL1LspSent(int32(recvMetric.GetCounters().GetLevel1().GetOutLsp()))
+		isisMetric.SetL1LspReceived(int32(recvMetric.GetCounters().GetLevel1().GetInLsp()))
+		isisMetric.SetL1DatabaseSize(int32(recvMetric.GetCounters().GetLevel1().GetDatabaseSize()))
+		isisMetric.SetL2SessionsUp(int32(recvMetric.GetCounters().GetLevel2().GetSessionsUp()))
+		isisMetric.SetL2SessionFlap(int32(recvMetric.GetCounters().GetLevel2().GetSessionsFlap()))
+		isisMetric.SetL2BroadcastHellosSent(int32(recvMetric.GetCounters().GetLevel2().GetOutBcastHellos()))
+		isisMetric.SetL2BroadcastHellosReceived(int32(recvMetric.GetCounters().GetLevel2().GetInBcastHellos()))
+		isisMetric.SetL2PointToPointHellosSent(int32(recvMetric.GetCounters().GetLevel2().GetOutP2PHellos()))
+		isisMetric.SetL2PointToPointHellosReceived(int32(recvMetric.GetCounters().GetLevel2().GetInP2PHellos()))
+		isisMetric.SetL2LspSent(int32(recvMetric.GetCounters().GetLevel2().GetOutLsp()))
+		isisMetric.SetL2LspReceived(int32(recvMetric.GetCounters().GetLevel2().GetInLsp()))
+		isisMetric.SetL2DatabaseSize(int32(recvMetric.GetCounters().GetLevel2().GetDatabaseSize()))
 	}
 	return metrics, nil
+}
+
+func GetIPv4NeighborStates(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.StatesResponseNeighborsv4StateIter, error) {
+	defer Timer(time.Now(), "Getting IPv4 Neighbor states GNMI")
+	ethNeighborMap := make(map[string][]string)
+	ethernetNames := []string{}
+	for _, d := range c.Devices().Items() {
+		for _, eth := range d.Ethernets().Items() {
+			ethernetNames = append(ethernetNames, eth.Name())
+			if _, found := ethNeighborMap[eth.Name()]; !found {
+				ethNeighborMap[eth.Name()] = []string{}
+			}
+			for _, ipv4Address := range eth.Ipv4Addresses().Items() {
+				ethNeighborMap[eth.Name()] = append(ethNeighborMap[eth.Name()], ipv4Address.Gateway())
+			}
+		}
+	}
+
+	states := gosnappi.NewApi().NewGetStatesResponse().StatusCode200().Ipv4Neighbors()
+	for _, ethernetName := range ethernetNames {
+		log.Printf("Fetching IPv4 Neighbor states for ethernet: %v", ethernetName)
+		for _, address := range ethNeighborMap[ethernetName] {
+			recvState := otg.Telemetry().Interface(ethernetName).Ipv4Neighbor(address).Get(t)
+			states.Add().
+				SetEthernetName(ethernetName).
+				SetIpv4Address(recvState.GetIpv4Address()).
+				SetLinkLayerAddress(recvState.GetLinkLayerAddress())
+		}
+	}
+	return states, nil
+}
+
+func GetIPv6NeighborStates(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.StatesResponseNeighborsv6StateIter, error) {
+	defer Timer(time.Now(), "Getting IPv6 Neighbor states GNMI")
+	ethNeighborMap := make(map[string][]string)
+	ethernetNames := []string{}
+	for _, d := range c.Devices().Items() {
+		for _, eth := range d.Ethernets().Items() {
+			ethernetNames = append(ethernetNames, eth.Name())
+			if _, found := ethNeighborMap[eth.Name()]; !found {
+				ethNeighborMap[eth.Name()] = []string{}
+			}
+			for _, ipv6Address := range eth.Ipv6Addresses().Items() {
+				ethNeighborMap[eth.Name()] = append(ethNeighborMap[eth.Name()], ipv6Address.Gateway())
+			}
+		}
+	}
+
+	states := gosnappi.NewApi().NewGetStatesResponse().StatusCode200().Ipv6Neighbors()
+	for _, ethernetName := range ethernetNames {
+		log.Printf("Fetching IPv6 Neighbor states for ethernet: %v", ethernetName)
+		for _, address := range ethNeighborMap[ethernetName] {
+			recvState := otg.Telemetry().Interface(ethernetName).Ipv6Neighbor(address).Get(t)
+			states.Add().
+				SetEthernetName(ethernetName).
+				SetIpv6Address(recvState.GetIpv6Address()).
+				SetLinkLayerAddress(recvState.GetLinkLayerAddress())
+		}
+	}
+	return states, nil
+}
+
+func GetAllIPv4NeighborMacEntries(t *testing.T, otg *ondatra.OTG) ([]string, error) {
+	macEntries := otg.Telemetry().InterfaceAny().Ipv4NeighborAny().LinkLayerAddress().Get(t)
+	return macEntries, nil
+}
+
+func GetAllIPv6NeighborMacEntries(t *testing.T, otg *ondatra.OTG) ([]string, error) {
+	macEntries := otg.Telemetry().InterfaceAny().Ipv6NeighborAny().LinkLayerAddress().Get(t)
+	return macEntries, nil
 }

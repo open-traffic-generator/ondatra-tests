@@ -3,10 +3,10 @@
 GO_VERSION=1.18.1
 PROTOC_VERSION=3.17.3
 
-KNE_COMMIT=09a59ae
+KNE_COMMIT=2004f3c
 MESHNET_COMMIT=de89b2e
 MESHNET_VERSION=v0.3.0
-OPERATOR_RELEASE=0.1.89
+OPERATOR_RELEASE=0.1.94
 
 KNEBIND_CONFIG="../resources/global/knebind-config.yaml"
 
@@ -302,8 +302,7 @@ setup_ondatra_tests() {
     get_test_deps \
     && get_go_test_deps \
     && get_protoc \
-    && get_kne \
-    && build_ondatra
+    && get_kne
 }
 
 rm_test_client() {

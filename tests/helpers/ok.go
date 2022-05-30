@@ -47,8 +47,8 @@ func NewExpectedState() ExpectedState {
 	return e
 }
 
-func AllIsisSessionUp(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config, expectedState ExpectedState) (bool, error) {
-	dMetrics, err := GetIsisMetrics(t, ate, c)
+func AllIsisSessionUp(t *testing.T, otg *ondatra.OTG, c gosnappi.Config, expectedState ExpectedState) (bool, error) {
+	dMetrics, err := GetIsisMetrics(t, otg, c)
 	if err != nil {
 		return false, err
 	}
@@ -71,8 +71,8 @@ func AllIsisSessionUp(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config, e
 	return expected, nil
 }
 
-func FlowMetricsOk(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config, expectedState ExpectedState) (bool, error) {
-	fMetrics, err := GetFlowMetrics(t, ate, c)
+func FlowMetricsOk(t *testing.T, otg *ondatra.OTG, c gosnappi.Config, expectedState ExpectedState) (bool, error) {
+	fMetrics, err := GetFlowMetrics(t, otg, c)
 	if err != nil {
 		return false, err
 	}
@@ -93,8 +93,8 @@ func FlowMetricsOk(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config, expe
 	return expected, nil
 }
 
-func AllBgp4SessionUp(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config, expectedState ExpectedState) (bool, error) {
-	dMetrics, err := GetBgpv4Metrics(t, ate, c)
+func AllBgp4SessionUp(t *testing.T, otg *ondatra.OTG, c gosnappi.Config, expectedState ExpectedState) (bool, error) {
+	dMetrics, err := GetBgpv4Metrics(t, otg, c)
 	if err != nil {
 		return false, err
 	}
@@ -115,8 +115,8 @@ func AllBgp4SessionUp(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config, e
 	return expected, nil
 }
 
-func AllBgp6SessionUp(t *testing.T, ate *ondatra.ATEDevice, c gosnappi.Config, expectedState ExpectedState) (bool, error) {
-	dMetrics, err := GetBgpv6Metrics(t, ate, c)
+func AllBgp6SessionUp(t *testing.T, otg *ondatra.OTG, c gosnappi.Config, expectedState ExpectedState) (bool, error) {
+	dMetrics, err := GetBgpv6Metrics(t, otg, c)
 	if err != nil {
 		return false, err
 	}

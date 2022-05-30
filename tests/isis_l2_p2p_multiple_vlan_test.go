@@ -33,7 +33,7 @@ func TestIsisL2P2pMultiVLAN(t *testing.T) {
 	ate := ondatra.ATE(t, "ate")
 	dut := ondatra.DUT(t, "dut")
 
-	otg := ate.OTG(t)
+	otg := ate.OTG()
 	defer helpers.CleanupTest(t, ate, otg, true)
 
 	config, expected := isisL2P2pMultiVlanConfig(t, otg)
@@ -45,18 +45,18 @@ func TestIsisL2P2pMultiVLAN(t *testing.T) {
 	}
 	defer dut.Config().New().WithAristaFile("../resources/dutconfig/isis_l2_p2p_multi_vlan/unset_dut.txt").Push(t)
 
-	otg.PushConfig(t, ate, config)
+	otg.PushConfig(t, config)
 	otg.StartProtocols(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return helpers.AllIsisSessionUp(t, ate, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllIsisSessionUp(t, otg, config, expected) }, nil)
 
 	otg.StartTraffic(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, ate, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, otg, config, expected) }, nil)
 }
 
 func isisL2P2pMultiVlanConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig()
+	config := otg.NewConfig(t)
 	port1 := config.Ports().Add().SetName("port1")
 	port2 := config.Ports().Add().SetName("port2")
 

@@ -278,16 +278,16 @@ func TestBGPRouteInstall(t *testing.T) {
 	defer routeInstallUnsetDUT(t, dut)
 
 	ate := ondatra.ATE(t, "ate")
-	otg := ate.OTG(t)
+	otg := ate.OTG()
 	defer helpers.CleanupTest(t, ate, otg, true)
 
 	config, expected := bgpRouteInstallConfig(t, otg)
 
-	otg.PushConfig(t, ate, config)
+	otg.PushConfig(t, config)
 	otg.StartProtocols(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp4SessionUp(t, ate, config, expected) }, nil)
-	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp6SessionUp(t, ate, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp4SessionUp(t, otg, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp6SessionUp(t, otg, config, expected) }, nil)
 
 	t.Logf("Verifying Port Status")
 	helpers.VerifyPortsUp(t, dut.Device)
@@ -297,11 +297,11 @@ func TestBGPRouteInstall(t *testing.T) {
 
 	otg.StartTraffic(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, ate, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, otg, config, expected) }, nil)
 }
 
 func bgpRouteInstallConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig()
+	config := otg.NewConfig(t)
 
 	port1 := config.Ports().Add().SetName("port1")
 	port2 := config.Ports().Add().SetName("port2")

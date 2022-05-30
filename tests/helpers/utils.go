@@ -398,5 +398,5 @@ func CleanupTest(t *testing.T, ate *ondatra.ATEDevice, otg *ondatra.OTG, stopPro
 	if stopProtocols {
 		otg.StopProtocols(t)
 	}
-	otg.PushConfig(t, ate, otg.NewConfig())
+	otg.PushConfig(t, otg.NewConfig(t))
 }

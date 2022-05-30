@@ -31,23 +31,23 @@ func TestBGPRoutePolicy(t *testing.T) {
 
 	defer dut.Config().New().WithAristaFile("../resources/dutconfig/bgp_route_policy/unset_dut.txt").Push(t)
 
-	otg := ate.OTG(t)
+	otg := ate.OTG()
 	defer helpers.CleanupTest(t, ate, otg, true)
 
 	config, expected := bgpRoutePolicyConfig(t, otg)
-	otg.PushConfig(t, ate, config)
+	otg.PushConfig(t, config)
 	otg.StartProtocols(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp4SessionUp(t, ate, config, expected) }, nil)
-	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp6SessionUp(t, ate, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp4SessionUp(t, otg, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.AllBgp6SessionUp(t, otg, config, expected) }, nil)
 
 	otg.StartTraffic(t)
 
-	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, ate, config, expected) }, nil)
+	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, otg, config, expected) }, nil)
 }
 
 func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
-	config := otg.NewConfig()
+	config := otg.NewConfig(t)
 
 	port1 := config.Ports().Add().SetName("port1")
 	port2 := config.Ports().Add().SetName("port2")
