@@ -3,7 +3,7 @@ module tests
 go 1.18
 
 require (
-	github.com/open-traffic-generator/snappi/gosnappi v0.7.18
+	github.com/open-traffic-generator/snappi/gosnappi v0.7.37
 	github.com/openconfig/ondatra v0.0.0-20220527172056-d31d97bd400c
 	github.com/openconfig/ygot v0.21.0
 	google.golang.org/protobuf v1.28.0
@@ -31,6 +31,6 @@ require (
 	golang.org/x/sys v0.0.0-20220406163625-3f8b81556e12 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20220405205423-9d709892a2bf // indirect
-	google.golang.org/grpc v1.45.0 // indirect
+	google.golang.org/grpc v1.46.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
