@@ -1,22 +1,18 @@
-transceiver qsfp default-mode 4x10G
+!! IOS XR Configuration 7.8.1
 !
-service routing protocols model ribd
+username cisco
+ group root-lr
+ group cisco-support
+ password 7 01100F175804575D72
+! 
+grpc
+ dscp cs4
+ port 57400
+ max-streams 128
+ max-streams-per-user 128
+ address-family dual
+ max-request-total 256
+ max-request-per-user 32
 !
-agent Bfd shutdown
-agent PowerManager shutdown
-agent LedPolicy shutdown
-agent Thermostat shutdown
-agent PowerFuse shutdown
-agent StandbyCpld shutdown
-agent LicenseManager shutdown
-!
-spanning-tree mode mstp
-!
-no aaa root
-aaa authentication policy local allow-nopassword-remote-login
-!
-username admin privilege 15 role network-admin nopassword
-!
-management api gnmi
-    transport grpc default
+ssh server vrf default
 end

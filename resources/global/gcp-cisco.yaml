@@ -1,2 +1,2 @@
 # TODO: replace existing image with an actual image of cisco DUT
-image: us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/cxr:latest
+image: us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/cisco:xrd
