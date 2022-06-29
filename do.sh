@@ -143,7 +143,7 @@ get_kubectl() {
 get_kne() {
     cecho "Getting kne commit: $KNE_COMMIT ..."
     rm -rf kne
-    git clone https://github.com/google/kne.git \
+    git clone https://github.com/openconfig/kne.git \
     && cd kne && git checkout $KNE_COMMIT && cd - \
     && cd kne/kne_cli && go install && cd - \
     && rm -rf kne
