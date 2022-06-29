@@ -4,8 +4,8 @@ go 1.18
 
 require (
 	github.com/open-traffic-generator/snappi/gosnappi v0.7.41
-	github.com/openconfig/ondatra v0.0.0-20220527172056-d31d97bd400c
-	github.com/openconfig/ygot v0.21.0
+	github.com/openconfig/ondatra v0.0.0-20220629205534-35d4f8159d8f
+	github.com/openconfig/ygot v0.23.1
 	google.golang.org/protobuf v1.28.0
 )
 
@@ -14,7 +14,6 @@ require (
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
-	github.com/google/kne v0.1.1-0.20220209214853-52a824020cd9 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/openconfig/gnmi v0.0.0-20220131173555-39aa74195f0d // indirect
@@ -22,6 +21,7 @@ require (
 	github.com/openconfig/gocloser v0.0.0-20220310182203-c6c950ed3b0b // indirect
 	github.com/openconfig/goyang v1.0.0 // indirect
 	github.com/openconfig/gribi v0.1.1-0.20220126144445-1634932f9fd8 // indirect
+	github.com/openconfig/kne v0.1.1 // indirect
 	github.com/p4lang/p4runtime v1.3.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
