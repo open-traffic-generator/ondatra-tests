@@ -6,32 +6,32 @@ metadata:
 data:
     versions: |
         {
-          "release": "0.0.1-3027-local",
+          "release": "0.0.1-3113-local",
           "images": [
                 {
                     "name": "controller",
                     "path": "ghcr.io/open-traffic-generator/licensed/ixia-c-controller",
-                    "tag": "0.0.1-3027"
+                    "tag": "0.0.1-3113"
                 },
                 {
                     "name": "gnmi-server",
                     "path": "ixiacom/ixia-c-gnmi-server",
-                    "tag": "1.8.10"
+                    "tag": "1.8.13"
                 },
                 {
                     "name": "grpc-server",
                     "path": "ixiacom/ixia-c-grpc-server",
-                    "tag": "0.8.8"
+                    "tag": "0.8.9"
                 },
                 {
                     "name": "traffic-engine",
                     "path": "ixiacom/ixia-c-traffic-engine",
-                    "tag": "1.4.1.29"
+                    "tag": "1.6.0.9
                 },
                 {
                     "name": "protocol-engine",
                     "path": "ghcr.io/open-traffic-generator/licensed/ixia-c-protocol-engine",
-                    "tag": "1.00.0.209"
+                    "tag": "1.00.0.214"
                 }
             ]
         }
