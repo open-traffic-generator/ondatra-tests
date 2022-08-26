@@ -26,7 +26,7 @@ data:
                 {
                     "name": "traffic-engine",
                     "path": "ixiacom/ixia-c-traffic-engine",
-                    "tag": "1.6.0.9
+                    "tag": "1.6.0.9"
                 },
                 {
                     "name": "protocol-engine",
