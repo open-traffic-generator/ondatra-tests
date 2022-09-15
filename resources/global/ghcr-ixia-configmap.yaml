@@ -15,12 +15,12 @@ data:
                 },
                 {
                     "name": "gnmi-server",
-                    "path": ""ghcr.io/open-traffic-generator/ixia-c-gnmi-server",
+                    "path": "ghcr.io/open-traffic-generator/ixia-c-gnmi-server",
                     "tag": "1.9.1"
                 },
                 {
                     "name": "traffic-engine",
-                    "path": ""ghcr.io/open-traffic-generator/ixia-c-traffic-engine",
+                    "path": "ghcr.io/open-traffic-generator/ixia-c-traffic-engine",
                     "tag": "1.6.0.9"
                 },
                 {
