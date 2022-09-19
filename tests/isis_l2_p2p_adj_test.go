@@ -16,6 +16,7 @@ import (
 
 	"github.com/open-traffic-generator/snappi/gosnappi"
 	"github.com/openconfig/ondatra"
+	otg "github.com/openconfig/ondatra/otg"
 )
 
 func TestIsisL2P2pAdj(t *testing.T) {
@@ -42,7 +43,7 @@ func TestIsisL2P2pAdj(t *testing.T) {
 	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, otg, config, expected) }, nil)
 }
 
-func isisL2P2pAdjConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+func isisL2P2pAdjConfig(t *testing.T, otg *otg.OTG) (gosnappi.Config, helpers.ExpectedState) {
 	config := otg.NewConfig(t)
 	port1 := config.Ports().Add().SetName("port1")
 	port2 := config.Ports().Add().SetName("port2")

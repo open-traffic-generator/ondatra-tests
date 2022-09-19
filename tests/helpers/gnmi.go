@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/open-traffic-generator/snappi/gosnappi"
-	"github.com/openconfig/ondatra"
+	otg "github.com/openconfig/ondatra/otg"
 	otgtelemetry "github.com/openconfig/ondatra/telemetry/otg"
 	"github.com/openconfig/ygot/ygot"
 )
 
-func GetFlowMetrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.MetricsResponseFlowMetricIter, error) {
+func GetFlowMetrics(t *testing.T, otg *otg.OTG, c gosnappi.Config) (gosnappi.MetricsResponseFlowMetricIter, error) {
 	defer Timer(time.Now(), "GetFlowMetrics GNMI")
 	metrics := gosnappi.NewApi().NewGetMetricsResponse().StatusCode200().FlowMetrics()
 	for _, f := range c.Flows().Items() {
@@ -27,7 +27,7 @@ func GetFlowMetrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi
 	return metrics, nil
 }
 
-func GetPortMetrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.MetricsResponsePortMetricIter, error) {
+func GetPortMetrics(t *testing.T, otg *otg.OTG, c gosnappi.Config) (gosnappi.MetricsResponsePortMetricIter, error) {
 	defer Timer(time.Now(), "GetPortMetrics GNMI")
 	metrics := gosnappi.NewApi().NewGetMetricsResponse().StatusCode200().PortMetrics()
 	for _, p := range c.Ports().Items() {
@@ -42,7 +42,7 @@ func GetPortMetrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi
 	return metrics, nil
 }
 
-func GetBgpv4Metrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.MetricsResponseBgpv4MetricIter, error) {
+func GetBgpv4Metrics(t *testing.T, otg *otg.OTG, c gosnappi.Config) (gosnappi.MetricsResponseBgpv4MetricIter, error) {
 	defer Timer(time.Now(), "GetBgpv4Metrics GNMI")
 	metrics := gosnappi.NewApi().NewGetMetricsResponse().StatusCode200().Bgpv4Metrics()
 	for _, d := range c.Devices().Items() {
@@ -72,7 +72,7 @@ func GetBgpv4Metrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnapp
 	return metrics, nil
 }
 
-func GetBgpv6Metrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.MetricsResponseBgpv6MetricIter, error) {
+func GetBgpv6Metrics(t *testing.T, otg *otg.OTG, c gosnappi.Config) (gosnappi.MetricsResponseBgpv6MetricIter, error) {
 	defer Timer(time.Now(), "GetBgpv6Metrics GNMI")
 	metrics := gosnappi.NewApi().NewGetMetricsResponse().StatusCode200().Bgpv6Metrics()
 	for _, d := range c.Devices().Items() {
@@ -102,7 +102,7 @@ func GetBgpv6Metrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnapp
 	return metrics, nil
 }
 
-func GetIsisMetrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.MetricsResponseIsisMetricIter, error) {
+func GetIsisMetrics(t *testing.T, otg *otg.OTG, c gosnappi.Config) (gosnappi.MetricsResponseIsisMetricIter, error) {
 	defer Timer(time.Now(), "GetIsisMetrics GNMI")
 	metrics := gosnappi.NewApi().NewGetMetricsResponse().StatusCode200().IsisMetrics()
 	for _, d := range c.Devices().Items() {
@@ -133,7 +133,7 @@ func GetIsisMetrics(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi
 	return metrics, nil
 }
 
-func GetIPv4NeighborStates(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.StatesResponseNeighborsv4StateIter, error) {
+func GetIPv4NeighborStates(t *testing.T, otg *otg.OTG, c gosnappi.Config) (gosnappi.StatesResponseNeighborsv4StateIter, error) {
 	defer Timer(time.Now(), "Getting IPv4 Neighbor states GNMI")
 	ethNeighborMap := make(map[string][]string)
 	ethernetNames := []string{}
@@ -163,7 +163,7 @@ func GetIPv4NeighborStates(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (g
 	return states, nil
 }
 
-func GetIPv6NeighborStates(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (gosnappi.StatesResponseNeighborsv6StateIter, error) {
+func GetIPv6NeighborStates(t *testing.T, otg *otg.OTG, c gosnappi.Config) (gosnappi.StatesResponseNeighborsv6StateIter, error) {
 	defer Timer(time.Now(), "Getting IPv6 Neighbor states GNMI")
 	ethNeighborMap := make(map[string][]string)
 	ethernetNames := []string{}
@@ -193,12 +193,12 @@ func GetIPv6NeighborStates(t *testing.T, otg *ondatra.OTG, c gosnappi.Config) (g
 	return states, nil
 }
 
-func GetAllIPv4NeighborMacEntries(t *testing.T, otg *ondatra.OTG) ([]string, error) {
+func GetAllIPv4NeighborMacEntries(t *testing.T, otg *otg.OTG) ([]string, error) {
 	macEntries := otg.Telemetry().InterfaceAny().Ipv4NeighborAny().LinkLayerAddress().Get(t)
 	return macEntries, nil
 }
 
-func GetAllIPv6NeighborMacEntries(t *testing.T, otg *ondatra.OTG) ([]string, error) {
+func GetAllIPv6NeighborMacEntries(t *testing.T, otg *otg.OTG) ([]string, error) {
 	macEntries := otg.Telemetry().InterfaceAny().Ipv6NeighborAny().LinkLayerAddress().Get(t)
 	return macEntries, nil
 }

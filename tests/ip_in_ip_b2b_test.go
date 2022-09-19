@@ -18,6 +18,8 @@ import (
 	"github.com/openconfig/ondatra"
 
 	"tests/tests/helpers"
+
+	otg "github.com/openconfig/ondatra/otg"
 )
 
 func TestIpInIpB2b(t *testing.T) {
@@ -35,7 +37,7 @@ func TestIpInIpB2b(t *testing.T) {
 	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, otg, config, expected) }, nil)
 }
 
-func ipInIpB2bConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+func ipInIpB2bConfig(t *testing.T, otg *otg.OTG) (gosnappi.Config, helpers.ExpectedState) {
 	config := otg.NewConfig(t)
 
 	port1 := config.Ports().Add().SetName("port1")

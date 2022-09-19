@@ -13,6 +13,7 @@ import (
 
 	"github.com/open-traffic-generator/snappi/gosnappi"
 	"github.com/openconfig/ondatra"
+	otg "github.com/openconfig/ondatra/otg"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -393,7 +394,7 @@ func GetCapturePorts(c gosnappi.Config) []string {
 	return capturePorts
 }
 
-func CleanupTest(t *testing.T, ate *ondatra.ATEDevice, otg *ondatra.OTG, stopProtocols bool) {
+func CleanupTest(t *testing.T, ate *ondatra.ATEDevice, otg *otg.OTG, stopProtocols bool) {
 	otg.StopTraffic(t)
 	if stopProtocols {
 		otg.StopProtocols(t)

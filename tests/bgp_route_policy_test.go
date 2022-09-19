@@ -18,6 +18,8 @@ import (
 	"github.com/openconfig/ondatra"
 
 	"tests/tests/helpers"
+
+	otg "github.com/openconfig/ondatra/otg"
 )
 
 func TestBGPRoutePolicy(t *testing.T) {
@@ -46,7 +48,7 @@ func TestBGPRoutePolicy(t *testing.T) {
 	helpers.WaitFor(t, func() (bool, error) { return helpers.FlowMetricsOk(t, otg, config, expected) }, nil)
 }
 
-func bgpRoutePolicyConfig(t *testing.T, otg *ondatra.OTG) (gosnappi.Config, helpers.ExpectedState) {
+func bgpRoutePolicyConfig(t *testing.T, otg *otg.OTG) (gosnappi.Config, helpers.ExpectedState) {
 	config := otg.NewConfig(t)
 
 	port1 := config.Ports().Add().SetName("port1")
