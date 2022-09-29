@@ -6,27 +6,27 @@ metadata:
 data:
   versions: |
     {
-      "release": "0.0.1-3383",
+      "release": "0.0.1-3423",
       "images": [
             {
                 "name": "controller",
                 "path": "us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ixia-c-controller",
-                "tag": "0.0.1-3383"
+                "tag": "0.0.1-3423"
             },
             {
                 "name": "gnmi-server",
                 "path": "us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ixia-c-gnmi-server",
-                "tag": "1.9.3"
+                "tag": "1.9.5"
             },
             {
                 "name": "traffic-engine",
                 "path": "us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ixia-c-traffic-engine",
-                "tag": "1.6.0.17"
+                "tag": "1.6.0.19"
             },
             {
                 "name": "protocol-engine",
                 "path": "us-central1-docker.pkg.dev/kt-nts-athena-dev/keysight/ixia-c-protocol-engine",
-                "tag": "1.00.0.225"
+                "tag": "1.00.0.232"
             }
         ]
     }
